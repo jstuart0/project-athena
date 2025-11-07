@@ -1,0 +1,200 @@
+# Project Athena - Network Configuration
+# Defines all network components and connectivity for the voice assistant system
+
+# Core Infrastructure
+infrastructure:
+  gateway:
+    device: "UDM Pro (Genesis)"
+    ip: "192.168.10.1"
+    network: "192.168.10.0/24"
+
+  switches:
+    usw_aggregation:
+      model: "USW Aggregation (8x 10GbE SFP+)"
+      ip: "192.168.10.182"
+      description: "Core 10GbE distribution"
+
+    usw_pro_hd_24_poe:
+      model: "USW Pro HD 24 PoE"
+      ip: "192.168.10.99"
+      description: "Access layer with PoE for Wyoming devices"
+      ports:
+        available_for_athena: [12, 13, 15, 16, 17, 18, 19, 24, 25, 26]
+        poe_budget: "PoE++ capable"
+
+# Jetson Devices
+jetson_devices:
+  jetson_01:
+    hostname: "jetson-01"
+    ip: "192.168.10.62"
+    role: "primary_wake_word_detection"
+    hardware: "NVIDIA Jetson Orin Nano Super"
+    network_interface: "1GbE"
+    switch_connection: "USW Pro HD 24 PoE Port 22"
+    current_status: "athena_lite_deployed"
+
+  jetson_02:
+    hostname: "jetson-02"
+    ip: "192.168.10.63"
+    role: "redundancy_load_balancing"
+    hardware: "NVIDIA Jetson Orin Nano Super"
+    network_interface: "1GbE"
+    switch_connection: "USW Pro HD 24 PoE Port 23"
+    current_status: "hardware_available_not_configured"
+
+# Wyoming Voice Devices
+wyoming_devices:
+  deployment_plan:
+    phase1: 3  # Office, Kitchen, Master Bedroom
+    phase2: 7  # Remaining zones
+    total: 10
+
+  network_config:
+    ip_range: "192.168.10.50-59"
+    subnet: "192.168.10.0/24"
+    gateway: "192.168.10.1"
+    dns: "192.168.10.1"
+    power: "PoE from USW Pro HD 24"
+
+  device_assignments:
+    - zone: "office"
+      ip: "192.168.10.50"
+      port: 12
+      priority: "phase1"
+    - zone: "kitchen"
+      ip: "192.168.10.51"
+      port: 13
+      priority: "phase1"
+    - zone: "master_bedroom"
+      ip: "192.168.10.55"
+      port: 18
+      priority: "phase1"
+    - zone: "living_room"
+      ip: "192.168.10.52"
+      port: 15
+      priority: "phase2"
+    - zone: "master_bath"
+      ip: "192.168.10.53"
+      port: 16
+      priority: "phase2"
+    - zone: "main_bath"
+      ip: "192.168.10.54"
+      port: 17
+      priority: "phase2"
+    - zone: "alpha"
+      ip: "192.168.10.56"
+      port: 19
+      priority: "phase2"
+    - zone: "beta"
+      ip: "192.168.10.57"
+      port: 24
+      priority: "phase2"
+    - zone: "basement_bath"
+      ip: "192.168.10.58"
+      port: 25
+      priority: "phase2"
+    - zone: "dining_room"
+      ip: "192.168.10.59"
+      port: 26
+      priority: "phase2"
+
+# Proxmox Cluster Integration
+proxmox_cluster:
+  cluster_name: "thor"
+  api_server: "192.168.10.222:6443"
+  nodes:
+    node1:
+      ip: "192.168.10.11"
+      role: "athena_orchestration_athena_command"
+      connection: "10GbE SFP+"
+    node2:
+      ip: "192.168.10.12"
+      role: "athena_stt_athena_tts"
+      connection: "10GbE SFP+"
+    node3:
+      ip: "192.168.10.13"
+      role: "ha_primary_athena_intent_athena_monitoring"
+      connection: "10GbE SFP+"
+
+# Home Assistant
+home_assistant:
+  current_location: "192.168.10.168"
+  access_method: "HTTPS (SSL required)"
+  api_endpoint: "https://192.168.10.168:8123/api"
+  migration_plan:
+    phase0: "Migrate to Proxmox VM"
+    target_node: "node3"
+    maintain_ip: true
+
+# Storage Network
+storage:
+  synology_nas:
+    model: "DS1821+"
+    ip: "192.168.10.159"
+    connection: "10GbE"
+    nfs_exports:
+      athena_models: "/volume1/athena/models"
+      athena_logs: "/volume1/athena/logs"
+      athena_backups: "/volume1/athena/backups"
+      athena_data: "/volume1/athena/data"
+
+  ceph_cluster:
+    nodes: ["192.168.10.11", "192.168.10.12", "192.168.10.13"]
+    backend_network: "Thunderbolt 4 ring (40Gbps per link)"
+    frontend_network: "10GbE SFP+"
+    usage: "VM primary storage"
+
+# Network Performance Requirements
+performance:
+  bandwidth_per_zone: "<1Mbps"
+  total_bandwidth: "<10Mbps"
+  latency_requirement: "<10ms internal network"
+
+  port_requirements:
+    wyoming_protocol: "Custom ports (TBD)"
+    home_assistant: "8123 (HTTP/WebSocket)"
+    jetson_services: "Custom ports (TBD)"
+
+# Security Configuration
+security:
+  network_isolation: "192.168.10.0/24 private network"
+  firewall_rules: "UDM Pro managed"
+  external_access: "No external network required for operation"
+  encryption: "TLS for Home Assistant communication"
+
+# DNS Configuration
+dns:
+  required_records:
+    - "jetson-01.xmojo.net → 192.168.10.62"
+    - "jetson-02.xmojo.net → 192.168.10.63"
+    - "homeassistant.xmojo.net → 192.168.10.168"
+    - "wyoming-01.xmojo.net → 192.168.10.50"
+    # (continue for all Wyoming devices)
+
+  current_status: "DNS records not configured"
+  dns_server: "192.168.10.1 (UDM Pro)"
+
+# Network Monitoring
+monitoring:
+  prometheus_targets:
+    - "192.168.10.62:9090"  # Jetson-01
+    - "192.168.10.63:9090"  # Jetson-02 (when deployed)
+    # Wyoming devices will be added as deployed
+
+  metrics_collection:
+    - "Network latency between components"
+    - "Bandwidth usage per zone"
+    - "PoE power consumption"
+    - "Device connectivity status"
+
+# Troubleshooting
+troubleshooting:
+  common_commands:
+    connectivity_test: "ping 192.168.10.62"
+    port_test: "nc -zv 192.168.10.168 8123"
+    dns_test: "nslookup jetson-01.xmojo.net"
+
+  network_diagnostics:
+    switch_management: "https://192.168.10.99"
+    gateway_management: "https://192.168.10.1"
+    topology_view: "UniFi Network Controller"

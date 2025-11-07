@@ -1,0 +1,1520 @@
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+homeassistant:
+  external_url: "https://ha.xmojo.net" # provide your subdomain and domain, with no port
+  internal_url: "https://ha.xmojo.net" # local address with port
+
+homekit:
+  filter:
+    include_entities:
+      - input_boolean.leave_lights_on
+      - input_boolean.brightness_override
+      - input_number.leave_lights_on_minutes
+      - input_number.override_brightness
+  entity_config:
+    input_number.override_brightness:
+      name: Kitchen Light Brightness
+    input_number.leave_lights_on_minutes:
+      name: Leave Lights On Minutes
+
+http:
+  base_url: ha.xmojo.net
+  ssl_certificate: /ssl/fullchain.pem
+  ssl_key: /ssl/privkey.pem
+  cors_allowed_origins:
+    - https://ha.xmojo.net
+  use_x_forwarded_for: true
+  ip_ban_enabled: true
+  server_port: 8123
+  login_attempts_threshold: 5
+  trusted_proxies:
+    - 192.168.10.168 # Add the IP address of the proxy server
+    - 172.30.33.0/24 # You may also provide the subnet mask
+    - 174.172.91.221
+    - 192.168.50.50
+    - 192.168.10.1
+    - 10.0.0.0/12
+    - 192.168.50.0/24
+    - 192.168.10.0/24
+    - 10.244.2.0/24
+    - 192.168.10.172
+    - 192.168.10.171
+    - 192.168.10.170
+    - 192.168.10.173
+    - 173.245.48.0/20
+    - 103.21.244.0/22
+    - 103.22.200.0/22
+    - 103.31.4.0/22
+    - 141.101.64.0/18
+    - 108.162.192.0/18
+    - 190.93.240.0/20
+    - 188.114.96.0/20
+    - 197.234.240.0/22
+    - 198.41.128.0/17
+    - 162.158.0.0/15
+    - 104.16.0.0/13
+    - 104.24.0.0/14
+    - 172.64.0.0/13
+    - 131.0.72.0/22
+
+browser_mod:
+
+wake_on_lan:
+
+media_player:
+  - platform: wiim_custom
+    host: 192.168.20.198
+    name: Home Audio
+
+samsungtv_smart:
+  - host: 192.168.10.180
+    turn_on_action:
+      - service: wake_on_lan.send_magic_packet
+        data:
+          mac: 64:e7:d8:37:71:d6
+    applist:
+      "Netflix": "11101200001"
+      "Prime Video": "3201512006785"
+      "Spotify": "3201606009684"
+
+#  spotify:
+#  client_id: 8f2e9759d3aa4c5ea85b16268fcb388e
+#  client_secret: 9663a771965c4740a990ef559de7b6ba
+
+spotcast:
+  sp_dc: !secret sp_dc
+  sp_key: !secret sp_key
+
+logger:
+  default: info
+  logs:
+    homeassistant.components.python_script: info
+    homeassistant.components.automation: info
+    custom_components.xiaomi_cloud_map_extractor: info
+    custom_components.lifx: info
+
+# configuration.yaml file
+python_script:
+
+camera:
+  - platform: generic
+    name: Ring Livestream
+    stream_source: http://192.168.10.168:3000/public/stream.m3u8
+    still_image_url: http://192.168.10.168:3000/public/stream.m3u8
+
+# Disabled: Vacuum not reachable at 192.168.10.184 (causing discovery errors)
+#  - platform: xiaomi_cloud_map_extractor
+#    host: !secret xiaomi_vacuum_host
+#    token: !secret xiaomi_vacuum_token
+#    username: !secret xiaomi_cloud_username
+#    password: !secret xiaomi_cloud_password
+#    country: us
+#    draw: ["all"]
+#    attributes:
+#      - calibration_points
+
+# vacuum:
+#   - platform: xiaomi_miio
+#     host: 192.168.10.184
+#     token: 706b4a56487049656a55506c67345337
+
+#lyric:
+#  client_id: !secret lyric_consumer_key
+#  client_secret: !secret lyric_consumer_secret
+
+mqtt:
+  sensor:
+    - name: "Bed"
+      unique_id: bedweight
+      state_topic: "home/bedroom/bed"
+      unit_of_measurement: "kg"
+      availability_topic: "home/bedroom/bed/available"
+    - name: "Bed Raw"
+      unique_id: bedrawweight
+      state_topic: "home/bedroom/bed/raw"
+      unit_of_measurement: "raw"
+      availability_topic: "home/bedroom/bed/available"
+
+input_boolean:
+  office_scene_001:
+    name: Office Scene 001
+    icon: mdi:brightness-7
+
+  office_scene_002:
+    name: Office Scene 002
+    icon: mdi:brightness-4
+
+  mbr_leave_lights_on:
+    name: Leave Lights On
+    icon: mdi:lightbulb-on
+  mbr_leave_lights_off:
+    name: Leave Lights Off
+    icon: mdi:power
+
+  mbr_brightness_override:
+    name: Brightness Override
+    icon: mdi:brightness-auto
+
+  office_leave_lights_on:
+    name: Leave Lights On
+    icon: mdi:lightbulb-on
+  office_leave_lights_off:
+    name: Leave Lights Off
+    icon: mdi:power
+
+  office_brightness_override:
+    name: Brightness Override
+    icon: mdi:brightness-auto
+
+  # Living Room Controls
+  living_room_leave_lights_on:
+    name: Living Room Leave Lights On
+    icon: mdi:lightbulb-on
+  living_room_leave_lights_off:
+    name: Living Room Leave Lights Off
+    icon: mdi:power
+  living_room_motion_disable:
+    name: Living Room Motion Disable
+    icon: mdi:motion-sensor-off
+  living_room_movie_mode:
+    name: Living Room Movie Mode
+    icon: mdi:movie
+
+  # Dining Room Controls
+  dining_room_leave_lights_on:
+    name: Dining Room Leave Lights On
+    icon: mdi:lightbulb-on
+  dining_room_leave_lights_off:
+    name: Dining Room Leave Lights Off
+    icon: mdi:power
+  dining_room_motion_disable:
+    name: Dining Room Motion Disable
+    icon: mdi:motion-sensor-off
+  dining_room_movie_mode:
+    name: Dining Room Movie Mode
+    icon: mdi:movie
+
+  # Kitchen Controls
+  kitchen_leave_lights_on:
+    name: Kitchen Leave Lights On
+    icon: mdi:lightbulb-on
+  kitchen_leave_lights_off:
+    name: Kitchen Leave Lights Off
+    icon: mdi:power
+  kitchen_motion_disable:
+    name: Kitchen Motion Disable
+    icon: mdi:motion-sensor-off
+
+  # Global Movie Mode
+  global_movie_mode:
+    name: Global Movie Mode
+    icon: mdi:movie-open
+  # Living Room Additional Overrides
+  living_room_brightness_override:
+    name: Living Room Brightness Override
+    icon: mdi:brightness-auto
+
+  # Dining Room Additional Overrides
+  dining_room_brightness_override:
+    name: Dining Room Brightness Override
+    icon: mdi:brightness-auto
+
+  # Kitchen Additional Overrides
+  kitchen_brightness_override:
+    name: Kitchen Brightness Override
+    icon: mdi:brightness-auto
+  # Manual Mode Indicators
+  living_room_manual_mode:
+    name: Living Room Manual Mode
+    icon: mdi:gesture-tap-button
+
+  dining_room_manual_mode:
+    name: Dining Room Manual Mode
+    icon: mdi:gesture-tap-button
+
+  kitchen_manual_mode:
+    name: Kitchen Manual Mode
+    icon: mdi:gesture-tap-button
+  # Bedroom-style room manual mode indicators
+  mbr_manual_mode:
+    name: Master Bedroom Manual Mode
+    icon: mdi:gesture-tap-button
+
+  office_manual_mode:
+    name: Office Manual Mode
+    icon: mdi:gesture-tap-button
+
+  alpha_manual_mode:
+    name: Alpha Bedroom Manual Mode
+    icon: mdi:gesture-tap-button
+
+  beta_manual_mode:
+    name: Beta Bedroom Manual Mode
+    icon: mdi:gesture-tap-button
+
+  main_bathroom_manual_mode:
+    name: Main Bathroom Manual Mode
+    icon: mdi:gesture-tap-button
+
+  master_bathroom_manual_mode:
+    name: Master Bathroom Manual Mode
+    icon: mdi:gesture-tap-button
+
+  basement_bathroom_manual_mode:
+    name: Basement Bathroom Manual Mode
+    icon: mdi:gesture-tap-button
+
+  basement_hallway_manual_mode:
+    name: Basement Hallway Manual Mode
+    icon: mdi:gesture-tap-button
+
+  hallway_manual_mode:
+    name: Hallway Manual Mode
+    icon: mdi:gesture-tap-button
+
+  powder_room_manual_mode:
+    name: Powder Room Manual Mode
+    icon: mdi:gesture-tap-button
+input_datetime:
+  bedtime_start:
+    name: Bedtime Start
+    has_date: false
+    has_time: true
+    initial: "22:00"
+
+  bedtime_end:
+    name: Bedtime End
+    has_date: false
+    has_time: true
+    initial: "06:00"
+
+input_number:
+  mbr_leave_lights_on_minutes:
+    name: Leave On Duration (Minutes)
+    initial: 10
+    min: 5
+    max: 480
+    step: 5
+    unit_of_measurement: "min"
+  mbr_leave_lights_off_minutes:
+    name: Leave Lights Off Duration
+    initial: 60
+    min: 5
+    max: 480
+    step: 5
+    unit_of_measurement: "min"
+
+  mbr_override_brightness:
+    name: Override Brightness
+    initial: 75
+    min: 1
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+
+  office_leave_lights_on_minutes:
+    name: Leave On Duration (Minutes)
+    initial: 10
+    min: 5
+    max: 480
+    step: 5
+    unit_of_measurement: "min"
+
+  office_leave_lights_off_minutes:
+    name: Leave Lights Off Duration
+    initial: 60
+    min: 5
+    max: 480
+    step: 5
+    unit_of_measurement: "min"
+
+  office_override_brightness:
+    name: Override Brightness
+    initial: 75
+    min: 1
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+
+  # Living Room Numbers
+  living_room_leave_lights_on_minutes:
+    name: Living Room Leave On Duration
+    initial: 10
+    min: 1
+    max: 120
+    step: 1
+    unit_of_measurement: "min"
+
+  # Dining Room Numbers
+  dining_room_leave_lights_on_minutes:
+    name: Dining Room Leave On Duration
+    initial: 10
+    min: 1
+    max: 120
+    step: 1
+    unit_of_measurement: "min"
+
+  # Kitchen Numbers
+  kitchen_leave_lights_on_minutes:
+    name: Kitchen Leave On Duration
+    initial: 10
+    min: 1
+    max: 120
+    step: 1
+    unit_of_measurement: "min"
+  # Living Room Additional Numbers
+  living_room_override_brightness:
+    name: Living Room Override Brightness
+    initial: 75
+    min: 1
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+
+  living_room_leave_lights_off_minutes:
+    name: Living Room Leave Off Duration
+    initial: 60
+    min: 1
+    max: 480
+    step: 1
+    unit_of_measurement: "min"
+
+  # Dining Room Additional Numbers
+  dining_room_override_brightness:
+    name: Dining Room Override Brightness
+    initial: 75
+    min: 1
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+
+  dining_room_leave_lights_off_minutes:
+    name: Dining Room Leave Off Duration
+    initial: 60
+    min: 1
+    max: 480
+    step: 1
+    unit_of_measurement: "min"
+
+  # Kitchen Additional Numbers
+  kitchen_override_brightness:
+    name: Kitchen Override Brightness
+    initial: 75
+    min: 1
+    max: 100
+    step: 1
+    unit_of_measurement: "%"
+
+  kitchen_leave_lights_off_minutes:
+    name: Kitchen Leave Off Duration
+    initial: 60
+    min: 1
+    max: 480
+    step: 1
+    unit_of_measurement: "min"
+sensor:
+  - platform: template
+    sensors:
+      num_in_bed:
+        friendly_name: "Number of People in Bed"
+        unit_of_measurement: "people"
+        value_template: >-
+          {% if is_state('binary_sensor.jay_in_bed', 'on') and is_state('binary_sensor.tracy_in_bed', 'on') %}
+              2
+          {% elif is_state('binary_sensor.jay_in_bed', 'on') or is_state('binary_sensor.tracy', 'on') %}
+              1
+          {% else %}
+              0
+          {% endif %}
+
+  - platform: rest
+    resource: "http://192.168.10.168:8123/api/hassio/addons/44c60309_ringlivestream/info"
+    headers:
+      Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiIzNGNlYzE4ZWM1NDE0ODhlOGMwNDczNzhhOWY4YzgyOSIsImlhdCI6MTYyODI2NzY0NiwiZXhwIjoxOTQzNjI3NjQ2fQ.Qele6uw3fsivK13s89bsYwJB7yucLFKCvrkSP-Livjw"
+      Content-Type: application/json
+    name: ring_addon_state
+    value_template: "{{value_json['data']['state']}}"
+
+    # One entry for each beacon you want to track
+  - platform: mqtt_room
+    device_id: "sd:0x180a"
+    name: "Jays Charge 5"
+    state_topic: "espresense/rooms"
+    timeout: 60
+    away_timeout: 120 # number of seconds after which the enitity will get status not_home
+  - platform: mqtt_room
+    device_id: "apple:1005:9-4"
+    name: "Apple Watch Jay"
+    state_topic: "espresense/rooms"
+    timeout: 60
+    away_timeout: 120 # number of seconds after which the enitity will get status not_home
+
+  - platform: rest
+    name: LivingRoomTablet
+    json_attributes:
+      - batteryLevel
+      - kioskMode
+      - screenBrightness
+      - motionDetectorState
+      - maintenanceMode
+      - appFreeMemory
+      - appUsedMemory
+      - totalFreeMemory
+      - totalUsedMemory
+      - hostname4
+      - ip4
+      - mac
+      - locationLatitude
+      - locationLongitude
+      - locationAltitude
+      - startUrl
+      - currentPage
+    resource: !secret LivingRoomTablet_rest
+    value_template: "{{ value_json.screenOn }}"
+
+  - platform: template
+    sensors:
+      livingroomtablet_battery_level:
+        friendly_name: "LivingRoomTablet_battery_level"
+        unit_of_measurement: "%"
+        value_template: "{{ states.sensor.livingroomtablet.attributes.batteryLevel }}"
+
+rest_command:
+  kiosk_command:
+    url: "http://localhost:8000/kiosk"
+    method: POST
+    headers:
+      Content-Type: 'application/json'
+    payload: >
+      {{ payload }}
+
+  athena_llm_simple:
+    url: 'http://192.168.10.62:5000/simple_command'
+    method: POST
+    headers:
+      Content-Type: 'application/json'
+    payload: >
+      {
+        "command": "{{ states('input_text.last_voice_command') }}",
+        "source_device": "{{ states('input_text.last_voice_device') if states('input_text.last_voice_device') != 'unknown' else None }}"
+      }
+
+  athena_llm_complex:
+    url: 'http://192.168.10.62:5000/process_command'
+    method: POST
+    headers:
+      Content-Type: 'application/json'
+    payload: >
+      {
+        "command": "{{ states('input_text.last_voice_command') }}",
+        "source_device": "{{ states('input_text.last_voice_device') if states('input_text.last_voice_device') != 'unknown' else None }}"
+      }
+switch:
+switch:
+  - platform: template
+  - platform: template
+    switches:
+    switches:
+      ring_live_stream:
+      ring_live_stream:
+        value_template: "{{ is_state('sensor.ring_addon_state', 'started') }}"
+        value_template: "{{ is_state('sensor.ring_addon_state', 'started') }}"
+        turn_on:
+        turn_on:
+          service: hassio.addon_start
+          service: hassio.addon_start
+          data:
+          data:
+            addon: 44c60309_ringlivestream
+            addon: 44c60309_ringlivestream
+        turn_off:
+        turn_off:
+          service: hassio.addon_stop
+          service: hassio.addon_stop
+          data:
+          data:
+            addon: 44c60309_ringlivestream
+            addon: 44c60309_ringlivestream
+
+
+recorder:
+recorder:
+  db_url: mysql://homeassistant:dcnsio4$#hd@core-mariadb/homeassistant?charset=utf8mb4
+  db_url: mysql://homeassistant:dcnsio4$#hd@core-mariadb/homeassistant?charset=utf8mb4
+  purge_keep_days: 75
+  purge_keep_days: 75
+
+
+influxdb:
+influxdb:
+  host: 192.168.10.168
+  host: 192.168.10.168
+  port: 8086
+  port: 8086
+  database: homeassistant
+  database: homeassistant
+  username: ha-record
+  username: ha-record
+  password: ha-record
+  password: ha-record
+  max_retries: 3
+  max_retries: 3
+  default_measurement: state
+  default_measurement: state
+
+
+light:
+light:
+  - platform: template
+  - platform: template
+    lights:
+    lights:
+      tablet_backlight:
+      tablet_backlight:
+        friendly_name: Tablet Backlight
+        friendly_name: Tablet Backlight
+        value_template: '{{ states.sensor.livingroomtablet.attributes["screenOn"] }}'
+        value_template: '{{ states.sensor.livingroomtablet.attributes["screenOn"] }}'
+        level_template: '{{ states.sensor.livingroomtablet.attributes["screenBrightness"] }}'
+        level_template: '{{ states.sensor.livingroomtablet.attributes["screenBrightness"] }}'
+        turn_on:
+        turn_on:
+          service: rest_command.kiosk_command
+          service: rest_command.kiosk_command
+          data:
+          data:
+            cmd: screenOn
+            cmd: screenOn
+        turn_off:
+        turn_off:
+          service: rest_command.kiosk_command
+          service: rest_command.kiosk_command
+          data:
+          data:
+            cmd: screenOff
+            cmd: screenOff
+        set_level:
+        set_level:
+          service: rest_command.kiosk_command
+          service: rest_command.kiosk_command
+          data_template:
+          data_template:
+            cmd: setStringSetting
+            cmd: setStringSetting
+            key: screenBrightness
+            key: screenBrightness
+            value: "{{ brightness }}"
+            value: "{{ brightness }}"
+
+
+  - platform: group
+  - platform: group
+    name: Dining Room
+    name: Dining Room
+    unique_id: "dining_room_lights"
+    unique_id: "dining_room_lights"
+    entities:
+    entities:
+      - light.diningroom_1
+      - light.diningroom_1
+      - light.diningroom_2
+      - light.diningroom_2
+      - light.diningroom_3
+      - light.diningroom_3
+      - light.diningroom_4_1
+      - light.diningroom_4_1
+      - light.diningroom_4_2
+      - light.diningroom_4_2
+      - light.dining_room_stairs
+      - light.dining_room_stairs
+
+
+  - platform: group
+  - platform: group
+    name: Living Room
+    name: Living Room
+    unique_id: "living_roon_lights"
+    unique_id: "living_roon_lights"
+    entities:
+    entities:
+      - light.lr_front_left
+      - light.lr_front_left
+      - light.lr_front_center
+      - light.lr_front_center
+      - light.lr_front_right
+      - light.lr_front_right
+      - light.lr_rear_left
+      - light.lr_rear_left
+      - light.lr_rear_center
+      - light.lr_rear_center
+      - light.lr_rear_right
+      - light.lr_rear_right
+
+
+  - platform: group
+  - platform: group
+    name: Kitchen
+    name: Kitchen
+    unique_id: "kitchen_lights"
+    unique_id: "kitchen_lights"
+    entities:
+    entities:
+      - light.kitchen_back_left
+      - light.kitchen_back_left
+      - light.kitchen_back_right
+      - light.kitchen_back_right
+      - light.kitchen_middle_left
+      - light.kitchen_middle_left
+      - light.kitchen_middle_right
+      - light.kitchen_middle_right
+      - light.kitchen_front_left
+      - light.kitchen_front_left
+      - light.kitchen_front_right
+      - light.kitchen_front_right
+      - light.kitchen_island_dr_side
+      - light.kitchen_island_dr_side
+      - light.kitchen_island_window_side
+      - light.kitchen_island_window_side
+
+
+  - platform: group
+  - platform: group
+    name: Kitchen Island
+    name: Kitchen Island
+    unique_id: "kitchen_island_lights"
+    unique_id: "kitchen_island_lights"
+    entities:
+    entities:
+      - light.kitchen_island_dr_side
+      - light.kitchen_island_dr_side
+      - light.kitchen_island_window_side
+      - light.kitchen_island_window_side
+
+
+  - platform: group
+  - platform: group
+    name: Day Time Lights
+    name: Day Time Lights
+    unique_id: "daytime_lights"
+    unique_id: "daytime_lights"
+    entities:
+    entities:
+      - light.kitchen_front_left
+      - light.kitchen_front_left
+      - light.kitchen_front_right
+      - light.kitchen_front_right
+      - light.diningroom_1
+      - light.diningroom_1
+      - light.diningroom_3
+      - light.diningroom_3
+      - light.living_room_tv
+      - light.living_room_tv
+      - light.lr_front_center
+      - light.lr_front_center
+      - light.lr_rear_center
+      - light.lr_rear_center
+
+
+  - platform: group
+  - platform: group
+    name: First Floor
+    name: First Floor
+    unique_id: "first_floor_lights"
+    unique_id: "first_floor_lights"
+    entities:
+    entities:
+      - light.kitchen_2
+      - light.kitchen_2
+      - light.dining_room
+      - light.dining_room
+      - light.living_room
+      - light.living_room
+
+
+  - platform: group
+  - platform: group
+    name: Alpha
+    name: Alpha
+    unique_id: "alpha_room"
+    unique_id: "alpha_room"
+    entities:
+    entities:
+      - light.alpha_door_left_light
+      - light.alpha_door_left_light
+      - light.alpha_door_right_light
+      - light.alpha_door_right_light
+      - light.alpha_window_left_light
+      - light.alpha_window_left_light
+      - light.alpha_window_right_light
+      - light.alpha_window_right_light
+
+
+  - platform: group
+  - platform: group
+    name: Master Bathroom
+    name: Master Bathroom
+    unique_id: "master_bathroom_lights"
+    unique_id: "master_bathroom_lights"
+    entities:
+    entities:
+      - light.master_bathroom_light_left_1
+      - light.master_bathroom_light_left_1
+      - light.master_bathroom_light_left_2
+      - light.master_bathroom_light_left_2
+      - light.master_bathroom_light_left_3
+      - light.master_bathroom_light_left_3
+      - light.master_bathroom_light_right_1
+      - light.master_bathroom_light_right_1
+      - light.master_bathroom_light_right_2
+      - light.master_bathroom_light_right_2
+      - light.master_bathroom_light_right_3
+      - light.master_bathroom_light_right_3
+      - light.master_bathroom_main_light
+      - light.master_bathroom_main_light
+
+
+  - platform: group
+  - platform: group
+    name: Master Shower
+    name: Master Shower
+    unique_id: "master_shower_lights"
+    unique_id: "master_shower_lights"
+    entities:
+    entities:
+      - light.master_bathroom_shower_left_light
+      - light.master_bathroom_shower_left_light
+      - light.master_bathroom_shower_right_light
+      - light.master_bathroom_shower_right_light
+
+
+  - platform: group
+  - platform: group
+    name: Basement Bathroom
+    name: Basement Bathroom
+    unique_id: "basement_bathroom_lights"
+    unique_id: "basement_bathroom_lights"
+    entities:
+    entities:
+      - light.basement_bathroom_main
+      - light.basement_bathroom_main
+      - light.basement_bathrom_sink_right
+      - light.basement_bathrom_sink_right
+      - light.basement_bathroom_sink_left
+      - light.basement_bathroom_sink_left
+
+
+  - platform: group
+  - platform: group
+    name: Beta
+    name: Beta
+    unique_id: "bedroom_beta_lights"
+    unique_id: "bedroom_beta_lights"
+    entities:
+    entities:
+      - light.beta_1
+      - light.beta_1
+      - light.beta_2
+      - light.beta_2
+      - light.beta_3
+      - light.beta_3
+
+
+  - platform: group
+  - platform: group
+    name: Main Bathroom
+    name: Main Bathroom
+    unique_id: "main_bathroom_lights"
+    unique_id: "main_bathroom_lights"
+    entities:
+    entities:
+      - light.main_bathroom_sink_left
+      - light.main_bathroom_sink_left
+      - light.main_bathroom_sink_middle
+      - light.main_bathroom_sink_middle
+      - light.main_bathroom_sink_right
+      - light.main_bathroom_sink_right
+      - light.main_bathroom_main_light
+      - light.main_bathroom_main_light
+
+
+  - platform: group
+  - platform: group
+    name: Master Bedroom
+    name: Master Bedroom
+    unique_id: "master_bedroom_lights"
+    unique_id: "master_bedroom_lights"
+    entities:
+    entities:
+      - light.master_light_1
+      - light.master_light_1
+      - light.master_light_2
+      - light.master_light_2
+      - light.master_light_3
+      - light.master_light_3
+      - light.master_light_4
+      - light.master_light_4
+
+
+  - platform: group
+  - platform: group
+    name: All Master Bedroom
+    name: All Master Bedroom
+    unique_id: "all_master_bedroom"
+    unique_id: "all_master_bedroom"
+    entities:
+    entities:
+      - light.master_light_1
+      - light.master_light_1
+      - light.master_light_2
+      - light.master_light_2
+      - light.master_light_3
+      - light.master_light_3
+      - light.master_light_4
+      - light.master_light_4
+      - light.underbedlight_2
+      - light.underbedlight_2
+      - light.master_bedroom_hexagon
+      - light.master_bedroom_hexagon
+      - light.master_bedroom_nightlight
+      - light.master_bedroom_nightlight
+
+
+  - platform: group
+  - platform: group
+    name: Master Hall
+    name: Master Hall
+    unique_id: "master_hall_lights"
+    unique_id: "master_hall_lights"
+    entities:
+    entities:
+      - light.master_hall_front
+      - light.master_hall_front
+      - light.master_hall_back
+      - light.master_hall_back
+
+
+  - platform: group
+  - platform: group
+    name: Ambient Light
+    name: Ambient Light
+    unique_id: ambient_light
+    unique_id: ambient_light
+    entities:
+    entities:
+      - light.entertainment_center_2
+      - light.entertainment_center_2
+      - light.kitchen_undercabinet_light
+      - light.kitchen_undercabinet_light
+
+
+  - platform: group
+  - platform: group
+    name: Hall
+    name: Hall
+    unique_id: "hall_lights"
+    unique_id: "hall_lights"
+    entities:
+    entities:
+      - light.hallway_1_light
+      - light.hallway_1_light
+      - light.hallway_2_light
+      - light.hallway_2_light
+      - light.hallway_3_light
+      - light.hallway_3_light
+      - light.hallway_4_light
+      - light.hallway_4_light
+
+
+  - platform: group
+  - platform: group
+    name: Office
+    name: Office
+    unique_id: "office_lights"
+    unique_id: "office_lights"
+    entities:
+    entities:
+      - light.office_door_left
+      - light.office_door_left
+      - light.office_door_right_light
+      - light.office_door_right_light
+      - light.office_window_left_light
+      - light.office_window_left_light
+      - light.office_window_right_light
+      - light.office_window_right_light
+
+
+  - platform: switch
+  - platform: switch
+    name: Master Closet
+    name: Master Closet
+    entity_id: switch.shelly_1_mastercloset_relay_0
+    entity_id: switch.shelly_1_mastercloset_relay_0
+
+
+input_select:
+input_select:
+  jay_stuart:
+  jay_stuart:
+    options:
+    options:
+      - Home
+      - Home
+      - Just Arrived
+      - Just Arrived
+      - Just Left
+      - Just Left
+      - Away
+      - Away
+      - Extended Away
+      - Extended Away
+
+
+binary_sensor:
+binary_sensor:
+  - platform: template
+  - platform: template
+    sensors:
+    sensors:
+      motion_in_rooms_DISABLED:
+      motion_in_rooms_DISABLED:
+        friendly_name: Motion in rooms
+        friendly_name: Motion in rooms
+        value_template: >-
+        value_template: >-
+          {{ is_state('binary_sensor.motion_livingroom_front', 'on')
+          {{ is_state('binary_sensor.motion_livingroom_front', 'on')
+             or is_state('binary_sensor.motion_livingroom_1', 'on')
+             or is_state('binary_sensor.motion_livingroom_1', 'on')
+             or is_state('binary_sensor.living_room_mm_sensor_presence_sensor', 'on')
+             or is_state('binary_sensor.living_room_mm_sensor_presence_sensor', 'on')
+             or is_state('binary_sensor.motion_dining_room','on')
+             or is_state('binary_sensor.motion_dining_room','on')
+             or is_state('binary_sensor.motion_kitchen', 'on') }}
+             or is_state('binary_sensor.motion_kitchen', 'on') }}
+        delay_off:
+        delay_off:
+          minutes: 10
+          minutes: 10
+
+
+  - platform: template
+  - platform: template
+    sensors:
+    sensors:
+      jay_in_bed:
+      jay_in_bed:
+        unique_id: jayinbed
+        unique_id: jayinbed
+        friendly_name: "Jay in Bed"
+        friendly_name: "Jay in Bed"
+        value_template: >
+        value_template: >
+          {{ states('sensor.bed')|float >= 70 }}
+          {{ states('sensor.bed')|float >= 70 }}
+      tracy_in_bed:
+      tracy_in_bed:
+        unique_id: tracyinbed
+        unique_id: tracyinbed
+        friendly_name: "Tracy in Bed"
+        friendly_name: "Tracy in Bed"
+        value_template: >
+        value_template: >
+          {{ states('sensor.bed')|float > 40
+          {{ states('sensor.bed')|float > 40
+            and (states('sensor.bed')|float < 60
+            and (states('sensor.bed')|float < 60
+               or states('sensor.bed')|float >= 100 )}}
+               or states('sensor.bed')|float >= 100 )}}
+
+
+  - platform: template
+  - platform: template
+    sensors:
+    sensors:
+      motion_in_office:
+      motion_in_office:
+        friendly_name: Motion in office
+        friendly_name: Motion in office
+        value_template: >-
+        value_template: >-
+          {{ is_state('binary_sensor.motion_office', 'on')
+          {{ is_state('binary_sensor.motion_office', 'on')
+             or is_state('binary_sensor.motion_office_2', 'on') 
+             or is_state('binary_sensor.motion_office_2', 'on') 
+             or is_state('binary_sensor.office_mm_presence', 'Detected')}}
+             or is_state('binary_sensor.office_mm_presence', 'Detected')}}
+        delay_off:
+        delay_off:
+          minutes: 1
+          minutes: 1
+
+
+  - platform: template
+  - platform: template
+    sensors:
+    sensors:
+      motion_in_master_bathroom:
+      motion_in_master_bathroom:
+        friendly_name: Motion in master bathroom
+        friendly_name: Motion in master bathroom
+        value_template: >-
+        value_template: >-
+          {{ is_state('binary_sensor.motion_master_shower', 'on')
+          {{ is_state('binary_sensor.motion_master_shower', 'on')
+             or is_state('binary_sensor.motion_master_bath_door', 'on')
+             or is_state('binary_sensor.motion_master_bath_door', 'on')
+             or is_state('binary_sensor.motion_master_bathroom', 'on') }}
+             or is_state('binary_sensor.motion_master_bathroom', 'on') }}
+  - platform: template
+    sensors:
+      living_room_manual_status:
+        friendly_name: "Living Room Manual Mode"
+        value_template: >-
+          {% if is_state('binary_sensor.living_room_physical_switch', 'on') %}
+            Physical Switch Override
+          {% elif is_state('input_boolean.living_room_manual_mode', 'on') %}
+            Aqara Manual Mode
+          {% else %}
+  - platform: template
+    sensors:
+      mbr_manual_status:
+        friendly_name: "Master Bedroom Manual Mode"
+        value_template: >-
+          {% if is_state('binary_sensor.shelly_switch_master_bedroom_input_0', 'on') %}
+            Physical Switch Override
+          {% elif is_state('input_boolean.mbr_manual_mode', 'on') %}
+            Aqara Manual Mode
+          {% else %}
+            Auto Mode
+          {% endif %}
+        icon_template: >-
+          {% if is_state('binary_sensor.shelly_switch_master_bedroom_input_0', 'on') %}
+            mdi:light-switch
+          {% elif is_state('input_boolean.mbr_manual_mode', 'on') %}
+            mdi:gesture-tap-button
+          {% else %}
+            mdi:motion-sensor
+          {% endif %}
+
+      office_manual_status:
+        friendly_name: "Office Manual Mode"
+        value_template: >-
+          {% if is_state('binary_sensor.shelly_2_5_office_input_0', 'on') %}
+            Physical Switch Override
+          {% elif is_state('input_boolean.office_manual_mode', 'on') %}
+            Aqara Manual Mode
+          {% else %}
+            Auto Mode
+          {% endif %}
+        icon_template: >-
+          {% if is_state('binary_sensor.shelly_2_5_office_input_0', 'on') %}
+            mdi:light-switch
+          {% elif is_state('input_boolean.office_manual_mode', 'on') %}
+            mdi:gesture-tap-button
+          {% else %}
+            mdi:motion-sensor
+          {% endif %}
+
+      alpha_manual_status:
+        friendly_name: "Alpha Bedroom Manual Mode"
+        value_template: >-
+          {% if is_state('binary_sensor.alpha_physical_switch', 'on') %}
+            Physical Switch Override
+          {% elif is_state('input_boolean.alpha_manual_mode', 'on') %}
+            Aqara Manual Mode
+          {% else %}
+            Auto Mode
+          {% endif %}
+        icon_template: >-
+          {% if is_state('binary_sensor.alpha_physical_switch', 'on') %}
+            mdi:light-switch
+          {% elif is_state('input_boolean.alpha_manual_mode', 'on') %}
+            mdi:gesture-tap-button
+          {% else %}
+            mdi:motion-sensor
+          {% endif %}
+
+      beta_manual_status:
+        friendly_name: "Beta Bedroom Manual Mode"
+        value_template: >-
+          {% if is_state('binary_sensor.beta_physical_switch', 'on') %}
+            Physical Switch Override
+          {% elif is_state('input_boolean.beta_manual_mode', 'on') %}
+            Aqara Manual Mode
+          {% else %}
+            Auto Mode
+          {% endif %}
+        icon_template: >-
+          {% if is_state('binary_sensor.beta_physical_switch', 'on') %}
+            mdi:light-switch
+          {% elif is_state('input_boolean.beta_manual_mode', 'on') %}
+            mdi:gesture-tap-button
+          {% else %}
+            mdi:motion-sensor
+          {% endif %}
+            Auto Mode
+          {% endif %}
+        icon_template: >-
+          {% if is_state('binary_sensor.living_room_physical_switch', 'on') %}
+            mdi:light-switch
+          {% elif is_state('input_boolean.living_room_manual_mode', 'on') %}
+            mdi:gesture-tap-button
+          {% else %}
+            mdi:motion-sensor
+          {% endif %}
+
+      dining_room_manual_status:
+        friendly_name: "Dining Room Manual Mode"
+        value_template: >-
+          {% if is_state('binary_sensor.dining_room_physical_switch', 'on') %}
+            Physical Switch Override
+          {% elif is_state('input_boolean.dining_room_manual_mode', 'on') %}
+            Aqara Manual Mode
+          {% else %}
+            Auto Mode
+          {% endif %}
+        icon_template: >-
+          {% if is_state('binary_sensor.dining_room_physical_switch', 'on') %}
+            mdi:light-switch
+          {% elif is_state('input_boolean.dining_room_manual_mode', 'on') %}
+            mdi:gesture-tap-button
+          {% else %}
+            mdi:motion-sensor
+          {% endif %}
+
+      kitchen_manual_status:
+        friendly_name: "Kitchen Manual Mode"
+        value_template: >-
+          {% if is_state('binary_sensor.kitchen_physical_switch', 'on') %}
+            Physical Switch Override
+          {% elif is_state('input_boolean.kitchen_manual_mode', 'on') %}
+            Aqara Manual Mode
+          {% else %}
+            Auto Mode
+          {% endif %}
+        icon_template: >-
+          {% if is_state('binary_sensor.kitchen_physical_switch', 'on') %}
+            mdi:light-switch
+          {% elif is_state('input_boolean.kitchen_manual_mode', 'on') %}
+            mdi:gesture-tap-button
+          {% else %}
+            mdi:motion-sensor
+          {% endif %}
+        delay_off:
+        delay_off:
+          minutes: 10
+          minutes: 10
+switch:
+  - platform: template
+    switches:
+      ring_live_stream:
+        value_template: "{{ is_state('sensor.ring_addon_state', 'started') }}"
+        turn_on:
+          service: hassio.addon_start
+          data:
+            addon: 44c60309_ringlivestream
+        turn_off:
+          service: hassio.addon_stop
+          data:
+            addon: 44c60309_ringlivestream
+
+recorder:
+  db_url: mysql://homeassistant:dcnsio4$#hd@core-mariadb/homeassistant?charset=utf8mb4
+  purge_keep_days: 75
+
+influxdb:
+  host: 192.168.10.168
+  port: 8086
+  database: homeassistant
+  username: ha-record
+  password: ha-record
+  max_retries: 3
+  default_measurement: state
+
+light:
+  - platform: template
+    lights:
+      tablet_backlight:
+        friendly_name: Tablet Backlight
+        value_template: '{{ states.sensor.livingroomtablet.attributes["screenOn"] }}'
+        level_template: '{{ states.sensor.livingroomtablet.attributes["screenBrightness"] }}'
+        turn_on:
+          service: rest_command.kiosk_command
+          data:
+            cmd: screenOn
+        turn_off:
+          service: rest_command.kiosk_command
+          data:
+            cmd: screenOff
+        set_level:
+          service: rest_command.kiosk_command
+          data_template:
+            cmd: setStringSetting
+            key: screenBrightness
+            value: "{{ brightness }}"
+
+  - platform: group
+    name: Dining Room
+    unique_id: "dining_room_lights"
+    entities:
+      - light.diningroom_1
+      - light.diningroom_2
+      - light.diningroom_3
+      - light.diningroom_4_1
+      - light.diningroom_4_2
+      - light.dining_room_stairs
+
+  - platform: group
+    name: Living Room
+    unique_id: "living_roon_lights"
+    entities:
+      - light.lr_front_left
+      - light.lr_front_center
+      - light.lr_front_right
+      - light.lr_rear_left
+      - light.lr_rear_center
+      - light.lr_rear_right
+
+  - platform: group
+    name: Kitchen
+    unique_id: "kitchen_lights"
+    entities:
+      - light.kitchen_back_left
+      - light.kitchen_back_right
+      - light.kitchen_middle_left
+      - light.kitchen_middle_right
+      - light.kitchen_front_left
+      - light.kitchen_front_right
+      - light.kitchen_island_dr_side
+      - light.kitchen_island_window_side
+
+  - platform: group
+    name: Kitchen Island
+    unique_id: "kitchen_island_lights"
+    entities:
+      - light.kitchen_island_dr_side
+      - light.kitchen_island_window_side
+
+  - platform: group
+    name: Day Time Lights
+    unique_id: "daytime_lights"
+    entities:
+      - light.kitchen_front_left
+      - light.kitchen_front_right
+      - light.diningroom_1
+      - light.diningroom_3
+      - light.living_room_tv
+      - light.lr_front_center
+      - light.lr_rear_center
+
+  - platform: group
+    name: First Floor
+    unique_id: "first_floor_lights"
+    entities:
+      - light.kitchen_2
+      - light.dining_room
+      - light.living_room
+
+  - platform: group
+    name: Alpha
+    unique_id: "alpha_room"
+    entities:
+      - light.alpha_door_left_light
+      - light.alpha_door_right_light
+      - light.alpha_window_left_light
+      - light.alpha_window_right_light
+
+  - platform: group
+    name: Master Bathroom
+    unique_id: "master_bathroom_lights"
+    entities:
+      - light.master_bathroom_light_left_1
+      - light.master_bathroom_light_left_2
+      - light.master_bathroom_light_left_3
+      - light.master_bathroom_light_right_1
+      - light.master_bathroom_light_right_2
+      - light.master_bathroom_light_right_3
+      - light.master_bathroom_main_light
+
+  - platform: group
+    name: Master Shower
+    unique_id: "master_shower_lights"
+    entities:
+      - light.master_bathroom_shower_left_light
+      - light.master_bathroom_shower_right_light
+
+  - platform: group
+    name: Basement Bathroom
+    unique_id: "basement_bathroom_lights"
+    entities:
+      - light.basement_bathroom_main
+      - light.basement_bathrom_sink_right
+      - light.basement_bathroom_sink_left
+
+  - platform: group
+    name: Beta
+    unique_id: "bedroom_beta_lights"
+    entities:
+      - light.beta_1
+      - light.beta_2
+      - light.beta_3
+
+  - platform: group
+    name: Main Bathroom
+    unique_id: "main_bathroom_lights"
+    entities:
+      - light.main_bathroom_sink_left
+      - light.main_bathroom_sink_middle
+      - light.main_bathroom_sink_right
+      - light.main_bathroom_main_light
+
+  - platform: group
+    name: Master Bedroom
+    unique_id: "master_bedroom_lights"
+    entities:
+      - light.master_light_1
+      - light.master_light_2
+      - light.master_light_3
+      - light.master_light_4
+
+  - platform: group
+    name: All Master Bedroom
+    unique_id: "all_master_bedroom"
+    entities:
+      - light.master_light_1
+      - light.master_light_2
+      - light.master_light_3
+      - light.master_light_4
+      - light.underbedlight_2
+      - light.master_bedroom_hexagon
+      - light.master_bedroom_nightlight
+
+  - platform: group
+    name: Master Hall
+    unique_id: "master_hall_lights"
+    entities:
+      - light.master_hall_front
+      - light.master_hall_back
+
+  - platform: group
+    name: Ambient Light
+    unique_id: ambient_light
+    entities:
+      - light.entertainment_center_2
+      - light.kitchen_undercabinet_light
+
+  - platform: group
+    name: Hall
+    unique_id: "hall_lights"
+    entities:
+      - light.hallway_1_light
+      - light.hallway_2_light
+      - light.hallway_3_light
+      - light.hallway_4_light
+
+  - platform: group
+    name: Office
+    unique_id: "office_lights"
+    entities:
+      - light.office_door_left
+      - light.office_door_right_light
+      - light.office_window_left_light
+      - light.office_window_right_light
+
+  - platform: switch
+    name: Master Closet
+    entity_id: switch.shelly_1_mastercloset_relay_0
+
+input_select:
+  jay_stuart:
+    options:
+      - Home
+      - Just Arrived
+      - Just Left
+      - Away
+      - Extended Away
+
+binary_sensor:
+  - platform: template
+    sensors:
+      motion_in_rooms_DISABLED:
+        friendly_name: Motion in rooms
+        value_template: >-
+          {{ is_state('binary_sensor.motion_livingroom_front', 'on')
+             or is_state('binary_sensor.motion_livingroom_1', 'on')
+             or is_state('binary_sensor.living_room_mm_sensor_presence_sensor', 'on')
+             or is_state('binary_sensor.motion_dining_room','on')
+             or is_state('binary_sensor.motion_kitchen', 'on') }}
+        delay_off:
+          minutes: 10
+
+  - platform: template
+    sensors:
+      jay_in_bed:
+        unique_id: jayinbed
+        friendly_name: "Jay in Bed"
+        value_template: >
+          {{ states('sensor.bed')|float >= 70 }}
+      tracy_in_bed:
+        unique_id: tracyinbed
+        friendly_name: "Tracy in Bed"
+        value_template: >
+          {{ states('sensor.bed')|float > 40
+            and (states('sensor.bed')|float < 60
+               or states('sensor.bed')|float >= 100 )}}
+
+  - platform: template
+    sensors:
+      motion_in_office:
+        friendly_name: Motion in office
+        value_template: >-
+          {{ is_state('binary_sensor.motion_office', 'on')
+             or is_state('binary_sensor.motion_office_2', 'on') 
+             or is_state('binary_sensor.office_mm_presence', 'Detected')}}
+        delay_off:
+          minutes: 1
+
+  - platform: template
+    sensors:
+      motion_in_master_bathroom:
+        friendly_name: Motion in master bathroom
+        value_template: >-
+          {{ is_state('binary_sensor.motion_master_shower', 'on')
+             or is_state('binary_sensor.motion_master_bath_door', 'on')
+             or is_state('binary_sensor.motion_master_bathroom', 'on') }}
+        delay_off:
+          minutes: 10
+
+# Athena LLM Conversation Override
+# Athena Template Conversation Agent
+# Athena Conversation Agent Integration
+athena_conversation:
+
+# Ollama as Default Conversation Agent
+# Added by Claude to fix intent recognition errors
+conversation:
+
+# Assist Pipeline Configuration
+assist_pipeline:
+  debug_recording_dir: /config/assist_pipeline
+
+# Input boolean to control conversation routing
+input_boolean:
+  use_ollama_for_all:
+    name: Use Ollama for All Conversations
+    initial: true
+    icon: mdi:robot-happy
+

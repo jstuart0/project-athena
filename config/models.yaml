@@ -1,0 +1,169 @@
+# Project Athena - AI Model Configuration
+# Defines all AI models used in the voice assistant system
+
+# Wake Word Detection Models
+wake_word_models:
+  jarvis:
+    engine: openWakeWord
+    model_file: "jarvis.tflite"
+    threshold: 0.5
+    description: "Quick commands and device control"
+    training_status: "needs_training"  # Custom model required
+    size_mb: ~50
+
+  athena:
+    engine: openWakeWord
+    model_file: "athena.tflite"
+    threshold: 0.5
+    description: "Complex reasoning and conversations"
+    training_status: "needs_training"  # Custom model required
+    size_mb: ~50
+
+# Speech-to-Text Models
+stt_models:
+  whisper_tiny_en:
+    engine: faster-whisper
+    model_name: "tiny.en"
+    size_mb: 73
+    language: "english"
+    performance: "2-3x real-time"
+    accuracy: "90-95%"
+    latency_ms: "500-800"
+    use_case: "primary_stt"
+    gpu_required: false
+
+  whisper_base_en:
+    engine: faster-whisper
+    model_name: "base.en"
+    size_mb: 290
+    language: "english"
+    performance: "1.5-2x real-time"
+    accuracy: "95-97%"
+    latency_ms: "800-1200"
+    use_case: "fallback_high_accuracy"
+    gpu_required: true
+
+# Text-to-Speech Models
+tts_models:
+  piper_default:
+    engine: piper
+    voice: "en_US-amy-medium"
+    quality: "medium"
+    speed: "5-10x real-time"
+    latency_ms: "200-400"
+    use_case: "primary_tts"
+    size_mb: ~20
+
+  piper_high_quality:
+    engine: piper
+    voice: "en_US-ryan-high"
+    quality: "high"
+    speed: "3-5x real-time"
+    latency_ms: "400-600"
+    use_case: "premium_voice"
+    size_mb: ~50
+
+# Large Language Models
+llm_models:
+  phi3_mini:
+    model_name: "microsoft/Phi-3-mini-4k-instruct"
+    size_gb: 3
+    context_length: 4096
+    inference_ms: "50-100"
+    use_case: "quick_commands"
+    description: "Simple device control, status queries, weather, time"
+    gpu_required: true
+    quantization: "fp16"
+
+  llama31_8b:
+    model_name: "meta-llama/Llama-3.1-8B-Instruct"
+    size_gb: 8
+    context_length: 8192
+    inference_ms: "200-500"
+    use_case: "complex_reasoning"
+    description: "Multi-step reasoning, context-aware responses, RAG integration"
+    gpu_required: true
+    quantization: "fp16"
+
+# Voice Activity Detection
+vad_models:
+  silero_vad:
+    engine: "silero"
+    model_file: "silero_vad.onnx"
+    size_mb: 2
+    latency_ms: "<50"
+    description: "Speech endpoint detection for faster processing"
+
+# Model Storage Configuration
+storage:
+  jetson_storage:
+    path: "/mnt/nvme/athena-models/"
+    capacity_gb: 1800
+    current_usage_gb: ~20  # Athena Lite models
+    description: "NVMe storage on Jetson devices"
+
+  synology_storage:
+    path: "/volume1/athena/models/"
+    nfs_mount: "192.168.10.164:/volume1/athena/models"
+    capacity_gb: 100  # Allocated portion
+    description: "Shared model storage for Proxmox services"
+
+# Model Deployment Strategy
+deployment:
+  athena_lite:
+    location: "jetson_storage"
+    models:
+      - "jarvis"
+      - "athena"
+      - "whisper_tiny_en"
+      - "piper_default"
+      - "silero_vad"
+    total_size_mb: ~195
+
+  phase1_proxmox:
+    location: "synology_storage"
+    models:
+      - "whisper_tiny_en"
+      - "whisper_base_en"
+      - "piper_default"
+      - "piper_high_quality"
+      - "phi3_mini"
+    total_size_gb: ~4
+
+  phase2_full:
+    location: "synology_storage"
+    models:
+      - "whisper_base_en"
+      - "piper_high_quality"
+      - "phi3_mini"
+      - "llama31_8b"
+    total_size_gb: ~12
+
+# Model Performance Targets
+performance_targets:
+  wake_word_detection:
+    latency_ms: "<200"
+    false_positive_rate: "<1%"
+    true_positive_rate: ">95%"
+
+  speech_to_text:
+    latency_ms: "<800"
+    accuracy: ">90%"
+    real_time_factor: ">2x"
+
+  text_to_speech:
+    latency_ms: "<400"
+    quality: "natural_sounding"
+    real_time_factor: ">5x"
+
+  llm_inference:
+    quick_commands_ms: "<100"
+    complex_reasoning_ms: "<500"
+    context_retention: "conversation_level"
+
+# Model Update and Management
+management:
+  auto_update: false  # Manual updates for stability
+  backup_strategy: "synology_backup"
+  version_control: "git_lfs"  # For model versioning
+  monitoring: "prometheus_metrics"

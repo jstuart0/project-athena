@@ -1,0 +1,133 @@
+# Project Athena - Zone Configuration
+# Defines all voice assistant zones and their properties
+
+zones:
+  office:
+    wyoming_device_id: jarvis-office
+    wyoming_device_ip: 192.168.10.50
+    ha_area: office
+    occupancy_sensor: binary_sensor.office_occupancy
+    location_method: hybrid  # audio + occupancy
+    priority: high  # Phase 1 test zone
+    switch_port: 12  # USW Pro HD 24 PoE Port 12
+    description: "Primary testing location, high-traffic zone"
+
+  kitchen:
+    wyoming_device_id: jarvis-kitchen
+    wyoming_device_ip: 192.168.10.51
+    ha_area: kitchen
+    occupancy_sensor: binary_sensor.kitchen_occupancy
+    location_method: hybrid
+    priority: high  # Phase 1 test zone
+    switch_port: 13  # USW Pro HD 24 PoE Port 13
+    description: "Cooking assistance, noisy environment test"
+
+  master_bedroom:
+    wyoming_device_id: jarvis-master-bedroom
+    wyoming_device_ip: 192.168.10.55
+    ha_area: master_bedroom
+    occupancy_sensor: binary_sensor.master_bedroom_occupancy
+    location_method: hybrid
+    priority: high  # Phase 1 test zone
+    switch_port: 18  # USW Pro HD 24 PoE Port 18
+    description: "Sleep routines, climate control, quiet environment"
+
+  living_room:
+    wyoming_device_id: jarvis-living-room
+    wyoming_device_ip: 192.168.10.52
+    ha_area: living_room
+    occupancy_sensor: binary_sensor.living_room_occupancy
+    location_method: hybrid
+    priority: medium  # Phase 2
+    switch_port: 15  # USW Pro HD 24 PoE Port 15
+    description: "Entertainment control, general queries"
+
+  master_bath:
+    wyoming_device_id: jarvis-master-bath
+    wyoming_device_ip: 192.168.10.53
+    ha_area: master_bath
+    occupancy_sensor: binary_sensor.master_bath_occupancy
+    location_method: hybrid
+    priority: medium  # Phase 2
+    switch_port: 16  # USW Pro HD 24 PoE Port 16
+    description: "Morning routines, music"
+
+  main_bath:
+    wyoming_device_id: jarvis-main-bath
+    wyoming_device_ip: 192.168.10.54
+    ha_area: main_bath
+    occupancy_sensor: binary_sensor.main_bath_occupancy
+    location_method: hybrid
+    priority: low  # Phase 2
+    switch_port: 17  # USW Pro HD 24 PoE Port 17
+    description: "Guest use, basic commands"
+
+  alpha:
+    wyoming_device_id: jarvis-alpha
+    wyoming_device_ip: 192.168.10.56
+    ha_area: alpha
+    occupancy_sensor: binary_sensor.alpha_occupancy
+    location_method: hybrid
+    priority: low  # Phase 2
+    switch_port: 19  # USW Pro HD 24 PoE Port 19 (reuse after HA migration)
+    description: "Guest Bedroom 1 - guest-friendly commands"
+
+  beta:
+    wyoming_device_id: jarvis-beta
+    wyoming_device_ip: 192.168.10.57
+    ha_area: beta
+    occupancy_sensor: binary_sensor.beta_occupancy
+    location_method: hybrid
+    priority: low  # Phase 2
+    switch_port: 24  # USW Pro HD 24 PoE Port 24
+    description: "Guest Bedroom 2 - guest-friendly commands"
+
+  basement_bath:
+    wyoming_device_id: jarvis-basement-bath
+    wyoming_device_ip: 192.168.10.58
+    ha_area: basement_bath
+    occupancy_sensor: binary_sensor.basement_bath_occupancy
+    location_method: hybrid
+    priority: low  # Phase 2
+    switch_port: 25  # USW Pro HD 24 PoE Port 25
+    description: "Basic commands"
+
+  dining_room:
+    wyoming_device_id: jarvis-dining-room
+    wyoming_device_ip: 192.168.10.59
+    ha_area: dining_room
+    occupancy_sensor: null  # NO OCCUPANCY SENSOR
+    location_method: audio_only
+    priority: low  # Phase 2
+    switch_port: 26  # USW Pro HD 24 PoE Port 26
+    description: "Meal-time assistance, music - audio only detection"
+
+# Network Configuration
+network:
+  switch: "USW Pro HD 24 PoE (192.168.10.99)"
+  ip_range: "192.168.10.50-59"
+  power: "PoE++ capable"
+
+# Phase Deployment Plan
+deployment_phases:
+  phase1:
+    zones: ["office", "kitchen", "master_bedroom"]
+    description: "Core voice pipeline testing"
+    device_count: 3
+
+  phase2:
+    zones: ["living_room", "master_bath", "main_bath", "alpha", "beta", "basement_bath", "dining_room"]
+    description: "Full home deployment"
+    device_count: 7
+
+# Location Resolution Configuration
+location_resolution:
+  hybrid_method:
+    description: "Use both audio signal strength and occupancy sensors"
+    fallback: "strongest_audio_signal"
+    timeout_ms: 500
+
+  audio_only_method:
+    description: "For zones without occupancy sensors (dining_room)"
+    primary: "strongest_audio_signal"
+    confidence_threshold: 0.7

@@ -1,0 +1,272 @@
+# =======================
+# TABLET DASHBOARD AUTOMATIONS
+# =======================
+
+# Ring Doorbell Automation
+- id: ring_doorbell_show_camera
+  alias: "Ring Doorbell - Show Camera on Front Door Tablet"
+  description: "Automatically display Ring camera when Clinton front doorbell is pressed"
+  trigger:
+    # Clinton front doorbell pressed (binary sensor)
+    - platform: state
+      entity_id: binary_sensor.entrance_door_ding
+      to: "on"
+  condition:
+    # Only trigger if wall tablet is available
+    - condition: template
+      value_template: "{{ states('media_player.wall_tablet') != 'unavailable' }}"
+  action:
+    - service: script.show_ring_camera
+  mode: single
+
+# Alternative Ring Doorbell Triggers (for other doors)
+- id: ring_doorbell_show_camera_alt
+  alias: "Ring Doorbell - Show Camera Alternative Doors"
+  description: "Automatically display Ring camera when other Ring doorbells are pressed"
+  trigger:
+    # Any other Ring doorbell binary sensors
+    - platform: state
+      entity_id: binary_sensor.front_door_ding_3
+      to: "on"
+    - platform: state
+      entity_id: binary_sensor.front_door_ding_5
+      to: "on"
+  condition:
+    # Only trigger if wall tablet is available
+    - condition: template
+      value_template: "{{ states('media_player.wall_tablet') != 'unavailable' }}"
+  action:
+    - service: script.show_ring_camera_alt
+  mode: single
+
+# =======================
+# EXISTING AUTOMATIONS
+# =======================
+
+- id: shellies_announce
+  alias: Shellies Announce
+  trigger:
+  - platform: homeassistant
+    event: start
+  - platform: time_pattern
+    hours: /1
+  action:
+    service: mqtt.publish
+    data:
+      topic: shellies/command
+      payload: announce
+- id: shellies_discovery
+  alias: Shellies Discovery
+  mode: queued
+  max: 999
+  trigger:
+    platform: mqtt
+    topic: shellies/announce
+  action:
+    service: python_script.shellies_discovery
+    data:
+      id: '{{ trigger.payload_json.id }}'
+      mac: '{{ trigger.payload_json.mac }}'
+      fw_ver: '{{ trigger.payload_json.fw_ver }}'
+      model: '{{ trigger.payload_json.model }}'
+      mode: '{{ trigger.payload_json.mode | default }}'
+      host: '{{ trigger.payload_json.ip }}'
+      qos: 2
+- alias: Honeywell Lyric Fix
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  - platform: state
+    entity_id: climate.thermostat
+    to: unavailable
+  condition:
+  - condition: state
+    entity_id: climate.thermostat
+    state: unavailable
+  action:
+  - service: homeassistant.update_entity
+    entity_id: climate.thermostat
+  id: fff4e1fb282f41aca659d6b8341c88e4
+- alias: Run Vacuum Zone
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - service: vacuum.stop
+    target:
+      entity_id: vacuum.roborock_vacuum_a15
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 3
+      milliseconds: 0
+  - service: script.turn_on
+    data_template:
+      entity_id: '{% if states.input_select.vacuum_rooms.state == "Kitchen" %} script.vacuum_kitchen  {%
+        elif states.input_select.vacuum_rooms.state == "Dining Room" %} script.vacuum_diningroom  {%
+        elif states.input_select.vacuum_rooms.state == "Living Room" %} script.vacuum_livingroom
+        {% elif states.input_select.vacuum_rooms.state == "(Trash Can)" %} script.vacuum_trash_can
+        {% endif %}
+
+        '
+      mode: single
+  id: 229d7dc236684df189e1f2dee1bca567
+- id: '1643173196687'
+  alias: You Got Mail
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.vibration_mail_vibration
+  condition: []
+  action:
+  - service: notify.mobile_app_jay_iphone_14_pro_max
+    data:
+      message: You Got Mail
+  - service: notify.mobile_app_jay
+    data:
+      message: Youve Got Mail
+  mode: single
+- id: '1654199135284'
+  alias: Turn Living Room Light Up
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: 076b7767fea24fa68a4e636d9a84b457
+    type: action
+    subtype: rotate_right
+    discovery_id: 0x003c84fffeb6e805 action_rotate_right
+  condition: []
+  action:
+  - service: light.turn_on
+    data:
+      brightness_step_pct: 10
+    target:
+      entity_id: light.living_room
+  mode: single
+- id: '1654199282816'
+  alias: Turn Living Room Light Down
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: 076b7767fea24fa68a4e636d9a84b457
+    type: action
+    subtype: rotate_left
+    discovery_id: 0x003c84fffeb6e805 action_rotate_left
+  condition: []
+  action:
+  - service: light.turn_on
+    data:
+      brightness_step_pct: -10
+    target:
+      entity_id: light.living_room
+  mode: single
+- id: '1654622603216'
+  alias: Office Magic Cube Zigbee2MQTT - 2022-05-05
+  description: ''
+  use_blueprint:
+    path: SirGoodenough/Zigbee2MQTT - Xiaomi Cube Controller.yaml
+    input:
+      remote: sensor.office_cube_action
+      doubletap_face_0:
+      - service: light.toggle
+        data:
+          transition: 10
+        target:
+          area_id: office
+          entity_id: light.office
+      rotate_cw_face_0:
+      - service: light.turn_on
+        data:
+          brightness_step_pct: 15
+        target:
+          entity_id: light.office
+      rotate_ccw_face_0:
+      - service: light.turn_on
+        data:
+          brightness_step_pct: -15
+        target:
+          entity_id: light.office
+- id: tare
+  alias: Remote tare
+  trigger:
+  - at: '12:00'
+    platform: time
+  condition:
+  - below: '1'
+    condition: numeric_state
+    entity_id: sensor.num_in_master_bed
+  action:
+  - data:
+      payload: 'on'
+      topic: home/bedroom/bed/tare
+    service: mqtt.publish
+- id: '1661891162915'
+  alias: Toggle Upstairs Hallway Light
+  description: ''
+  trigger:
+  - device_id: 191d978d0022a52dce4e5c0fde045d9d
+    domain: hue
+    platform: device
+    type: initial_press
+    subtype: 1
+    unique_id: a9962580-eb81-4c32-aba8-cf56d8018255
+  - device_id: 142b34c34271327eba917d7f2cb41da4
+    domain: hue
+    platform: device
+    type: initial_press
+    subtype: 1
+    unique_id: fc0cbf0b-35f9-472c-97e4-1b7e969c3198
+  - device_id: 22700ac235e1cf379cef26da6fe808a3
+    domain: hue
+    platform: device
+    type: initial_press
+    subtype: 1
+    unique_id: 690052e9-eb3b-4a2e-973c-822c7e66f1af
+  condition: []
+  action:
+  - service: light.toggle
+    data: {}
+    target:
+      entity_id: light.hall
+  mode: single
+- id: '1661922919909'
+  alias: Zigbee2MQTT Lutron Aurora Dimmer Control
+  description: ''
+  use_blueprint:
+    path: drinfernoo/zigbee2mqtt-lutron-aurora-dimmer-control.yaml
+    input:
+      aurora: sensor.hallway_2_action
+      light:
+        entity_id: light.hall
+- id: '1661923086027'
+  alias: Zigbee2MQTT Lutron Aurora Dimmer Control
+  description: ''
+  use_blueprint:
+    path: drinfernoo/zigbee2mqtt-lutron-aurora-dimmer-control.yaml
+    input:
+      aurora: sensor.hallway_2_brightness
+      light:
+        entity_id: light.hall
+
+# Ollama Conversation Router
+# Routes all conversation to Ollama to bypass intent recognition
+- id: 'ollama_conversation_router_1730794800'
+  alias: Route All Conversations to Ollama
+  description: 'Bypasses default intent recognition by routing to Ollama'
+  trigger:
+  - platform: event
+    event_type: conversation_started
+  condition:
+  - condition: state
+    entity_id: input_boolean.use_ollama_for_all
+    state: 'on'
+  action:
+  - service: conversation.process
+    data:
+      agent_id: conversation.ollama_conversation
+      text: '{{ trigger.event.data.text if trigger.event.data.text is defined else "" }}'
+  mode: parallel
+  max: 10
