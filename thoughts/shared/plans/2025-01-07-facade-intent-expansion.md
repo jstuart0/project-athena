@@ -1834,8 +1834,8 @@ No new dependencies needed (requests already included).
 ```bash
 # Phase 2 APIs (get from thor cluster)
 FLIGHTAWARE_API_KEY=<kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.flightaware-api-key}' | base64 -d>
-EVENTBRITE_API_KEY=<get_from_eventbrite.com>
-TICKETMASTER_API_KEY=<get_from_ticketmaster.com>
+EVENTBRITE_API_KEY=<kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.eventbrite-api-key}' | base64 -d>
+TICKETMASTER_API_KEY=<kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.ticketmaster-api-key}' | base64 -d>
 ```
 
 ### Success Criteria

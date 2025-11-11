@@ -439,8 +439,9 @@ OPENWEATHER_API_KEY=$(kubectl -n automation get secret project-athena-credential
 # Location
 GOOGLE_PLACES_API_KEY=<from-jetson>
 
-# Events
-TICKETMASTER_API_KEY=<from-jetson>
+# Events (stored in thor cluster)
+TICKETMASTER_API_KEY=$(kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.ticketmaster-api-key}' | base64 -d)
+TICKETMASTER_CONSUMER_SECRET=$(kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.ticketmaster-consumer-secret}' | base64 -d)
 
 # News
 NEWSAPI_KEY=<from-jetson>
