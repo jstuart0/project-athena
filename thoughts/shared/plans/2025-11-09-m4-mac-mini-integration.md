@@ -43,7 +43,7 @@ This plan fully integrates your M4 Mac Mini into Project Athena, replacing Jetso
               ┌───────────────────────┐
               │  Orchestration Hub    │
               │  (Proxmox VM)         │
-              │  192.168.10.20        │
+              │  192.168.10.167        │
               │  2 vCPU, 4GB RAM      │
               └───────────┬───────────┘
                           ↓
@@ -153,7 +153,7 @@ TOTAL: ~1.3 seconds (vs 2.5s original plan)
 **PROJECT ATHENA:**
 ```
 192.168.10.168   - ha-primary (Home Assistant VM, Node 3)
-192.168.10.20    - athena-orchestration (Proxmox VM, Node 1)
+192.168.10.167    - athena-orchestration (Proxmox VM, Node 1)
 192.168.10.27    - athena-monitoring (Proxmox VM, Node 3)
 192.168.10.15    - jetson-wakeword (Jetson Nano Super #1)
 192.168.10.17    - mac-mini-athena (M4 Mac Mini, 16GB)
@@ -360,7 +360,7 @@ running on M4 Mac Mini with sub-1.5s response times.
 ## Architecture
 - Wake Word: Jetson Nano Super (192.168.10.15)
 - Inference: M4 Mac Mini 16GB (192.168.10.17)
-- Orchestration: Proxmox VM (192.168.10.20)
+- Orchestration: Proxmox VM (192.168.10.167)
 - Home Control: Home Assistant (192.168.10.168)
 
 ## Documentation
@@ -726,7 +726,7 @@ import json
 import time
 
 # Configuration
-ORCHESTRATION_HUB = "ws://192.168.10.20:8080/wakeword"
+ORCHESTRATION_HUB = "ws://192.168.10.167:8080/wakeword"
 AUDIO_FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
@@ -937,7 +937,7 @@ qm set 200 --serial0 socket --vga serial0
 qm set 200 --agent enabled=1
 
 # Configure cloud-init
-qm set 200 --ipconfig0 ip=192.168.10.20/24,gw=192.168.10.1
+qm set 200 --ipconfig0 ip=192.168.10.167/24,gw=192.168.10.1
 qm set 200 --nameserver 192.168.10.1
 qm set 200 --ciuser athena
 qm set 200 --sshkeys ~/.ssh/authorized_keys
@@ -952,14 +952,14 @@ qm start 200
 sleep 60
 
 # Verify connectivity
-ping -c 3 192.168.10.20
-ssh athena@192.168.10.20 "hostname"
+ping -c 3 192.168.10.167
+ssh athena@192.168.10.167 "hostname"
 ```
 
 **Validation:**
 - ☐ VM appears in Proxmox web interface
-- ☐ IP 192.168.10.20 responds to ping
-- ☐ Can SSH to 192.168.10.20
+- ☐ IP 192.168.10.167 responds to ping
+- ☐ Can SSH to 192.168.10.167
 - ☐ VM shows in Proxmox node 1
 
 #### 4.2 - System Configuration
@@ -968,7 +968,7 @@ ssh athena@192.168.10.20 "hostname"
 
 ```bash
 # SSH to orchestration hub
-ssh athena@192.168.10.20
+ssh athena@192.168.10.167
 
 # Update system
 sudo apt update && sudo apt upgrade -y

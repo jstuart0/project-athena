@@ -21,7 +21,7 @@
 **On Mac Studio:**
 ```bash
 # Open System Settings → Network → Wi-Fi/Ethernet → Details → TCP/IP
-# Set to Manual, assign: 192.168.10.20
+# Set to Manual, assign: 192.168.10.167
 # Subnet: 255.255.255.0
 # Router: 192.168.10.1 (your gateway)
 # DNS: 192.168.10.1 or 8.8.8.8
@@ -35,7 +35,7 @@
 **Verify connectivity:**
 ```bash
 # From your laptop
-ping 192.168.10.20
+ping 192.168.10.167
 ping 192.168.10.181
 
 # From Mac Studio
@@ -79,7 +79,7 @@ ping 192.168.10.168  # Should reach Home Assistant
 
 ### Task 1: Environment Setup (30 minutes)
 
-**On Mac Studio @ 192.168.10.20:**
+**On Mac Studio @ 192.168.10.167:**
 
 ```bash
 # 1. Install Homebrew (if not already installed)
@@ -319,7 +319,7 @@ python scripts/init_qdrant.py
 
 By end of today, you should have:
 
-- [x] **Network:** Mac Studio @ 192.168.10.20, Mac mini @ 192.168.10.181
+- [x] **Network:** Mac Studio @ 192.168.10.167, Mac mini @ 192.168.10.181
 - [x] **Docker:** Running on both Macs
 - [x] **Ollama:** Models downloaded on Mac Studio (`ollama list` shows phi3 and llama3.1)
 - [x] **Mac mini services:** Qdrant + Redis running and accessible

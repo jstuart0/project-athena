@@ -54,9 +54,9 @@ Plan: Scale to Wyoming devices + Proxmox services
 │       STT: Wyoming Whisper → Agent: OpenAI Conversation → Piper │
 │                              ↓                                   │
 │                       Points to gateway @                       │
-│                       192.168.10.20:8000                        │
+│                       192.168.10.167:8000                        │
 ├─────────────────────────────────────────────────────────────────┤
-│              Mac Studio M4/64GB @ 192.168.10.20                 │
+│              Mac Studio M4/64GB @ 192.168.10.167                 │
 │  ├─> OpenAI-compatible Gateway (LiteLLM/proxy)                 │
 │  ├─> LangGraph Orchestrator                                    │
 │  │    ├─> Classifier (control vs info vs complex)              │
@@ -180,7 +180,7 @@ Plan: Scale to Wyoming devices + Proxmox services
 
 ### New IPs (Active):
 - **192.168.10.168** - Home Assistant (Proxmox VM) ✅ **SAME IP**
-- **192.168.10.20** - Mac Studio M4/64GB (gateway, orchestrator, models)
+- **192.168.10.167** - Mac Studio M4/64GB (gateway, orchestrator, models)
 - **192.168.10.181** - Mac mini M4/16GB (vector DB, cache, monitoring)
 - **192.168.10.50-59** - HA Voice preview devices (Wyoming satellites)
 - Existing Prometheus/Grafana infrastructure (no new IPs)
@@ -269,7 +269,7 @@ project-athena/
 
 ### Phase 1: Core Services (Mac Studio + Mac mini)
 
-**Mac Studio (192.168.10.20):**
+**Mac Studio (192.168.10.167):**
 - OpenAI-compatible gateway (LiteLLM/proxy)
 - LangGraph orchestrator
 - Local models (Ollama/vLLM: small, medium, large)
@@ -466,7 +466,7 @@ All sources have configurable providers, TTLs, and freshness labels:
 
 **Network:**
 - HA IP (192.168.10.168): Keep same ✅
-- Gateway IP (192.168.10.20): New allocation for Mac Studio ✅
+- Gateway IP (192.168.10.167): New allocation for Mac Studio ✅
 - Vector DB IP (192.168.10.181): New allocation for Mac mini ✅
 - Satellite IPs (192.168.10.50-59): New range ✅
 

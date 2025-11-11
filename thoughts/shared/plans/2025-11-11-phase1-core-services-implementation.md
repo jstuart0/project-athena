@@ -113,7 +113,7 @@ This plan provides **detailed implementation steps** for Phase 1 of the new Proj
 
 ### Phase 1 Complete When:
 
-**Mac Studio (192.168.10.20) Running:**
+**Mac Studio (192.168.10.167) Running:**
 ```
 apps/
   gateway/           → OpenAI-compatible API (port 8000)
@@ -139,14 +139,14 @@ services/
 - ✅ Faster-Whisper add-on (Wyoming STT)
 - ✅ Piper TTS add-on (Wyoming TTS)
 - ✅ Assist Pipeline 1: **CONTROL** (HA native agent)
-- ✅ Assist Pipeline 2: **KNOWLEDGE** (OpenAI Conversation → 192.168.10.20:8000)
+- ✅ Assist Pipeline 2: **KNOWLEDGE** (OpenAI Conversation → 192.168.10.167:8000)
 
 **End-to-End Voice Flow Working:**
 1. User says "Jarvis, what's the weather in Baltimore?"
 2. HA Voice device captures audio
 3. Wyoming Whisper transcribes → "what's the weather in Baltimore?"
 4. HA routes to KNOWLEDGE pipeline
-5. OpenAI Conversation calls Mac Studio gateway (192.168.10.20:8000)
+5. OpenAI Conversation calls Mac Studio gateway (192.168.10.167:8000)
 6. LangGraph orchestrator:
    - Classifies as "info/weather"
    - Routes to rag-weather service
@@ -158,8 +158,8 @@ services/
 
 ### Success Criteria (Automated):
 
-- [ ] `curl http://192.168.10.20:8000/v1/chat/completions` returns valid OpenAI-compatible response
-- [ ] `curl http://192.168.10.20:8001/health` returns healthy status
+- [ ] `curl http://192.168.10.167:8000/v1/chat/completions` returns valid OpenAI-compatible response
+- [ ] `curl http://192.168.10.167:8001/health` returns healthy status
 - [ ] `curl http://192.168.10.181:6333/healthz` returns Qdrant healthy
 - [ ] `redis-cli -h 192.168.10.181 PING` returns PONG
 - [ ] HA Assist Pipeline test returns answer (HA UI → Settings → Voice Assistants → Test Pipeline)
@@ -1157,7 +1157,7 @@ wake_word: "jarvis"
 
 # Configuration:
 api_key: "dummy-key"  # LiteLLM doesn't validate
-base_url: "http://192.168.10.20:8000/v1"
+base_url: "http://192.168.10.167:8000/v1"
 model: "athena-medium"
 
 # Then create pipeline

@@ -135,7 +135,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with Pr
 ### Key Athena IPs
 
 **Mac Studio/mini (Phase 1 - NEW):**
-- 192.168.10.20 - Mac Studio M4 64GB (Gateway, Orchestrator, LLMs, RAG services)
+- 192.168.10.167 - Mac Studio M4 64GB (Gateway, Orchestrator, LLMs, RAG services)
 - 192.168.10.181 - Mac mini M4 16GB (Qdrant vector DB, Redis cache)
 
 **Jetson Devices:**
@@ -185,14 +185,28 @@ kubectl -n automation get secret home-assistant-credentials -o jsonpath='{.data.
 # Output: https://192.168.10.168:8123
 ```
 
-### Jetson Access
+### Mac Studio/mini Access (Phase 1 - NEW)
+
+**Mac Studio M4 (64GB):** jstuart@192.168.10.167
+- **SSH Access:** `ssh jstuart@192.168.10.167` (passwordless configured ✅)
+- **Hostname:** Jays-Mac-Studio.local
+- **Services:** Gateway (8000), Orchestrator (8001), RAG (8010-8012), Ollama (11434)
+- **Models:** phi3:mini-q8, llama3.1:8b-q4
+- **Project Location:** `/Users/jaystuart/dev/project-athena/`
+
+**Mac mini M4 (16GB):** 192.168.10.181
+- **Services:** Qdrant (6333), Redis (6379)
+- **Docker:** docker-compose deployment
+- **Storage:** Persistent volumes for vectors and cache
+
+### Jetson Access (Archived)
 
 **Primary Device:** jetson-01 (192.168.10.62)
 - **SSH Access:** `ssh jstuart@192.168.10.62` (passwordless access configured)
 - **Project Location:** `/mnt/nvme/athena-lite/`
 - **Storage:** 1.8TB NVMe for AI models and data
 - **Models:** Jarvis + Athena wake words, Whisper tiny.en (73MB)
-- **Status:** Athena Lite implementation ready for testing
+- **Status:** Athena Lite proof-of-concept (archived implementation)
 
 ### Infrastructure Credentials
 
@@ -338,7 +352,31 @@ project-athena/
 
 ## Common Operations
 
-### Test Athena Lite
+### Access Mac Studio/mini (Phase 1)
+
+```bash
+# SSH to Mac Studio (passwordless)
+ssh jstuart@192.168.10.167
+
+# Check services on Mac Studio
+ssh jstuart@192.168.10.167 "docker ps"
+ssh jstuart@192.168.10.167 "ollama list"
+
+# Check Qdrant on Mac mini
+curl http://192.168.10.181:6333/healthz
+
+# Check Redis on Mac mini
+redis-cli -h 192.168.10.181 PING
+
+# Deploy Mac mini services (from Mac Studio)
+scp deployment/mac-mini/docker-compose.yml jstuart@192.168.10.181:~/athena/
+ssh jstuart@192.168.10.181 "cd ~/athena && docker compose up -d"
+
+# Verify Day 1 setup
+bash scripts/verify_day1.sh
+```
+
+### Test Athena Lite (Archived)
 
 ```bash
 # Check if Jetson is accessible

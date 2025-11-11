@@ -24,7 +24,7 @@ Everything is prepared and ready for immediate implementation:
 - **All configuration files ready** - Just fill in your values
 
 ### ⏳ What You Need to Do
-1. Assign static IPs (192.168.10.20 for Mac Studio, .29 for Mac mini)
+1. Assign static IPs (192.168.10.167 for Mac Studio, .29 for Mac mini)
 2. Get API keys (at least OpenWeatherMap today)
 3. Follow Day 1 guide (2-3 hours)
 
@@ -218,7 +218,7 @@ open scripts/README.md
 Use this checklist to track your Day 1 progress:
 
 ### Network (15 min)
-- [ ] Assign Mac Studio static IP: 192.168.10.20
+- [ ] Assign Mac Studio static IP: 192.168.10.167
 - [ ] Assign Mac mini static IP: 192.168.10.181
 - [ ] Verify connectivity: `ping 192.168.10.181`
 - [ ] Verify HA connectivity: `ping 192.168.10.168`
@@ -435,7 +435,7 @@ You're ready to start! Here's your immediate next action:
 open docs/DAY_1_QUICK_START.md
 
 # 2. Start with network configuration
-# Assign Mac Studio: 192.168.10.20
+# Assign Mac Studio: 192.168.10.167
 # Assign Mac mini: 192.168.10.181
 
 # 3. Follow the guide step-by-step

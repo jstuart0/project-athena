@@ -14,7 +14,7 @@ Updated all project documentation to reflect the correct Mac mini IP address (19
 ### Project Athena Hardware
 
 **Mac Studio M4 (64GB RAM):**
-- **IP:** 192.168.10.20
+- **IP:** 192.168.10.167
 - **Role:** Primary compute for Project Athena
 - **Services:**
   - LiteLLM Gateway (port 8000)
@@ -103,7 +103,7 @@ Updated all project documentation to reflect the correct Mac mini IP address (19
 1. **Added Project Athena section** to Key Infrastructure IPs:
    ```
    **Project Athena (Mac Studio/mini):**
-   - 192.168.10.20 - Mac Studio M4 64GB (Gateway, Orchestrator, LLMs, RAG)
+   - 192.168.10.167 - Mac Studio M4 64GB (Gateway, Orchestrator, LLMs, RAG)
    - 192.168.10.181 - Mac mini M4 16GB (Qdrant vector DB, Redis cache)
    ```
 
@@ -180,7 +180,7 @@ redis-cli -h 192.168.10.181 PING
 
 All project CLAUDE.md files now consistently reference:
 
-1. **Mac Studio:** 192.168.10.20 (Project Athena primary compute)
+1. **Mac Studio:** 192.168.10.167 (Project Athena primary compute)
 2. **Mac mini:** 192.168.10.181 (Project Athena databases)
 3. **Home Assistant:** 192.168.10.168 (Smart home hub)
 4. **Thor Cluster:** 192.168.10.222 (Kubernetes API)
@@ -196,7 +196,7 @@ Now that IP addresses are updated, you can proceed with Day 1 setup:
 1. **Network Setup (15 min)**
    ```bash
    # Assign static IPs (if not already done)
-   # Mac Studio: 192.168.10.20
+   # Mac Studio: 192.168.10.167
    # Mac mini: 192.168.10.181
 
    # Verify connectivity

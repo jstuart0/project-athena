@@ -81,7 +81,7 @@ This plan migrates Project Athena from proof-of-concept (Athena Lite on Jetson) 
               ┌───────────────────────┐
               │  Orchestration Hub    │
               │  (Proxmox VM, Node 1) │
-              │  192.168.10.20        │
+              │  192.168.10.167        │
               │  2 vCPU, 4GB RAM      │
               │  • Zone routing       │
               │  • Context mgmt       │
@@ -664,7 +664,7 @@ async def process_voice_command(self, zone, wake_word):
 ```bash
 # On Orchestration Hub VM
 scp jetson@192.168.10.62:/mnt/nvme/athena-lite/context_manager.py \
-    athena@192.168.10.20:~/athena-orchestration/
+    athena@192.168.10.167:~/athena-orchestration/
 ```
 
 ---
@@ -1037,7 +1037,7 @@ import json
 import time
 
 # Configuration
-ORCHESTRATION_HUB = "ws://192.168.10.20:8080/wakeword"
+ORCHESTRATION_HUB = "ws://192.168.10.167:8080/wakeword"
 AUDIO_FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
@@ -1200,7 +1200,7 @@ qm set 200 --serial0 socket --vga serial0
 qm set 200 --agent enabled=1
 
 # Configure cloud-init
-qm set 200 --ipconfig0 ip=192.168.10.20/24,gw=192.168.10.1
+qm set 200 --ipconfig0 ip=192.168.10.167/24,gw=192.168.10.1
 qm set 200 --nameserver 192.168.10.1
 qm set 200 --ciuser athena
 qm set 200 --sshkeys ~/.ssh/authorized_keys
@@ -1213,13 +1213,13 @@ qm start 200
 
 # Wait and verify
 sleep 60
-ping -c 3 192.168.10.20
+ping -c 3 192.168.10.167
 ```
 
 #### 3.2 - System Configuration
 ```bash
 # SSH to orchestration hub
-ssh athena@192.168.10.20
+ssh athena@192.168.10.167
 
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -1431,7 +1431,7 @@ sudo systemctl status athena-orchestration.service
 ```
 
 **Checklist:**
-- [ ] VM accessible at 192.168.10.20
+- [ ] VM accessible at 192.168.10.167
 - [ ] NFS mounts working
 - [ ] Zone configuration loaded
 - [ ] Context manager migrated
@@ -2693,13 +2693,13 @@ esptool.py --port /dev/ttyUSB0 write_flash 0x0 wyoming-satellite-esp32.bin
 # Configure WiFi/Ethernet via web interface
 # Access: http://192.168.10.50 (after device boots)
 
-# Set Wyoming server: ws://192.168.10.20:8080
+# Set Wyoming server: ws://192.168.10.167:8080
 ```
 
 #### 9.4 - Configure Wyoming Protocol in Orchestration Hub
 ```bash
 # SSH to orchestration hub
-ssh athena@192.168.10.20
+ssh athena@192.168.10.167
 
 cd ~/athena-orchestration
 
@@ -2762,7 +2762,7 @@ curl -X POST http://192.168.10.17:8003/synthesize \
   -o test_playback.wav
 
 # Send to Wyoming device (via orchestration hub)
-curl -X POST http://192.168.10.20:8080/playback \
+curl -X POST http://192.168.10.167:8080/playback \
   -H "Content-Type: application/json" \
   -d '{
     "zone": "office",
@@ -2809,7 +2809,7 @@ curl -X POST http://192.168.10.20:8080/playback \
 ssh jetson@192.168.10.15 "sudo journalctl -u athena-wakeword.service -f"
 
 # Terminal 2: Orchestration hub logs
-ssh athena@192.168.10.20 "sudo journalctl -u athena-orchestration.service -f"
+ssh athena@192.168.10.167 "sudo journalctl -u athena-orchestration.service -f"
 
 # Terminal 3: Mac Mini service logs
 ssh athena-admin@192.168.10.17 "tail -f /mnt/athena-logs/stt.log /mnt/athena-logs/intent.log /mnt/athena-logs/command.log /mnt/athena-logs/tts.log"
@@ -2928,7 +2928,7 @@ sudo launchctl load /Library/LaunchDaemons/com.athena.command.plist
 # Expected: Only bedroom lights turn on
 
 # Verify zone routing in orchestration logs
-ssh athena@192.168.10.20 "grep 'zone:' /var/log/athena/orchestration.log | tail -20"
+ssh athena@192.168.10.167 "grep 'zone:' /var/log/athena/orchestration.log | tail -20"
 ```
 
 **Checklist:**
@@ -2955,7 +2955,7 @@ ssh athena@192.168.10.20 "grep 'zone:' /var/log/athena/orchestration.log | tail 
 # Use HA occupancy sensors to determine likely zone
 
 # Update orchestration hub
-ssh athena@192.168.10.20
+ssh athena@192.168.10.167
 
 cat >> ~/athena-orchestration/location_detection.py << 'EOFPYTHON'
 #!/usr/bin/env python3
@@ -3025,7 +3025,7 @@ EOFPYTHON
 # Expected response: "You are in the kitchen"
 
 # Monitor audio levels
-ssh athena@192.168.10.20 "tail -f /var/log/athena/audio-levels.log"
+ssh athena@192.168.10.167 "tail -f /var/log/athena/audio-levels.log"
 
 # Should show signal strengths from each Wyoming device:
 # Office: 0.85, Kitchen: 0.12, Bedroom: 0.03
@@ -3251,11 +3251,11 @@ ssh athena-admin@192.168.10.17 "grep -E 'weather|sports' /mnt/athena-logs/comman
 ```bash
 # Test network latency between components
 # Orchestration Hub → Mac Mini
-ssh athena@192.168.10.20 "ping -c 10 192.168.10.17"
+ssh athena@192.168.10.167 "ping -c 10 192.168.10.17"
 # Target: <1ms average
 
 # Wyoming Device → Orchestration Hub
-ping -c 10 192.168.10.20
+ping -c 10 192.168.10.167
 # Target: <2ms average
 
 # If latency high:
@@ -3319,7 +3319,7 @@ scrape_configs:
 
   - job_name: 'athena-orchestration'
     static_configs:
-      - targets: ['192.168.10.20:9094']
+      - targets: ['192.168.10.167:9094']
 
   - job_name: 'jetson-wakeword'
     static_configs:
@@ -3475,7 +3475,7 @@ Project Athena Phase 1 is a distributed AI voice assistant system with complete 
 - **Uptime:** 99.9%+
 
 ### Orchestration Hub (Proxmox VM)
-- **Location:** 192.168.10.20
+- **Location:** 192.168.10.167
 - **Resources:** 2 vCPU, 4GB RAM
 - **Role:** Request routing, context management
 - **Dependencies:** Mac Mini services, HA
@@ -3573,7 +3573,7 @@ sudo launchctl load /Library/LaunchDaemons/com.athena.stt.plist
 **Proxmox Services:**
 ```bash
 # Orchestration hub
-ssh athena@192.168.10.20
+ssh athena@192.168.10.167
 sudo systemctl restart athena-orchestration.service
 
 # Jetson wake word
@@ -3602,7 +3602,7 @@ tail -f /mnt/athena-logs/command.log
 tail -f /mnt/athena-logs/tts.log
 
 # Orchestration hub
-ssh athena@192.168.10.20 "sudo journalctl -u athena-orchestration.service -f"
+ssh athena@192.168.10.167 "sudo journalctl -u athena-orchestration.service -f"
 
 # Jetson wake word
 ssh jetson@192.168.10.15 "sudo journalctl -u athena-wakeword.service -f"
@@ -3645,8 +3645,8 @@ tar czf athena-macmini-backup-$(date +%Y%m%d).tar.gz \
 scp athena-macmini-backup-*.tar.gz admin@192.168.10.164:/volume1/athena/backups/
 
 # Backup orchestration hub
-ssh athena@192.168.10.20 "tar czf athena-orchestration-backup.tar.gz ~/athena-orchestration"
-scp athena@192.168.10.20:~/athena-orchestration-backup.tar.gz /tmp/
+ssh athena@192.168.10.167 "tar czf athena-orchestration-backup.tar.gz ~/athena-orchestration"
+scp athena@192.168.10.167:~/athena-orchestration-backup.tar.gz /tmp/
 
 # Backup Jetson configurations
 ssh jetson@192.168.10.15 "tar czf athena-jetson-backup.tar.gz ~/athena-wakeword"
@@ -3686,7 +3686,7 @@ cat > /tmp/athena-phase1-final-checklist.md << 'EOF'
 
 ## Infrastructure
 - [x] Mac Mini configured (192.168.10.17)
-- [x] Orchestration Hub deployed (192.168.10.20)
+- [x] Orchestration Hub deployed (192.168.10.167)
 - [x] Jetson wake word service (192.168.10.15)
 - [x] Synology NFS mounts working
 - [x] Redis caching operational

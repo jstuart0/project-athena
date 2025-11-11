@@ -26,7 +26,7 @@ Before beginning implementation, ensure you have:
 
 ### Hardware
 
-- [ ] **Mac Studio M4 (64GB RAM)** delivered and networked at 192.168.10.20
+- [ ] **Mac Studio M4 (64GB RAM)** delivered and networked at 192.168.10.167
 - [ ] **Mac mini M4 (16GB RAM)** delivered and networked at 192.168.10.181
 - [ ] **Home Assistant** running on Proxmox VM at 192.168.10.168
 - [ ] **HA Voice preview device** (at least 1 for testing) at 192.168.10.50
@@ -52,7 +52,7 @@ Before beginning implementation, ensure you have:
 
 ### Network Configuration
 
-- [ ] Static IP assigned to Mac Studio: 192.168.10.20
+- [ ] Static IP assigned to Mac Studio: 192.168.10.167
 - [ ] Static IP assigned to Mac mini: 192.168.10.181
 - [ ] Firewall rules allow:
   - Mac Studio → Mac mini (Redis 6379, Qdrant 6333)
@@ -71,7 +71,7 @@ Before beginning implementation, ensure you have:
 
 ```bash
 # SSH to Mac Studio
-ssh jstuart@192.168.10.20
+ssh jstuart@192.168.10.167
 
 # Install Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -637,7 +637,7 @@ voice: en_US-lessac-medium
 2. **Add Integration** → Search "OpenAI Conversation"
 3. Configure:
    - **API Key:** `dummy-key` (not validated by LiteLLM)
-   - **Base URL:** `http://192.168.10.20:8000/v1`
+   - **Base URL:** `http://192.168.10.167:8000/v1`
    - **Model:** `athena-medium`
    - **Temperature:** 0.3
    - **Max Tokens:** 1000
@@ -828,9 +828,9 @@ cat > docs/operations/DEPLOYMENT.md <<'EOF'
 # Deployment Guide
 
 ## Services Overview
-- Gateway: http://192.168.10.20:8000
-- Orchestrator: http://192.168.10.20:8001
-- RAG Services: http://192.168.10.20:8010-8012
+- Gateway: http://192.168.10.167:8000
+- Orchestrator: http://192.168.10.167:8001
+- RAG Services: http://192.168.10.167:8010-8012
 - Qdrant: http://192.168.10.181:6333
 - Redis: redis://192.168.10.181:6379
 
@@ -943,7 +943,7 @@ cat > README.md <<'EOF'
 
 ## Architecture
 
-- **Mac Studio M4** @ 192.168.10.20 - Gateway, Orchestrator, LLMs, RAG
+- **Mac Studio M4** @ 192.168.10.167 - Gateway, Orchestrator, LLMs, RAG
 - **Mac mini M4** @ 192.168.10.181 - Vector DB, Cache, Monitoring
 - **Home Assistant** @ 192.168.10.168 - Voice pipelines, device control
 
@@ -1002,7 +1002,7 @@ EOF
 
 ### Infrastructure
 
-- [ ] Mac Studio accessible at 192.168.10.20
+- [ ] Mac Studio accessible at 192.168.10.167
 - [ ] Mac mini accessible at 192.168.10.181
 - [ ] All services running: `docker compose ps`
 - [ ] Qdrant healthy: `curl http://192.168.10.181:6333/healthz`

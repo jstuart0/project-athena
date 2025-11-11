@@ -385,7 +385,7 @@ property:
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│         Gateway @ 192.168.10.20:8000 (Mac Studio)               │
+│         Gateway @ 192.168.10.167:8000 (Mac Studio)               │
 │  1. Receive request with room, device_id                        │
 │  2. Call Mode Service → get current mode                        │
 │  3. Add mode metadata to request                                │
@@ -393,7 +393,7 @@ property:
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│         Mode Service (NEW) @ 192.168.10.20:8001                 │
+│         Mode Service (NEW) @ 192.168.10.167:8001                 │
 │  GET /mode/current → {mode: "guest"|"owner", reason, stay_id}  │
 │  POST /mode/override → set manual override                      │
 │                                                                 │
@@ -423,7 +423,7 @@ property:
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│         Feedback Service (NEW) @ 192.168.10.20:8002             │
+│         Feedback Service (NEW) @ 192.168.10.167:8002             │
 │  POST /feedback → record good/bad answer                        │
 │  GET /feedback/review → admin review queue                      │
 │                                                                 │
@@ -1322,7 +1322,7 @@ athena_auto_mode:
 # REST commands
 rest_command:
   athena_mode_override:
-    url: "http://192.168.10.20:8001/mode/override"
+    url: "http://192.168.10.167:8001/mode/override"
     method: POST
     headers:
       Authorization: "Bearer {{ states('input_text.athena_api_key') }}"
