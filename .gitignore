@@ -13,7 +13,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 venv/
 ENV/
 build/
@@ -51,9 +50,11 @@ Thumbs.db
 *.log
 logs/
 
-# Environment variables
+# Environment variables (but allow .env.template)
 .env
 .env.local
+config/env/.env
+!config/env/.env.template
 
 # Models (large files - store on remote)
 *.pth
