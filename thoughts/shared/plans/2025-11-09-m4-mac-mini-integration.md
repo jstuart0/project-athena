@@ -1,8 +1,10 @@
 # PROJECT ATHENA - COMPLETE IMPLEMENTATION PLAN
 ## M4 Mac Mini (16GB) Integration
 
-**Status:** READY FOR IMMEDIATE EXECUTION
+**Status:** ⚠️ DEPRECATED - Superseded by 2025-11-11-full-bootstrap-implementation.md
 **Hardware Configuration:** M4 Mac Mini, 16GB unified memory, 256GB+ storage
+
+**DEPRECATION NOTICE:** This plan assumed Mac mini as primary compute. Current architecture uses Mac Studio M4 (64GB) for compute and Mac mini M4 (16GB) for databases. See `2025-11-11-full-bootstrap-implementation.md`.
 
 ---
 

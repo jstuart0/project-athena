@@ -1,8 +1,10 @@
 # M4 Mac Mini Integration - Athena Lite Feature Migration Addendum
 
 **Date:** 2025-11-09
-**Status:** CRITICAL ADDENDUM to main M4 Mac Mini plan
-**Parent Plan:** `2025-11-09-m4-mac-mini-integration.md`
+**Status:** ⚠️ DEPRECATED - Parent plan superseded by 2025-11-11-full-bootstrap-implementation.md
+**Parent Plan:** `2025-11-09-m4-mac-mini-integration.md` (DEPRECATED)
+
+**DEPRECATION NOTICE:** Parent plan deprecated. See `2025-11-11-full-bootstrap-implementation.md` for current implementation.
 
 ---
 

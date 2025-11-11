@@ -2,9 +2,11 @@
 ## M4 Mac Mini Integration with Full Athena Lite Feature Migration
 
 **Date:** 2025-11-09
-**Status:** READY FOR EXECUTION
+**Status:** ⚠️ DEPRECATED - Superseded by 2025-11-11-full-bootstrap-implementation.md
 **Hardware:** M4 Mac Mini (16GB), Jetson Nano Super, Proxmox Cluster
 **Replaces:** Original M4 Mac Mini plan + Athena Lite addendum
+
+**DEPRECATION NOTICE:** This plan has been superseded by the 2025-11-11 Full Bootstrap Implementation Plan which reflects the correct Mac Studio/mini architecture (Mac Studio for compute, Mac mini for databases). See `2025-11-11-full-bootstrap-implementation.md` for the current implementation plan.
 
 ---
 
