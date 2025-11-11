@@ -1273,12 +1273,12 @@ transformers==4.35.0
 **File**: `/mnt/nvme/athena-lite/.env` (on Jetson)
 
 ```bash
-# Home Assistant
-HA_TOKEN=<your_ha_token>
+# Home Assistant (get from thor cluster)
+HA_TOKEN=<kubectl -n automation get secret home-assistant-credentials -o jsonpath='{.data.long-lived-token}' | base64 -d>
 HA_URL=https://ha.xmojo.net
 
-# Weather APIs
-OPENWEATHER_API_KEY=<your_key_here>  # Get from openweathermap.org
+# Weather APIs (get from thor cluster)
+OPENWEATHER_API_KEY=<kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.openweathermap-api-key}' | base64 -d>
 
 # Phase 3 APIs (not needed yet, but reserved)
 TMDB_API_KEY=

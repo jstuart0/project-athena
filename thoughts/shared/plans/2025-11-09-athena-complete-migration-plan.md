@@ -433,8 +433,8 @@ scp jetson@192.168.10.62:/mnt/nvme/athena-lite/facade/web_search_handler.py hand
 ```bash
 # File: /usr/local/athena/services/command/.env
 
-# Weather
-OPENWEATHER_API_KEY=<from-jetson>
+# Weather (stored in thor cluster)
+OPENWEATHER_API_KEY=$(kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.openweathermap-api-key}' | base64 -d)
 
 # Location
 GOOGLE_PLACES_API_KEY=<from-jetson>

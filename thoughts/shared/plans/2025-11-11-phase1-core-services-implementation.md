@@ -339,7 +339,8 @@ QDRANT_COLLECTION=athena_knowledge
 # Redis
 REDIS_URL=redis://192.168.10.181:6379/0
 
-# RAG API Keys
+# RAG API Keys (retrieve from thor cluster)
+# kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.openweathermap-api-key}' | base64 -d
 OPENWEATHER_API_KEY=your_key_here
 FLIGHTAWARE_API_KEY=your_key_here
 THESPORTSDB_API_KEY=your_key_here
