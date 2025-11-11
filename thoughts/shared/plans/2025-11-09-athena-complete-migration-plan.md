@@ -73,7 +73,7 @@ This plan migrates Project Athena from proof-of-concept (Athena Lite on Jetson) 
               ┌───────────────────────┐
               │   Jetson Nano Super   │
               │   Wake Word Detection │
-              │   192.168.10.15       │
+              │   192.168.10.62      │
               │   15W, Always-On      │
               │   Jarvis + Athena     │
               └───────────┬───────────┘
@@ -90,7 +90,7 @@ This plan migrates Project Athena from proof-of-concept (Athena Lite on Jetson) 
                           ↓ HTTP/WebSocket
     ┌─────────────────────────────────────────────────────────────┐
     │          M4 Mac Mini - Unified Inference Engine             │
-    │                   192.168.10.17                             │
+    │                   192.168.10.181                            │
     │              16GB Unified Memory, 40-60W                    │
     ├─────────────────────────────────────────────────────────────┤
     │  Memory Allocation:                                         │
@@ -637,7 +637,7 @@ scp jetson@192.168.10.62:/mnt/nvme/athena-lite/ha_client.py \
 from context_manager import ContextManager
 import redis
 
-redis_client = redis.Redis(host='192.168.10.17', port=6379)
+redis_client = redis.Redis(host='192.168.10.181', port=6379)
 context_mgr = ContextManager(redis_client)
 
 async def process_voice_command(self, zone, wake_word):
@@ -689,10 +689,10 @@ ERROR_COUNT = Counter('errors_total', 'Total errors')
 
 **Metrics Endpoints:**
 ```
-http://192.168.10.17:9090/metrics  # STT
-http://192.168.10.17:9091/metrics  # Intent
-http://192.168.10.17:9092/metrics  # Command
-http://192.168.10.17:9093/metrics  # TTS
+http://192.168.10.181:9090/metrics  # STT
+http://192.168.10.181:9091/metrics  # Intent
+http://192.168.10.181:9092/metrics  # Command
+http://192.168.10.181:9093/metrics  # TTS
 ```
 
 **Files to Copy:**
@@ -786,8 +786,8 @@ print(json.dumps(BALTIMORE_CONFIG, indent=2))
 " > /tmp/athena-lite-config-backup.json
 
 # Copy to Mac Mini for reference
-scp /tmp/athena-lite-env-backup.txt athena-admin@192.168.10.17:/tmp/
-scp /tmp/athena-lite-config-backup.json athena-admin@192.168.10.17:/tmp/
+scp /tmp/athena-lite-env-backup.txt athena-admin@192.168.10.181/tmp/
+scp /tmp/athena-lite-config-backup.json athena-admin@192.168.10.181/tmp/
 ```
 
 #### 0.4 - Full Athena Lite Backup
@@ -952,7 +952,7 @@ redis-cli ping  # Should return PONG
 
 **Checklist:**
 - [ ] Synology NFS configured and accessible
-- [ ] Mac Mini network configured (192.168.10.17)
+- [ ] Mac Mini network configured (192.168.10.181
 - [ ] All software installed (Homebrew, Python, Redis)
 - [ ] NFS mounts working
 - [ ] Redis running
@@ -967,7 +967,7 @@ redis-cli ping  # Should return PONG
 ssh jetson@192.168.10.62
 
 # Configure static IP
-sudo nmcli con mod "Wired connection 1" ipv4.addresses 192.168.10.15/24
+sudo nmcli con mod "Wired connection 1" ipv4.addresses 192.168.10.6224
 sudo nmcli con mod "Wired connection 1" ipv4.gateway 192.168.10.1
 sudo nmcli con mod "Wired connection 1" ipv4.dns 192.168.10.1
 sudo nmcli con mod "Wired connection 1" ipv4.method manual
@@ -977,7 +977,7 @@ sudo nmcli con down "Wired connection 1" && sudo nmcli con up "Wired connection 
 sudo hostnamectl set-hostname jetson-wakeword
 
 # Verify
-ip addr show eth0  # Should show 192.168.10.15
+ip addr show eth0  # Should show 192.168.10.62
 ```
 
 **Physical:** Connect Jetson to Port 22 on switch
@@ -1171,7 +1171,7 @@ sensors  # Should show <50°C idle
 ```
 
 **Checklist:**
-- [ ] Jetson accessible at 192.168.10.15
+- [ ] Jetson accessible at 192.168.10.62
 - [ ] Wake word service running
 - [ ] Models loaded successfully
 - [ ] Temperature <75°C
@@ -1330,8 +1330,8 @@ from context_manager import ContextManager
 
 # Configuration
 ZONES_CONFIG = "/etc/athena/zones.yaml"
-MAC_MINI_BASE = "http://192.168.10.17"
-REDIS_HOST = "192.168.10.17"
+MAC_MINI_BASE = "http://192.168.10.181
+REDIS_HOST = "192.168.10.181
 REDIS_PORT = 6379
 
 logging.basicConfig(level=logging.INFO)
@@ -1602,7 +1602,7 @@ sudo launchctl load /Library/LaunchDaemons/com.athena.stt.plist
 
 # Test
 sleep 5
-curl http://192.168.10.17:8000/health
+curl http://192.168.10.181:8000/health
 ```
 
 **Checklist:**
@@ -1828,7 +1828,7 @@ sudo launchctl load /Library/LaunchDaemons/com.athena.intent.plist
 
 # Test
 sleep 5
-curl http://192.168.10.17:8001/health
+curl http://192.168.10.181:8001/health
 ```
 
 **Checklist:**
@@ -2180,7 +2180,7 @@ sudo launchctl load /Library/LaunchDaemons/com.athena.command.plist
 
 # Test
 sleep 5
-curl http://192.168.10.17:8002/health
+curl http://192.168.10.181:8002/health
 ```
 
 **Checklist:**
@@ -2449,13 +2449,13 @@ sudo launchctl load /Library/LaunchDaemons/com.athena.tts.plist
 
 # Test
 sleep 5
-curl http://192.168.10.17:8003/health
+curl http://192.168.10.181:8003/health
 ```
 
 #### 7.6 - Voice Quality Testing
 ```bash
 # Test Jarvis voice
-curl -X POST http://192.168.10.17:8003/synthesize \
+curl -X POST http://192.168.10.181:8003/synthesize \
   -H "Content-Type: application/json" \
   -d '{"text": "Good morning. All systems operational. How may I assist you?", "wake_word": "jarvis"}' \
   -o jarvis_test.wav
@@ -2463,7 +2463,7 @@ curl -X POST http://192.168.10.17:8003/synthesize \
 afplay jarvis_test.wav
 
 # Test Athena voice
-curl -X POST http://192.168.10.17:8003/synthesize \
+curl -X POST http://192.168.10.181:8003/synthesize \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello. I am Athena, your advanced AI assistant. Ready to help with complex queries.", "wake_word": "athena"}' \
   -o athena_test.wav
@@ -2471,7 +2471,7 @@ curl -X POST http://192.168.10.17:8003/synthesize \
 afplay athena_test.wav
 
 # Test cache (second request should be <50ms)
-time curl -X POST http://192.168.10.17:8003/synthesize \
+time curl -X POST http://192.168.10.181:8003/synthesize \
   -H "Content-Type: application/json" \
   -d '{"text": "Good morning. All systems operational. How may I assist you?", "wake_word": "jarvis"}' \
   -o jarvis_cached.wav
@@ -2596,7 +2596,7 @@ print(f'Turn on result: {result}')
 #### 8.5 - Test Zone-Aware Device Control
 ```bash
 # Test office zone
-curl -X POST http://192.168.10.17:8002/execute \
+curl -X POST http://192.168.10.181:8002/execute \
   -H "Content-Type: application/json" \
   -d '{
     "classification": {
@@ -2614,7 +2614,7 @@ curl -X POST http://192.168.10.17:8002/execute \
 # Should turn on office lights only
 
 # Test kitchen zone
-curl -X POST http://192.168.10.17:8002/execute \
+curl -X POST http://192.168.10.181:8002/execute \
   -H "Content-Type: application/json" \
   -d '{
     "classification": {
@@ -2756,7 +2756,7 @@ sudo journalctl -u athena-orchestration.service -f
 # From Mac Mini:
 
 # Generate TTS
-curl -X POST http://192.168.10.17:8003/synthesize \
+curl -X POST http://192.168.10.181:8003/synthesize \
   -H "Content-Type: application/json" \
   -d '{"text": "Office Wyoming device test successful", "wake_word": "jarvis"}' \
   -o test_playback.wav
@@ -2766,7 +2766,7 @@ curl -X POST http://192.168.10.167:8080/playback \
   -H "Content-Type: application/json" \
   -d '{
     "zone": "office",
-    "audio_url": "http://192.168.10.17:8003/audio/test_playback.wav"
+    "audio_url": "http://192.168.10.181:8003/audio/test_playback.wav"
   }'
 
 # Should hear audio from office Wyoming device
@@ -2806,13 +2806,13 @@ curl -X POST http://192.168.10.167:8080/playback \
 
 # Monitor all services:
 # Terminal 1: Jetson wake word logs
-ssh jetson@192.168.10.15 "sudo journalctl -u athena-wakeword.service -f"
+ssh jetson@192.168.10.62"sudo journalctl -u athena-wakeword.service -f"
 
 # Terminal 2: Orchestration hub logs
 ssh athena@192.168.10.167 "sudo journalctl -u athena-orchestration.service -f"
 
 # Terminal 3: Mac Mini service logs
-ssh athena-admin@192.168.10.17 "tail -f /mnt/athena-logs/stt.log /mnt/athena-logs/intent.log /mnt/athena-logs/command.log /mnt/athena-logs/tts.log"
+ssh athena-admin@192.168.10.181"tail -f /mnt/athena-logs/stt.log /mnt/athena-logs/intent.log /mnt/athena-logs/command.log /mnt/athena-logs/tts.log"
 
 # Speak query and verify each service logs activity
 ```
@@ -3094,7 +3094,7 @@ curl -k -X GET "https://192.168.10.168:8123/api/states/binary_sensor.office_occu
 # Expected: API call fails, cache miss, apologizes for no connectivity
 
 # Check command service logs
-ssh athena-admin@192.168.10.17 "grep 'API.*failed' /mnt/athena-logs/command.log"
+ssh athena-admin@192.168.10.181"grep 'API.*failed' /mnt/athena-logs/command.log"
 
 # Should show graceful fallback
 ```
@@ -3209,15 +3209,15 @@ sudo launchctl load /Library/LaunchDaemons/com.athena.command.plist
 ```bash
 # Verify Metal acceleration active
 # Check STT service
-curl http://192.168.10.17:8000/health | jq '.backend'
+curl http://192.168.10.181:8000/health | jq '.backend'
 # Should return: "metal"
 
 # Check Intent service
-curl http://192.168.10.17:8001/health | jq '.model'
+curl http://192.168.10.181:8001/health | jq '.model'
 # Should return: "phi-3-mini" (with Metal acceleration)
 
 # Check Command service
-curl http://192.168.10.17:8002/health | jq '.model'
+curl http://192.168.10.181:8002/health | jq '.model'
 # Should return: "llama-3.2-3b" (with Metal acceleration)
 
 # Monitor GPU usage
@@ -3237,7 +3237,7 @@ sudo powermetrics --samplers gpu_power -i 1000
 # Expected: Both API calls happen simultaneously
 
 # Check command service logs for timestamps
-ssh athena-admin@192.168.10.17 "grep -E 'weather|sports' /mnt/athena-logs/command.log | tail -20"
+ssh athena-admin@192.168.10.181"grep -E 'weather|sports' /mnt/athena-logs/command.log | tail -20"
 
 # Should show:
 # [timestamp1] Weather API call started
@@ -3251,7 +3251,7 @@ ssh athena-admin@192.168.10.17 "grep -E 'weather|sports' /mnt/athena-logs/comman
 ```bash
 # Test network latency between components
 # Orchestration Hub → Mac Mini
-ssh athena@192.168.10.167 "ping -c 10 192.168.10.17"
+ssh athena@192.168.10.167 "ping -c 10 192.168.10.181
 # Target: <1ms average
 
 # Wyoming Device → Orchestration Hub
@@ -3303,19 +3303,19 @@ global:
 scrape_configs:
   - job_name: 'athena-stt'
     static_configs:
-      - targets: ['192.168.10.17:9090']
+      - targets: ['192.168.10.181:9090']
 
   - job_name: 'athena-intent'
     static_configs:
-      - targets: ['192.168.10.17:9091']
+      - targets: ['192.168.10.181:9091']
 
   - job_name: 'athena-command'
     static_configs:
-      - targets: ['192.168.10.17:9092']
+      - targets: ['192.168.10.181:9092']
 
   - job_name: 'athena-tts'
     static_configs:
-      - targets: ['192.168.10.17:9093']
+      - targets: ['192.168.10.181:9093']
 
   - job_name: 'athena-orchestration'
     static_configs:
@@ -3323,7 +3323,7 @@ scrape_configs:
 
   - job_name: 'jetson-wakeword'
     static_configs:
-      - targets: ['192.168.10.15:9095']
+      - targets: ['192.168.10.629095']
 EOF
 
 sudo systemctl restart prometheus
@@ -3380,16 +3380,16 @@ sudo systemctl enable grafana-server
 
 # Add metrics endpoints to services if missing
 # STT service (:9090)
-curl http://192.168.10.17:9090/metrics
+curl http://192.168.10.181:9090/metrics
 
 # Intent service (:9091)
-curl http://192.168.10.17:9091/metrics
+curl http://192.168.10.181:9091/metrics
 
 # Command service (:9092)
-curl http://192.168.10.17:9092/metrics
+curl http://192.168.10.181:9092/metrics
 
 # TTS service (:9093)
-curl http://192.168.10.17:9093/metrics
+curl http://192.168.10.181:9093/metrics
 
 # Should return Prometheus-formatted metrics
 ```
@@ -3468,7 +3468,7 @@ Project Athena Phase 1 is a distributed AI voice assistant system with complete 
 ## Service Specifications
 
 ### Wake Word Detection (Jetson)
-- **Location:** 192.168.10.15
+- **Location:** 192.168.10.62
 - **Model:** OpenWakeWord (Jarvis + Athena)
 - **Latency:** <200ms
 - **Power:** 15W
@@ -3481,20 +3481,20 @@ Project Athena Phase 1 is a distributed AI voice assistant system with complete 
 - **Dependencies:** Mac Mini services, HA
 
 ### STT Service (Mac Mini)
-- **Location:** 192.168.10.17:8000
+- **Location:** 192.168.10.181:8000
 - **Model:** Whisper Large-v3 (Metal-accelerated)
 - **Latency:** 200-300ms
 - **Memory:** ~3GB
 
 ### Intent Service (Mac Mini)
-- **Location:** 192.168.10.17:8001
+- **Location:** 192.168.10.181:8001
 - **Model:** Phi-3-mini (Metal-accelerated)
 - **Latency:** 100-150ms
 - **Memory:** ~2.5GB
 - **Features:** Multi-intent query splitting
 
 ### Command Service (Mac Mini)
-- **Location:** 192.168.10.17:8002
+- **Location:** 192.168.10.181:8002
 - **Model:** Llama-3.2-3B (Metal-accelerated)
 - **Latency:** 300-600ms (facade), 2-3s (LLM)
 - **Memory:** ~2GB
@@ -3506,7 +3506,7 @@ Project Athena Phase 1 is a distributed AI voice assistant system with complete 
   - Multi-intent response merging
 
 ### TTS Service (Mac Mini)
-- **Location:** 192.168.10.17:8003
+- **Location:** 192.168.10.181:8003
 - **Model:** Piper TTS (2 voices)
 - **Latency:** 300-400ms (new), <50ms (cached)
 - **Memory:** ~100MB
@@ -3577,17 +3577,17 @@ ssh athena@192.168.10.167
 sudo systemctl restart athena-orchestration.service
 
 # Jetson wake word
-ssh jetson@192.168.10.15
+ssh jetson@192.168.10.62
 sudo systemctl restart athena-wakeword.service
 ```
 
 ### Health Checks
 ```bash
 # Quick health check all services
-curl http://192.168.10.17:8000/health  # STT
-curl http://192.168.10.17:8001/health  # Intent
-curl http://192.168.10.17:8002/health  # Command
-curl http://192.168.10.17:8003/health  # TTS
+curl http://192.168.10.181:8000/health  # STT
+curl http://192.168.10.181:8001/health  # Intent
+curl http://192.168.10.181:8002/health  # Command
+curl http://192.168.10.181:8003/health  # TTS
 
 # Or use monitoring script
 bash /usr/local/athena/scripts/health-check.sh
@@ -3605,15 +3605,15 @@ tail -f /mnt/athena-logs/tts.log
 ssh athena@192.168.10.167 "sudo journalctl -u athena-orchestration.service -f"
 
 # Jetson wake word
-ssh jetson@192.168.10.15 "sudo journalctl -u athena-wakeword.service -f"
+ssh jetson@192.168.10.62"sudo journalctl -u athena-wakeword.service -f"
 ```
 
 ### Troubleshooting Common Issues
 
 **Issue: High latency**
 1. Check Metal GPU usage: `sudo powermetrics --samplers gpu_power`
-2. Verify cache hit rates: `curl http://192.168.10.17:8002/health | jq '.cache_hit_rate'`
-3. Check network latency: `ping 192.168.10.17`
+2. Verify cache hit rates: `curl http://192.168.10.181:8002/health | jq '.cache_hit_rate'`
+3. Check network latency: `ping 192.168.10.181
 4. Review service logs for bottlenecks
 
 **Issue: Service not responding**
@@ -3629,7 +3629,7 @@ ssh jetson@192.168.10.15 "sudo journalctl -u athena-wakeword.service -f"
 3. Check disk space: `df -h /mnt/athena-cache`
 
 **Issue: Wake word not detected**
-1. Check Jetson service: `ssh jetson@192.168.10.15 "systemctl status athena-wakeword"`
+1. Check Jetson service: `ssh jetson@192.168.10.62"systemctl status athena-wakeword"`
 2. Verify Wyoming device connectivity
 3. Test microphone: Access Wyoming device web UI
 4. Check wake word models: `ls ~/athena-wakeword/*.tflite`
@@ -3649,8 +3649,8 @@ ssh athena@192.168.10.167 "tar czf athena-orchestration-backup.tar.gz ~/athena-o
 scp athena@192.168.10.167:~/athena-orchestration-backup.tar.gz /tmp/
 
 # Backup Jetson configurations
-ssh jetson@192.168.10.15 "tar czf athena-jetson-backup.tar.gz ~/athena-wakeword"
-scp jetson@192.168.10.15:~/athena-jetson-backup.tar.gz /tmp/
+ssh jetson@192.168.10.62"tar czf athena-jetson-backup.tar.gz ~/athena-wakeword"
+scp jetson@192.168.10.62~/athena-jetson-backup.tar.gz /tmp/
 ```
 EOF
 
@@ -3685,9 +3685,9 @@ cat > /tmp/athena-phase1-final-checklist.md << 'EOF'
 # Athena Phase 1 - Final Completion Checklist
 
 ## Infrastructure
-- [x] Mac Mini configured (192.168.10.17)
+- [x] Mac Mini configured (192.168.10.181
 - [x] Orchestration Hub deployed (192.168.10.167)
-- [x] Jetson wake word service (192.168.10.15)
+- [x] Jetson wake word service (192.168.10.62
 - [x] Synology NFS mounts working
 - [x] Redis caching operational
 - [x] Network configuration complete

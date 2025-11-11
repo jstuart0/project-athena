@@ -250,7 +250,7 @@ if classification['intent'] == 'home_control':
 context = context_manager.get_context(zone)
 
 # Send context to Mac Mini intent service
-intent = requests.post('http://192.168.10.17:8001/classify', json={
+intent = requests.post('http://192.168.10.181:8001/classify', json={
     "transcription": transcription,
     "context": context
 })
@@ -278,10 +278,10 @@ context_manager.update_context(zone, intent, response)
 
 **Metrics Endpoints:**
 ```
-http://192.168.10.17:9090/metrics  # STT metrics
-http://192.168.10.17:9091/metrics  # Intent metrics
-http://192.168.10.17:9092/metrics  # Command metrics
-http://192.168.10.17:9093/metrics  # TTS metrics
+http://192.168.10.181:9090/metrics  # STT metrics
+http://192.168.10.181:9091/metrics  # Intent metrics
+http://192.168.10.181:9092/metrics  # Command metrics
+http://192.168.10.181:9093/metrics  # TTS metrics
 ```
 
 ---

@@ -36,7 +36,7 @@ This plan fully integrates your M4 Mac Mini into Project Athena, replacing Jetso
               ┌───────────────────────┐
               │   Jetson Nano Super   │
               │   Wake Word Detection │
-              │   192.168.10.15       │
+              │   192.168.10.62       │
               │   15W, Always-On      │
               └───────────┬───────────┘
                           ↓
@@ -49,7 +49,7 @@ This plan fully integrates your M4 Mac Mini into Project Athena, replacing Jetso
                           ↓
     ┌─────────────────────────────────────────────────┐
     │          M4 Mac Mini - Inference Engine          │
-    │              192.168.10.17                       │
+    │              192.168.10.181                       │
     │         16GB Unified Memory, 40-60W              │
     ├──────────────────────────────────────────────────┤
     │  Memory Allocation:                              │
@@ -155,8 +155,8 @@ TOTAL: ~1.3 seconds (vs 2.5s original plan)
 192.168.10.168   - ha-primary (Home Assistant VM, Node 3)
 192.168.10.167    - athena-orchestration (Proxmox VM, Node 1)
 192.168.10.27    - athena-monitoring (Proxmox VM, Node 3)
-192.168.10.15    - jetson-wakeword (Jetson Nano Super #1)
-192.168.10.17    - mac-mini-athena (M4 Mac Mini, 16GB)
+192.168.10.62    - jetson-wakeword (Jetson Nano Super #1)
+192.168.10.181    - mac-mini-athena (M4 Mac Mini, 16GB)
 ```
 
 **WYOMING DEVICES:**
@@ -358,8 +358,8 @@ Smart home voice assistant with dual wake words (Jarvis/Athena),
 running on M4 Mac Mini with sub-1.5s response times.
 
 ## Architecture
-- Wake Word: Jetson Nano Super (192.168.10.15)
-- Inference: M4 Mac Mini 16GB (192.168.10.17)
+- Wake Word: Jetson Nano Super (192.168.10.62)
+- Inference: M4 Mac Mini 16GB (192.168.10.181)
 - Orchestration: Proxmox VM (192.168.10.167)
 - Home Control: Home Assistant (192.168.10.168)
 
@@ -407,7 +407,7 @@ EOF
 2. Select Ethernet (or Thunderbolt Ethernet if using adapter)
 3. Click "Details"
 4. Configure IPv4: Manually
-   - IP Address: 192.168.10.17
+   - IP Address: 192.168.10.181
    - Subnet Mask: 255.255.255.0
    - Router: 192.168.10.1
    - DNS: 192.168.10.1
@@ -429,15 +429,15 @@ EOF
 **Validation:**
 ```bash
 # From your workstation or Proxmox node
-ping 192.168.10.17
+ping 192.168.10.181
 # Should get responses
 
-ssh athena-admin@192.168.10.17
+ssh athena-admin@192.168.10.181
 # Should connect successfully
 
 # Once SSH'd in:
 ifconfig en0
-# Should show 192.168.10.17
+# Should show 192.168.10.181
 
 hostname
 # Should show mac-mini-athena
@@ -449,7 +449,7 @@ hostname
 
 ```bash
 # SSH to Mac Mini
-ssh athena-admin@192.168.10.17
+ssh athena-admin@192.168.10.181
 
 # Install Xcode Command Line Tools (required for Homebrew)
 xcode-select --install
@@ -595,14 +595,14 @@ sudo launchctl load /Library/LaunchDaemons/com.athena.mount-nfs.plist
 
 #### 3.1 - Jetson Network Configuration
 
-**Action:** Configure Jetson at 192.168.10.15
+**Action:** Configure Jetson at 192.168.10.62
 
 ```bash
 # SSH to Jetson (default credentials or yours)
 ssh jetson@<current-jetson-ip>
 
 # Configure static IP
-sudo nmcli con mod "Wired connection 1" ipv4.addresses 192.168.10.15/24
+sudo nmcli con mod "Wired connection 1" ipv4.addresses 192.168.10.62/24
 sudo nmcli con mod "Wired connection 1" ipv4.gateway 192.168.10.1
 sudo nmcli con mod "Wired connection 1" ipv4.dns 192.168.10.1
 sudo nmcli con mod "Wired connection 1" ipv4.method manual
@@ -613,15 +613,15 @@ sudo hostnamectl set-hostname jetson-wakeword
 
 # Verify
 ip addr show eth0
-# Should show 192.168.10.15
+# Should show 192.168.10.62
 ```
 
 **Physical Connection:**
 - Connect Jetson to Port 22 on USW Pro HD 24 PoE
 
 **Validation:**
-- ☐ Jetson accessible at 192.168.10.15
-- ☐ Can ping from Mac Mini: `ping 192.168.10.15`
+- ☐ Jetson accessible at 192.168.10.62
+- ☐ Can ping from Mac Mini: `ping 192.168.10.62`
 - ☐ Shows in UniFi controller as "jetson-wakeword"
 
 #### 3.2 - Wake Word Software Setup
@@ -630,7 +630,7 @@ ip addr show eth0
 
 ```bash
 # SSH to Jetson
-ssh jetson@192.168.10.15
+ssh jetson@192.168.10.62
 
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -1116,7 +1116,7 @@ from datetime import datetime
 
 # Configuration
 ZONES_CONFIG = "/etc/athena/zones.yaml"
-MAC_MINI_BASE = "http://192.168.10.17"
+MAC_MINI_BASE = "http://192.168.10.181"
 HA_BASE = "http://192.168.10.168:8123"
 HA_TOKEN = "YOUR_HA_TOKEN"  # Will be configured in Step 7
 
@@ -1253,7 +1253,7 @@ sudo systemctl status athena-orchestration.service
 
 ```bash
 # SSH to Mac Mini
-ssh athena-admin@192.168.10.17
+ssh athena-admin@192.168.10.181
 
 cd /usr/local/athena/services/stt
 git clone https://github.com/ggerganov/whisper.cpp.git
@@ -1474,7 +1474,7 @@ sudo launchctl list | grep athena.stt
 
 # Test service
 sleep 5
-curl http://192.168.10.17:8000/health
+curl http://192.168.10.181:8000/health
 ```
 
 **Expected Response:**
@@ -1497,7 +1497,7 @@ curl http://192.168.10.17:8000/health
 cd /usr/local/athena/services/stt/whisper.cpp
 
 # Test with sample audio
-curl -X POST -F "audio=@samples/jfk.wav" http://192.168.10.17:8000/transcribe
+curl -X POST -F "audio=@samples/jfk.wav" http://192.168.10.181:8000/transcribe
 
 # Should return in <300ms with transcription
 ```
