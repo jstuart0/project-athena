@@ -165,9 +165,10 @@ REDIS_URL=redis://192.168.10.181:6379/0
 # RAG API Keys (retrieve from thor cluster)
 # kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.openweathermap-api-key}' | base64 -d
 # kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.flightaware-api-key}' | base64 -d
+# kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.thesportsdb-api-key}' | base64 -d
 OPENWEATHER_API_KEY=your_key_here
 FLIGHTAWARE_API_KEY=your_key_here
-THESPORTSDB_API_KEY=your_key_here
+THESPORTSDB_API_KEY=123
 
 # Feature Flags (Phase 1)
 ENABLE_GUEST_MODE=false
