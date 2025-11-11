@@ -1832,8 +1832,8 @@ No new dependencies needed (requests already included).
 **File**: `/mnt/nvme/athena-lite/.env`
 
 ```bash
-# Phase 2 APIs
-FLIGHTAWARE_API_KEY=<get_from_flightaware.com>
+# Phase 2 APIs (get from thor cluster)
+FLIGHTAWARE_API_KEY=<kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.flightaware-api-key}' | base64 -d>
 EVENTBRITE_API_KEY=<get_from_eventbrite.com>
 TICKETMASTER_API_KEY=<get_from_ticketmaster.com>
 ```
