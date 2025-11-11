@@ -187,17 +187,43 @@ kubectl -n automation get secret home-assistant-credentials -o jsonpath='{.data.
 
 ### Mac Studio/mini Access (Phase 1 - NEW)
 
+**⚠️ CRITICAL: All credentials stored in thor cluster `automation` namespace**
+
+**Quick Access:**
+```bash
+# Switch to thor cluster
+kubectl config use-context thor
+
+# Get Mac Studio SSH access
+kubectl -n automation get secret mac-studio-credentials -o jsonpath='{.data.ssh-command}' | base64 -d
+# Output: ssh jstuart@192.168.10.167
+
+# Get SSH private key (if needed on another machine)
+kubectl -n automation get secret mac-studio-credentials -o jsonpath='{.data.ssh-private-key}' | base64 -d > ~/.ssh/athena_key
+chmod 600 ~/.ssh/athena_key
+
+# Get Mac Studio password
+kubectl -n automation get secret mac-studio-credentials -o jsonpath='{.data.password}' | base64 -d
+
+# Get all Project Athena service URLs
+kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.qdrant-url}' | base64 -d
+kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.redis-url}' | base64 -d
+kubectl -n automation get secret project-athena-credentials -o jsonpath='{.data.gateway-url}' | base64 -d
+```
+
 **Mac Studio M4 (64GB):** jstuart@192.168.10.167
 - **SSH Access:** `ssh jstuart@192.168.10.167` (passwordless configured ✅)
 - **Hostname:** Jays-Mac-Studio.local
 - **Services:** Gateway (8000), Orchestrator (8001), RAG (8010-8012), Ollama (11434)
 - **Models:** phi3:mini-q8, llama3.1:8b-q4
 - **Project Location:** `/Users/jaystuart/dev/project-athena/`
+- **Credentials:** `kubectl -n automation get secret mac-studio-credentials -o yaml`
 
 **Mac mini M4 (16GB):** 192.168.10.181
 - **Services:** Qdrant (6333), Redis (6379)
 - **Docker:** docker-compose deployment
 - **Storage:** Persistent volumes for vectors and cache
+- **Credentials:** `kubectl -n automation get secret project-athena-credentials -o yaml`
 
 ### Jetson Access (Archived)
 
