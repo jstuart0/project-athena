@@ -15,7 +15,7 @@ Configuration:
     - Collection: athena_knowledge
     - Vector size: 384 dimensions (all-MiniLM-L6-v2)
     - Distance metric: Cosine similarity
-    - Qdrant URL: http://192.168.10.29:6333 (or localhost if running on Mac mini)
+    - Qdrant URL: http://192.168.10.181:6333 (or localhost if running on Mac mini)
 """
 
 import os
@@ -25,7 +25,7 @@ from qdrant_client.models import Distance, VectorParams, PointStruct
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 # Configuration
-QDRANT_URL = os.getenv("QDRANT_URL", "http://192.168.10.29:6333")
+QDRANT_URL = os.getenv("QDRANT_URL", "http://192.168.10.181:6333")
 COLLECTION_NAME = "athena_knowledge"
 VECTOR_SIZE = 384  # sentence-transformers/all-MiniLM-L6-v2
 DISTANCE_METRIC = Distance.COSINE
@@ -151,7 +151,7 @@ def main():
         print()
         print("Troubleshooting:")
         print(f"  1. Verify Qdrant is running: curl {QDRANT_URL}/healthz")
-        print(f"  2. Check Mac mini is accessible at 192.168.10.29")
+        print(f"  2. Check Mac mini is accessible at 192.168.10.181")
         print(f"  3. Verify Docker services: docker ps")
         sys.exit(1)
 

@@ -219,8 +219,8 @@ Use this checklist to track your Day 1 progress:
 
 ### Network (15 min)
 - [ ] Assign Mac Studio static IP: 192.168.10.20
-- [ ] Assign Mac mini static IP: 192.168.10.29
-- [ ] Verify connectivity: `ping 192.168.10.29`
+- [ ] Assign Mac mini static IP: 192.168.10.181
+- [ ] Verify connectivity: `ping 192.168.10.181`
 - [ ] Verify HA connectivity: `ping 192.168.10.168`
 
 ### Environment Setup (30 min)
@@ -245,10 +245,10 @@ Use this checklist to track your Day 1 progress:
 
 ### Mac mini Services (15 min)
 - [ ] Copy docker-compose to Mac mini
-- [ ] SSH to Mac mini: `ssh user@192.168.10.29`
+- [ ] SSH to Mac mini: `ssh user@192.168.10.181`
 - [ ] Deploy services: `cd ~/athena/mac-mini && docker compose up -d`
-- [ ] Verify Qdrant: `curl http://192.168.10.29:6333/healthz`
-- [ ] Verify Redis: `redis-cli -h 192.168.10.29 PING`
+- [ ] Verify Qdrant: `curl http://192.168.10.181:6333/healthz`
+- [ ] Verify Redis: `redis-cli -h 192.168.10.181 PING`
 
 ### Qdrant Initialization (5 min)
 - [ ] Install qdrant-client: `pip install qdrant-client`
@@ -436,7 +436,7 @@ open docs/DAY_1_QUICK_START.md
 
 # 2. Start with network configuration
 # Assign Mac Studio: 192.168.10.20
-# Assign Mac mini: 192.168.10.29
+# Assign Mac mini: 192.168.10.181
 
 # 3. Follow the guide step-by-step
 

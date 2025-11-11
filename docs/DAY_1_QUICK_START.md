@@ -29,17 +29,17 @@
 
 **On Mac mini:**
 ```bash
-# Same process, assign: 192.168.10.29
+# Same process, assign: 192.168.10.181
 ```
 
 **Verify connectivity:**
 ```bash
 # From your laptop
 ping 192.168.10.20
-ping 192.168.10.29
+ping 192.168.10.181
 
 # From Mac Studio
-ping 192.168.10.29  # Should reach Mac mini
+ping 192.168.10.181  # Should reach Mac mini
 ping 192.168.10.168  # Should reach Home Assistant
 ```
 
@@ -107,7 +107,7 @@ pip install --upgrade pip
 pip install pytest pytest-asyncio black flake8
 ```
 
-**On Mac mini @ 192.168.10.29:**
+**On Mac mini @ 192.168.10.181:**
 
 ```bash
 # 1. Install Homebrew
@@ -177,8 +177,8 @@ OLLAMA_LARGE_MODEL=llama3.1:13b-q4
 LITELLM_MASTER_KEY=sk-$(openssl rand -hex 16)
 
 # Vector DB & Cache (Mac mini)
-QDRANT_URL=http://192.168.10.29:6333
-REDIS_URL=redis://192.168.10.29:6379/0
+QDRANT_URL=http://192.168.10.181:6333
+REDIS_URL=redis://192.168.10.181:6379/0
 
 # RAG API Keys (Get these ASAP)
 OPENWEATHER_API_KEY=GET_THIS_TODAY
@@ -270,10 +270,10 @@ redis-cli PING
 
 ```bash
 # Test Qdrant from Mac Studio
-curl http://192.168.10.29:6333/healthz
+curl http://192.168.10.181:6333/healthz
 
 # Test Redis from Mac Studio
-redis-cli -h 192.168.10.29 PING
+redis-cli -h 192.168.10.181 PING
 ```
 
 ### Task 5: Initialize Qdrant Collection (5 minutes)
@@ -291,7 +291,7 @@ cat > scripts/init_qdrant.py <<'EOF'
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
-client = QdrantClient(url="http://192.168.10.29:6333")
+client = QdrantClient(url="http://192.168.10.181:6333")
 
 # Create collection for knowledge vectors
 client.create_collection(
@@ -319,7 +319,7 @@ python scripts/init_qdrant.py
 
 By end of today, you should have:
 
-- [x] **Network:** Mac Studio @ 192.168.10.20, Mac mini @ 192.168.10.29
+- [x] **Network:** Mac Studio @ 192.168.10.20, Mac mini @ 192.168.10.181
 - [x] **Docker:** Running on both Macs
 - [x] **Ollama:** Models downloaded on Mac Studio (`ollama list` shows phi3 and llama3.1)
 - [x] **Mac mini services:** Qdrant + Redis running and accessible
@@ -330,10 +330,10 @@ By end of today, you should have:
 
 ```bash
 # From Mac Studio
-ping 192.168.10.29  # Mac mini reachable
+ping 192.168.10.181  # Mac mini reachable
 ollama list  # Shows 2+ models
-curl http://192.168.10.29:6333/healthz  # Qdrant healthy
-redis-cli -h 192.168.10.29 PING  # Redis responds PONG
+curl http://192.168.10.181:6333/healthz  # Qdrant healthy
+redis-cli -h 192.168.10.181 PING  # Redis responds PONG
 cat config/env/.env | grep HA_TOKEN  # Token present
 cat config/env/.env | grep OPENWEATHER  # API key present (not "GET_THIS_TODAY")
 ```

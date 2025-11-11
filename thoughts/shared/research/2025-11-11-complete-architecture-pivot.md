@@ -83,7 +83,7 @@ Plan: Scale to Wyoming devices + Proxmox services
 │  │    └─> Dining (Yelp/Places - nearby with distance/time)     │
 │  └─> Share Service (Twilio + SMTP/SendGrid)                    │
 ├─────────────────────────────────────────────────────────────────┤
-│              Mac mini M4/16GB @ 192.168.10.29                   │
+│              Mac mini M4/16GB @ 192.168.10.181                   │
 │  ├─> Vector DB (Qdrant/Weaviate/Chroma)                        │
 │  ├─> Job Queue (RQ/Celery) + Cache (Redis)                     │
 │  └─> Monitoring Sidecar + Log Aggregation                      │
@@ -181,7 +181,7 @@ Plan: Scale to Wyoming devices + Proxmox services
 ### New IPs (Active):
 - **192.168.10.168** - Home Assistant (Proxmox VM) ✅ **SAME IP**
 - **192.168.10.20** - Mac Studio M4/64GB (gateway, orchestrator, models)
-- **192.168.10.29** - Mac mini M4/16GB (vector DB, cache, monitoring)
+- **192.168.10.181** - Mac mini M4/16GB (vector DB, cache, monitoring)
 - **192.168.10.50-59** - HA Voice preview devices (Wyoming satellites)
 - Existing Prometheus/Grafana infrastructure (no new IPs)
 
@@ -278,7 +278,7 @@ project-athena/
 - Twilio/SMS + email integration
 - Wire OpenAI Conversation (HA) → gateway
 
-**Mac mini (192.168.10.29):**
+**Mac mini (192.168.10.181):**
 - Vector DB (Qdrant/Weaviate)
 - Job queue (RQ/Celery) + cache (Redis)
 - Monitoring exporter
@@ -467,7 +467,7 @@ All sources have configurable providers, TTLs, and freshness labels:
 **Network:**
 - HA IP (192.168.10.168): Keep same ✅
 - Gateway IP (192.168.10.20): New allocation for Mac Studio ✅
-- Vector DB IP (192.168.10.29): New allocation for Mac mini ✅
+- Vector DB IP (192.168.10.181): New allocation for Mac mini ✅
 - Satellite IPs (192.168.10.50-59): New range ✅
 
 ## Success Criteria

@@ -27,7 +27,7 @@ Before beginning implementation, ensure you have:
 ### Hardware
 
 - [ ] **Mac Studio M4 (64GB RAM)** delivered and networked at 192.168.10.20
-- [ ] **Mac mini M4 (16GB RAM)** delivered and networked at 192.168.10.29
+- [ ] **Mac mini M4 (16GB RAM)** delivered and networked at 192.168.10.181
 - [ ] **Home Assistant** running on Proxmox VM at 192.168.10.168
 - [ ] **HA Voice preview device** (at least 1 for testing) at 192.168.10.50
 - [ ] Network connectivity between all devices (10GbE preferred for Mac Studio)
@@ -53,7 +53,7 @@ Before beginning implementation, ensure you have:
 ### Network Configuration
 
 - [ ] Static IP assigned to Mac Studio: 192.168.10.20
-- [ ] Static IP assigned to Mac mini: 192.168.10.29
+- [ ] Static IP assigned to Mac mini: 192.168.10.181
 - [ ] Firewall rules allow:
   - Mac Studio → Mac mini (Redis 6379, Qdrant 6333)
   - Home Assistant → Mac Studio (Gateway 8000)
@@ -97,7 +97,7 @@ pip install pytest pytest-asyncio black flake8 mypy
 
 ```bash
 # SSH to Mac mini
-ssh jstuart@192.168.10.29
+ssh jstuart@192.168.10.181
 
 # Install Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -159,8 +159,8 @@ OLLAMA_URL=http://localhost:11434
 LITELLM_MASTER_KEY=sk-1234567890abcdef  # Generate random key
 
 # Vector DB & Cache
-QDRANT_URL=http://192.168.10.29:6333
-REDIS_URL=redis://192.168.10.29:6379/0
+QDRANT_URL=http://192.168.10.181:6333
+REDIS_URL=redis://192.168.10.181:6379/0
 
 # RAG API Keys
 OPENWEATHER_API_KEY=your_key_here
@@ -195,7 +195,7 @@ LOG_LEVEL=INFO
 
 ```bash
 # SSH to Mac mini
-ssh jstuart@192.168.10.29
+ssh jstuart@192.168.10.181
 
 # Create deployment directory
 mkdir -p ~/athena/mac-mini
@@ -263,7 +263,7 @@ cat > scripts/init_qdrant.py <<'EOF'
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
-client = QdrantClient(url="http://192.168.10.29:6333")
+client = QdrantClient(url="http://192.168.10.181:6333")
 
 # Create collection
 client.create_collection(
@@ -283,9 +283,9 @@ python scripts/init_qdrant.py
 
 #### Step 1.3: Success Criteria
 
-- [ ] Qdrant accessible: `curl http://192.168.10.29:6333/healthz`
-- [ ] Redis accessible: `redis-cli -h 192.168.10.29 PING`
-- [ ] Qdrant collection created: Check via web UI http://192.168.10.29:6333/dashboard
+- [ ] Qdrant accessible: `curl http://192.168.10.181:6333/healthz`
+- [ ] Redis accessible: `redis-cli -h 192.168.10.181 PING`
+- [ ] Qdrant collection created: Check via web UI http://192.168.10.181:6333/dashboard
 - [ ] Both services survive restart: `docker compose restart` then verify
 
 ---
@@ -473,7 +473,7 @@ services:
       - "8010:8010"
     environment:
       OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY}
-      REDIS_URL: redis://192.168.10.29:6379/0
+      REDIS_URL: redis://192.168.10.181:6379/0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
 
@@ -483,7 +483,7 @@ services:
       - "8011:8011"
     environment:
       FLIGHTAWARE_API_KEY: ${FLIGHTAWARE_API_KEY}
-      REDIS_URL: redis://192.168.10.29:6379/0
+      REDIS_URL: redis://192.168.10.181:6379/0
 
   rag-sports:
     image: athena-rag-sports
@@ -491,7 +491,7 @@ services:
       - "8012:8012"
     environment:
       THESPORTSDB_API_KEY: ${THESPORTSDB_API_KEY}
-      REDIS_URL: redis://192.168.10.29:6379/0
+      REDIS_URL: redis://192.168.10.181:6379/0
 EOF
 
 # Start RAG services
@@ -568,7 +568,7 @@ docker run -d \
   -p 8001:8001 \
   -e LITELLM_URL=http://host.docker.internal:8000 \
   -e LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY} \
-  -e REDIS_URL=redis://192.168.10.29:6379/0 \
+  -e REDIS_URL=redis://192.168.10.181:6379/0 \
   --add-host host.docker.internal:host-gateway \
   athena-orchestrator
 
@@ -831,8 +831,8 @@ cat > docs/operations/DEPLOYMENT.md <<'EOF'
 - Gateway: http://192.168.10.20:8000
 - Orchestrator: http://192.168.10.20:8001
 - RAG Services: http://192.168.10.20:8010-8012
-- Qdrant: http://192.168.10.29:6333
-- Redis: redis://192.168.10.29:6379
+- Qdrant: http://192.168.10.181:6333
+- Redis: redis://192.168.10.181:6379
 
 ## Start All Services
 \`\`\`bash
@@ -883,7 +883,7 @@ docker logs athena-orchestrator
 curl http://localhost:8000/health
 
 # Verify Redis accessible
-redis-cli -h 192.168.10.29 PING
+redis-cli -h 192.168.10.181 PING
 
 # Restart orchestrator
 docker compose restart orchestrator
@@ -944,7 +944,7 @@ cat > README.md <<'EOF'
 ## Architecture
 
 - **Mac Studio M4** @ 192.168.10.20 - Gateway, Orchestrator, LLMs, RAG
-- **Mac mini M4** @ 192.168.10.29 - Vector DB, Cache, Monitoring
+- **Mac mini M4** @ 192.168.10.181 - Vector DB, Cache, Monitoring
 - **Home Assistant** @ 192.168.10.168 - Voice pipelines, device control
 
 ## Quick Start
@@ -1003,10 +1003,10 @@ EOF
 ### Infrastructure
 
 - [ ] Mac Studio accessible at 192.168.10.20
-- [ ] Mac mini accessible at 192.168.10.29
+- [ ] Mac mini accessible at 192.168.10.181
 - [ ] All services running: `docker compose ps`
-- [ ] Qdrant healthy: `curl http://192.168.10.29:6333/healthz`
-- [ ] Redis healthy: `redis-cli -h 192.168.10.29 PING`
+- [ ] Qdrant healthy: `curl http://192.168.10.181:6333/healthz`
+- [ ] Redis healthy: `redis-cli -h 192.168.10.181 PING`
 
 ### Services
 

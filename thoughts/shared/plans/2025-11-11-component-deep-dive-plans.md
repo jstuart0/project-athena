@@ -756,7 +756,7 @@ redis_client = None
 @app.on_event("startup")
 async def startup():
     global redis_client
-    redis_url = os.getenv('REDIS_URL', 'redis://192.168.10.29:6379/0')
+    redis_url = os.getenv('REDIS_URL', 'redis://192.168.10.181:6379/0')
     redis_client = redis.from_url(redis_url, decode_responses=True)
 
 @app.on_event("shutdown")
@@ -1121,7 +1121,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 import uuid
 
-client = QdrantClient(url="http://192.168.10.29:6333")
+client = QdrantClient(url="http://192.168.10.181:6333")
 
 # Create collection
 client.create_collection(

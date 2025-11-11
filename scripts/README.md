@@ -27,7 +27,7 @@ bash scripts/verify_day1.sh
 
 **Example output:**
 ```
-[PASS] Mac mini is reachable at 192.168.10.29
+[PASS] Mac mini is reachable at 192.168.10.181
 [PASS] Ollama installed: ollama version 0.1.14
 [FAIL] Small model not found: phi3:mini-q8
 [WARN] OpenWeatherMap API key not configured
@@ -79,7 +79,7 @@ python3 scripts/init_qdrant.py
 **Requirements:**
 - Python 3.x
 - `qdrant-client` library: `pip install qdrant-client`
-- Qdrant running at http://192.168.10.29:6333
+- Qdrant running at http://192.168.10.181:6333
 
 **What it does:**
 1. Connects to Qdrant
@@ -92,7 +92,7 @@ python3 scripts/init_qdrant.py
 - Collection: `athena_knowledge`
 - Vector size: 384 (all-MiniLM-L6-v2)
 - Distance: Cosine similarity
-- URL: Set via `QDRANT_URL` env var or defaults to `http://192.168.10.29:6333`
+- URL: Set via `QDRANT_URL` env var or defaults to `http://192.168.10.181:6333`
 
 ---
 
@@ -126,10 +126,10 @@ nano config/env/.env
 **3. Deploy Mac mini Services**
 ```bash
 # Copy docker-compose to Mac mini
-scp deployment/mac-mini/docker-compose.yml user@192.168.10.29:~/athena/mac-mini/
+scp deployment/mac-mini/docker-compose.yml user@192.168.10.181:~/athena/mac-mini/
 
 # SSH to Mac mini and deploy
-ssh user@192.168.10.29
+ssh user@192.168.10.181
 cd ~/athena/mac-mini
 docker compose up -d
 ```
@@ -176,7 +176,7 @@ pip install qdrant-client
 
 ```bash
 # Verify Qdrant is running on Mac mini
-curl http://192.168.10.29:6333/healthz
+curl http://192.168.10.181:6333/healthz
 
 # If not running, deploy services
 cd deployment/mac-mini

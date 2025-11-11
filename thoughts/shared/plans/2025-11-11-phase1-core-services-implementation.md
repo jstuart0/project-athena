@@ -127,7 +127,7 @@ apps/
   ollama/            → LLM inference (port 11434)
 ```
 
-**Mac mini (192.168.10.29) Running:**
+**Mac mini (192.168.10.181) Running:**
 ```
 services/
   qdrant/            → Vector DB (port 6333)
@@ -160,8 +160,8 @@ services/
 
 - [ ] `curl http://192.168.10.20:8000/v1/chat/completions` returns valid OpenAI-compatible response
 - [ ] `curl http://192.168.10.20:8001/health` returns healthy status
-- [ ] `curl http://192.168.10.29:6333/healthz` returns Qdrant healthy
-- [ ] `redis-cli -h 192.168.10.29 PING` returns PONG
+- [ ] `curl http://192.168.10.181:6333/healthz` returns Qdrant healthy
+- [ ] `redis-cli -h 192.168.10.181 PING` returns PONG
 - [ ] HA Assist Pipeline test returns answer (HA UI → Settings → Voice Assistants → Test Pipeline)
 - [ ] Prometheus scrapes all service metrics successfully
 - [ ] Docker containers start cleanly: `docker compose up -d`
@@ -333,11 +333,11 @@ OLLAMA_MEDIUM_MODEL=llama3.1:8b-q4
 OLLAMA_LARGE_MODEL=llama3.1:13b-q4
 
 # Vector DB
-QDRANT_URL=http://192.168.10.29:6333
+QDRANT_URL=http://192.168.10.181:6333
 QDRANT_COLLECTION=athena_knowledge
 
 # Redis
-REDIS_URL=redis://192.168.10.29:6379/0
+REDIS_URL=redis://192.168.10.181:6379/0
 
 # RAG API Keys
 OPENWEATHER_API_KEY=your_key_here
@@ -828,7 +828,7 @@ import redis.asyncio as redis
 app = FastAPI(title="Weather RAG Service", version="1.0.0")
 
 # Initialize Redis cache
-redis_client = redis.from_url(os.getenv('REDIS_URL', 'redis://192.168.10.29:6379/0'))
+redis_client = redis.from_url(os.getenv('REDIS_URL', 'redis://192.168.10.181:6379/0'))
 
 class WeatherQuery(BaseModel):
     query: str
@@ -957,7 +957,7 @@ services:
       - "8010:8010"
     environment:
       OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY}
-      REDIS_URL: redis://192.168.10.29:6379/0
+      REDIS_URL: redis://192.168.10.181:6379/0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
       interval: 30s
@@ -972,7 +972,7 @@ services:
       - "8011:8011"
     environment:
       FLIGHTAWARE_API_KEY: ${FLIGHTAWARE_API_KEY}
-      REDIS_URL: redis://192.168.10.29:6379/0
+      REDIS_URL: redis://192.168.10.181:6379/0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8011/health"]
       interval: 30s
@@ -987,7 +987,7 @@ services:
       - "8012:8012"
     environment:
       THESPORTSDB_API_KEY: ${THESPORTSDB_API_KEY}
-      REDIS_URL: redis://192.168.10.29:6379/0
+      REDIS_URL: redis://192.168.10.181:6379/0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8012/health"]
       interval: 30s
@@ -1022,7 +1022,7 @@ services:
 
 ```bash
 # SSH to Mac mini
-ssh jstuart@192.168.10.29
+ssh jstuart@192.168.10.181
 
 # Install Docker Desktop for Mac or use Homebrew
 brew install docker docker-compose
@@ -1082,7 +1082,7 @@ volumes:
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
-client = QdrantClient(url="http://192.168.10.29:6333")
+client = QdrantClient(url="http://192.168.10.181:6333")
 
 # Create collection for knowledge vectors
 client.create_collection(
@@ -1100,13 +1100,13 @@ print("Qdrant collection 'athena_knowledge' created successfully")
 
 **Automated Verification:**
 - [ ] Services start on Mac mini: `docker compose up -d`
-- [ ] Qdrant health check: `curl http://192.168.10.29:6333/healthz`
-- [ ] Redis health check: `redis-cli -h 192.168.10.29 PING`
+- [ ] Qdrant health check: `curl http://192.168.10.181:6333/healthz`
+- [ ] Redis health check: `redis-cli -h 192.168.10.181 PING`
 - [ ] Qdrant collection created: `python scripts/init_qdrant.py`
-- [ ] Redis memory limit enforced: `redis-cli -h 192.168.10.29 INFO memory | grep maxmemory`
+- [ ] Redis memory limit enforced: `redis-cli -h 192.168.10.181 INFO memory | grep maxmemory`
 
 **Manual Verification:**
-- [ ] Qdrant web UI accessible: http://192.168.10.29:6333/dashboard
+- [ ] Qdrant web UI accessible: http://192.168.10.181:6333/dashboard
 - [ ] Redis accepts connections from Mac Studio
 - [ ] Storage volumes persist after restart
 
@@ -1227,8 +1227,8 @@ services:
     environment:
       LITELLM_URL: http://gateway:8000
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
-      REDIS_URL: redis://192.168.10.29:6379/0
-      QDRANT_URL: http://192.168.10.29:6333
+      REDIS_URL: redis://192.168.10.181:6379/0
+      QDRANT_URL: http://192.168.10.181:6333
     depends_on:
       - gateway
     healthcheck:
@@ -1290,7 +1290,7 @@ source config/env/.env
 
 # Deploy Mac mini services
 echo "1. Deploying Mac mini services (Qdrant + Redis)..."
-ssh jstuart@192.168.10.29 "cd ~/athena/mac-mini && docker compose up -d"
+ssh jstuart@192.168.10.181 "cd ~/athena/mac-mini && docker compose up -d"
 
 # Initialize Qdrant collection
 echo "2. Initializing Qdrant collection..."

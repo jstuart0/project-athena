@@ -134,11 +134,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with Pr
 
 ### Key Athena IPs
 
+**Mac Studio/mini (Phase 1 - NEW):**
+- 192.168.10.20 - Mac Studio M4 64GB (Gateway, Orchestrator, LLMs, RAG services)
+- 192.168.10.181 - Mac mini M4 16GB (Qdrant vector DB, Redis cache)
+
 **Jetson Devices:**
-- 192.168.10.62 - jetson-01 (Athena Lite, wake word detection)
+- 192.168.10.62 - jetson-01 (Athena Lite proof-of-concept, archived)
 - 192.168.10.63 - jetson-02 (planned, load balancing)
 
 **Home Assistant:**
+- 192.168.10.168 - Home Assistant server
 - https://ha.xmojo.net - Home Assistant (domain-based access)
 
 **Planned Wyoming Devices:**
