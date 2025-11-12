@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Athena - Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { margin-bottom: 10px; color: #fff; }
+        h2 { font-size: 18px; margin-bottom: 15px; color: #fff; }
+        h3 { font-size: 14px; margin-bottom: 10px; color: #ccc; font-weight: 600; }
+        .subtitle { color: #888; margin-bottom: 30px; }
+        .status-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .service-card {
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .service-card.healthy { border-left: 4px solid #4caf50; }
+        .service-card.unhealthy { border-left: 4px solid #f44336; }
+        .service-name { font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+        .service-status { font-size: 14px; color: #888; }
+        .service-port { font-size: 12px; color: #666; }
+        .service-host {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid #333;
+        }
+        .health-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .health-indicator.healthy { background: #4caf50; }
+        .health-indicator.unhealthy { background: #f44336; }
+        .overall-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-box {
+            flex: 1;
+            min-width: 150px;
+            background: #222;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-value { font-size: 32px; font-weight: 700; margin-bottom: 5px; }
+        .stat-label { font-size: 14px; color: #888; }
+        .refresh-btn {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 20px;
+            margin-right: 10px;
+        }
+        .refresh-btn:hover { background: #1565c0; }
+        .refresh-btn:active { background: #0d47a1; }
+        .loading { text-align: center; padding: 40px; color: #888; }
+        .error { background: #3a1919; border: 1px solid #5c2020; color: #ff9999; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+
+        /* Test Query Interface */
+        .test-query-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .query-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .query-input {
+            flex: 1;
+            min-width: 250px;
+            background: #222;
+            border: 1px solid #444;
+            color: #e0e0e0;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        .query-input:focus {
+            outline: none;
+            border-color: #1976d2;
+            background: #2a2a2a;
+        }
+        .query-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .query-btn:hover { background: #45a049; }
+        .query-btn:active { background: #397d33; }
+        .query-btn:disabled { background: #666; cursor: not-allowed; opacity: 0.6; }
+        .query-result {
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .query-result.success { border-left: 4px solid #4caf50; }
+        .query-result.error { border-left: 4px solid #f44336; color: #ff9999; }
+        .query-result.loading { color: #888; }
+        .query-result pre {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Configuration Panel */
+        .config-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .config-panel-header:hover { color: #fff; }
+        .config-toggle {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+        }
+        .config-panel-content {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a2a;
+            font-size: 14px;
+        }
+        .config-item:last-child { border-bottom: none; }
+        .config-label { color: #888; }
+        .config-value { color: #fff; font-family: 'Monaco', monospace; font-weight: 600; }
+        .config-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .config-input {
+            background: #222;
+            border: 1px solid #444;
+            color: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100px;
+        }
+        .config-input:focus {
+            outline: none;
+            border-color: #1976d2;
+        }
+
+        /* Service Group Sections */
+        .service-group {
+            margin-bottom: 20px;
+        }
+        .service-group-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #333;
+        }
+        .service-group-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            flex: 1;
+        }
+        .service-group-badge {
+            background: #1976d2;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .service-group-badge.healthy {
+            background: #4caf50;
+        }
+        .service-group-badge.degraded {
+            background: #ff9800;
+        }
+        .service-group-badge.unhealthy {
+            background: #f44336;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .overall-stats {
+                flex-direction: column;
+            }
+            .stat-box {
+                min-width: auto;
+            }
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            .query-input-group {
+                flex-direction: column;
+            }
+            .query-input {
+                min-width: auto;
+            }
+            .config-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .config-input-group {
+                width: 100%;
+                margin-top: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Project Athena</h1>
+        <p class="subtitle">Admin Dashboard - Thor Kubernetes Cluster</p>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button class="refresh-btn" onclick="loadStatus()">🔄 Refresh Status</button>
+        </div>
+
+        <div id="error-container"></div>
+
+        <div id="stats-container" style="display: none;">
+            <div class="overall-stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-healthy">-</div>
+                    <div class="stat-label">Healthy Services</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-total">-</div>
+                    <div class="stat-label">Total Services</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-health">-</div>
+                    <div class="stat-label">Overall Health</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Query Interface -->
+        <div class="test-query-card">
+            <h2>Test Query Interface</h2>
+            <p style="color: #888; font-size: 14px; margin-bottom: 15px;">Send a test query to the orchestrator and view the response</p>
+            <div class="query-input-group">
+                <input
+                    type="text"
+                    class="query-input"
+                    id="test-query-input"
+                    placeholder="Enter test query (e.g., 'What is the weather?')"
+                    onkeypress="if (event.key === 'Enter') testQuery()"
+                >
+                <button class="query-btn" onclick="testQuery()" id="test-query-btn">Send Query</button>
+            </div>
+            <div id="query-result-container" style="display: none;">
+                <div id="query-result" class="query-result">
+                    <pre id="query-result-text"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Panel -->
+        <div class="status-card">
+            <div class="config-panel-header" onclick="toggleConfigPanel()">
+                <h2 style="margin: 0;">⚙️ Configuration</h2>
+                <span class="config-toggle" id="config-toggle">▼</span>
+            </div>
+            <div id="config-panel-content" class="config-panel-content">
+                <div class="config-item">
+                    <span class="config-label">Mac Studio IP</span>
+                    <span class="config-value">192.168.10.167</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Mac mini IP</span>
+                    <span class="config-value">192.168.10.181</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Auto-Refresh Interval</span>
+                    <div class="config-input-group">
+                        <span class="config-value" id="refresh-interval-display">30s</span>
+                        <span style="color: #666; font-size: 12px;">(View source to modify)</span>
+                    </div>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Service Count</span>
+                    <span class="config-value" id="config-service-count">-</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Status Summary</span>
+                    <span class="config-value" id="config-status-summary">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services by Group -->
+        <div id="services-by-group-container"></div>
+
+        <!-- Fallback Service Status (for backward compatibility) -->
+        <div class="status-card" id="legacy-status-card" style="display: none;">
+            <h2>Service Status</h2>
+            <div id="services-container" class="status-grid">
+                <div class="loading">Loading services...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';  // Proxied through ingress
+        const REFRESH_INTERVAL = 30000; // 30 seconds
+
+        // Service to host mapping
+        const serviceHostMap = {
+            // Mac Studio services
+            'gateway': 'Mac Studio',
+            'orchestrator': 'Mac Studio',
+            'rag': 'Mac Studio',
+            'rag-service': 'Mac Studio',
+            'ollama': 'Mac Studio',
+            'whisper': 'Mac Studio',
+
+            // Mac mini services
+            'qdrant': 'Mac mini',
+            'redis': 'Mac mini',
+            'vector-db': 'Mac mini',
+            'cache': 'Mac mini'
+        };
+
+        function getServiceHost(serviceName) {
+            const nameLower = serviceName.toLowerCase();
+            for (const [key, host] of Object.entries(serviceHostMap)) {
+                if (nameLower.includes(key)) {
+                    return host;
+                }
+            }
+            return 'Unknown';
+        }
+
+        function groupServices(services) {
+            const grouped = {
+                'Mac Studio Services': [],
+                'Mac mini Services': [],
+                'Other Services': []
+            };
+
+            services.forEach(service => {
+                const host = getServiceHost(service.name);
+                if (host === 'Mac Studio') {
+                    grouped['Mac Studio Services'].push(service);
+                } else if (host === 'Mac mini') {
+                    grouped['Mac mini Services'].push(service);
+                } else {
+                    grouped['Other Services'].push(service);
+                }
+            });
+
+            return grouped;
+        }
+
+        function getGroupHealth(services) {
+            if (services.length === 0) return 'unknown';
+            const allHealthy = services.every(s => s.healthy);
+            if (allHealthy) return 'healthy';
+            const someHealthy = services.some(s => s.healthy);
+            return someHealthy ? 'degraded' : 'unhealthy';
+        }
+
+        async function loadStatus() {
+            const errorContainer = document.getElementById('error-container');
+            const statsContainer = document.getElementById('stats-container');
+            const servicesGroupContainer = document.getElementById('services-by-group-container');
+
+            try {
+                errorContainer.innerHTML = '';
+
+                const response = await fetch(`${API_BASE}/status`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+
+                // Update stats
+                document.getElementById('stat-healthy').textContent = data.healthy_services;
+                document.getElementById('stat-total').textContent = data.total_services;
+                document.getElementById('stat-health').textContent = data.overall_health.toUpperCase();
+                document.getElementById('stat-health').style.color =
+                    data.overall_health === 'healthy' ? '#4caf50' :
+                    data.overall_health === 'degraded' ? '#ff9800' : '#f44336';
+                statsContainer.style.display = 'block';
+
+                // Update configuration panel
+                document.getElementById('config-service-count').textContent = data.total_services;
+                document.getElementById('config-status-summary').textContent =
+                    `${data.healthy_services}/${data.total_services} healthy`;
+
+                // Group and render services
+                const grouped = groupServices(data.services);
+                let html = '';
+
+                Object.entries(grouped).forEach(([groupName, services]) => {
+                    if (services.length === 0) return;
+
+                    const groupHealth = getGroupHealth(services);
+                    const healthyCount = services.filter(s => s.healthy).length;
+
+                    html += `
+                        <div class="status-card">
+                            <div class="service-group-header">
+                                <span class="service-group-title">${groupName}</span>
+                                <span class="service-group-badge ${groupHealth}">
+                                    ${healthyCount}/${services.length} healthy
+                                </span>
+                            </div>
+                            <div class="status-grid">
+                                ${services.map(service => `
+                                    <div class="service-card ${service.healthy ? 'healthy' : 'unhealthy'}">
+                                        <div class="service-name">
+                                            <span class="health-indicator ${service.healthy ? 'healthy' : 'unhealthy'}"></span>
+                                            ${service.name}
+                                        </div>
+                                        <div class="service-status">${service.status}</div>
+                                        <div class="service-port">Port: ${service.port}</div>
+                                        ${service.version !== 'unknown' ? `<div class="service-port">v${service.version}</div>` : ''}
+                                        <div class="service-host">Host: ${getServiceHost(service.name)}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                servicesGroupContainer.innerHTML = html;
+
+            } catch (error) {
+                errorContainer.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> ${error.message}<br>
+                        <small>Make sure the backend API is accessible</small>
+                    </div>
+                `;
+                servicesGroupContainer.innerHTML = '';
+            }
+        }
+
+        async function testQuery() {
+            const queryInput = document.getElementById('test-query-input');
+            const resultContainer = document.getElementById('query-result-container');
+            const resultDiv = document.getElementById('query-result');
+            const resultText = document.getElementById('query-result-text');
+            const testQueryBtn = document.getElementById('test-query-btn');
+            const query = queryInput.value.trim();
+
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            try {
+                testQueryBtn.disabled = true;
+                queryInput.disabled = true;
+
+                resultContainer.style.display = 'block';
+                resultDiv.className = 'query-result loading';
+                resultText.textContent = 'Sending query...';
+
+                const response = await fetch(`${API_BASE}/test-query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    resultDiv.className = 'query-result error';
+                    resultText.textContent = `Error: ${data.error || 'Unknown error'}\n\nDetails:\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'query-result success';
+                    resultText.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'query-result error';
+                resultText.textContent = `Error: ${error.message}\n\nMake sure the orchestrator API is accessible at ${API_BASE}/test-query`;
+            } finally {
+                testQueryBtn.disabled = false;
+                queryInput.disabled = false;
+            }
+        }
+
+        function toggleConfigPanel() {
+            const content = document.getElementById('config-panel-content');
+            const toggle = document.getElementById('config-toggle');
+            const isVisible = content.style.display !== 'none';
+
+            content.style.display = isVisible ? 'none' : 'block';
+            toggle.textContent = isVisible ? '▶' : '▼';
+        }
+
+        // Load on page load
+        loadStatus();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadStatus, REFRESH_INTERVAL);
+    </script>
+</body>
+</html>
