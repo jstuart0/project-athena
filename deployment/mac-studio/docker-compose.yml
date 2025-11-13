@@ -1,0 +1,248 @@
+# Project Athena - Mac Studio Services
+# Deployment configuration for AI processing layer services
+# Hardware: Mac Studio M4 64GB - 192.168.10.167
+
+services:
+  # ===========================================================================
+  # Piper TTS - Text-to-Speech Service
+  # ===========================================================================
+  piper-tts:
+    image: rhasspy/wyoming-piper:latest
+    container_name: athena-piper-tts
+    restart: unless-stopped
+
+    # Wyoming protocol port for TTS
+    ports:
+      - "10200:10200"
+
+    # Voice models and configuration
+    volumes:
+      - ./piper/data:/data
+
+    # Command-line arguments for Wyoming Piper
+    command: >
+      --voice en_US-lessac-medium
+      --data-dir /data
+      --length-scale 1.0
+      --noise-scale 0.667
+      --noise-w-scale 0.8
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10200/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits (Mac Studio has 64GB RAM)
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - athena
+
+  # ===========================================================================
+  # Faster-Whisper STT - Speech-to-Text Service
+  # ===========================================================================
+  whisper-stt:
+    image: rhasspy/wyoming-whisper:latest
+    container_name: athena-whisper-stt
+    restart: unless-stopped
+
+    # Wyoming protocol port for STT
+    ports:
+      - "10300:10300"
+
+    # Model storage
+    volumes:
+      - ./whisper/data:/data
+      - ./whisper/models:/models
+
+    # Environment configuration
+    environment:
+      - TZ=America/New_York
+      # Whisper model configuration
+      - WHISPER_MODEL=tiny-int8             # Model size (tiny-int8, base-int8, small-int8)
+      - WHISPER_BEAM_SIZE=5                 # Beam size for decoding
+      - WHISPER_LANGUAGE=en                 # Language code
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10300/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - athena
+
+  # ===========================================================================
+  # Gateway Service - Main API Entry Point
+  # ===========================================================================
+  gateway:
+    image: python:3.11-slim
+    container_name: athena-gateway
+    restart: unless-stopped
+
+    # Main API port
+    ports:
+      - "8000:8000"
+
+    # Application code and configuration
+    volumes:
+      - ../../src/gateway:/app
+      - ./gateway/config:/config
+
+    working_dir: /app
+
+    # Install dependencies and run
+    command: >
+      bash -c "
+        pip install --no-cache-dir -r requirements.txt &&
+        python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+    # Environment configuration
+    environment:
+      - TZ=America/New_York
+      - PYTHONUNBUFFERED=1
+      # Service URLs
+      - STT_SERVICE_URL=http://whisper-stt:10300
+      - TTS_SERVICE_URL=http://piper-tts:10200
+      - ORCHESTRATOR_SERVICE_URL=http://orchestrator:8001
+      - LLM_SERVICE_URL=http://host.docker.internal:11434  # Ollama on host
+      # RAG service URLs
+      - RAG_WEATHER_URL=http://host.docker.internal:8010
+      - RAG_AIRPORTS_URL=http://host.docker.internal:8011
+      - RAG_FLIGHTS_URL=http://host.docker.internal:8012
+      # Qdrant vector DB (on Mac mini)
+      - QDRANT_URL=http://192.168.10.181:6333
+      # Redis cache (on Mac mini)
+      - REDIS_URL=redis://192.168.10.181:6379
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - athena
+
+    depends_on:
+      - piper-tts
+      - whisper-stt
+
+  # ===========================================================================
+  # Orchestrator Service - Request Coordination
+  # ===========================================================================
+  orchestrator:
+    image: python:3.11-slim
+    container_name: athena-orchestrator
+    restart: unless-stopped
+
+    # Orchestrator API port
+    ports:
+      - "8001:8001"
+
+    # Application code and configuration
+    volumes:
+      - ../../src/orchestrator:/app
+      - ./orchestrator/config:/config
+
+    working_dir: /app
+
+    # Install dependencies and run
+    command: >
+      bash -c "
+        pip install --no-cache-dir -r requirements.txt &&
+        python -m uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+      "
+
+    # Environment configuration
+    environment:
+      - TZ=America/New_York
+      - PYTHONUNBUFFERED=1
+      # Service URLs
+      - LLM_SERVICE_URL=http://host.docker.internal:11434
+      - RAG_WEATHER_URL=http://host.docker.internal:8010
+      - RAG_AIRPORTS_URL=http://host.docker.internal:8011
+      - RAG_FLIGHTS_URL=http://host.docker.internal:8012
+      - QDRANT_URL=http://192.168.10.181:6333
+      - REDIS_URL=redis://192.168.10.181:6379
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - athena
+
+networks:
+  athena:
+    driver: bridge
+    name: athena-network

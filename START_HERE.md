@@ -150,7 +150,7 @@ open thoughts/shared/plans/2025-11-11-component-deep-dive-plans.md
 
 ### Priority 2 (Get This Week)
 - **FlightAware** - Free tier, may take 1-2 days for activation
-  - Go to: https://www.flightaware.com/commercial/flightxml/
+  - Go to: https://www.flightaware.com/what commercial/flightxml/
   - Get key for airport queries
 
 - **TheSportsDB** - Free tier or $2/month Patreon

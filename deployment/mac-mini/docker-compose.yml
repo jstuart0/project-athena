@@ -3,8 +3,8 @@ version: '3.8'
 # Project Athena - Mac mini Services
 # Deployment: Qdrant (vector database) + Redis (cache)
 #
-# Deploy on Mac mini @ 192.168.10.29:
-#   cd ~/athena/mac-mini
+# Deploy on Mac mini @ 192.168.10.181:
+#   cd ~/mac-mini
 #   docker compose up -d
 #
 # Verify:

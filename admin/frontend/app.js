@@ -1,0 +1,2203 @@
+/**
+ * Project Athena - Admin Interface Frontend
+ * Phase 2: Complete Management Interface
+ */
+
+// Configuration
+const API_BASE = window.location.origin;
+let authToken = null;
+let currentUser = null;
+
+// Initialize app
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuthStatus();
+    loadStatus(); // Load initial dashboard
+});
+
+// ============================================================================
+// Authentication
+// ============================================================================
+
+function checkAuthStatus() {
+    // Check for token in URL (from auth callback)
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    if (token) {
+        authToken = token;
+        localStorage.setItem('auth_token', token);
+        // Remove token from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        // Check localStorage
+        authToken = localStorage.getItem('auth_token');
+    }
+
+    if (authToken) {
+        loadCurrentUser();
+    } else {
+        updateAuthUI(false);
+    }
+}
+
+async function loadCurrentUser() {
+    try {
+        const response = await fetch(`${API_BASE}/auth/me`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            currentUser = await response.json();
+            updateAuthUI(true);
+        } else {
+            // Token invalid
+            authToken = null;
+            localStorage.removeItem('auth_token');
+            updateAuthUI(false);
+        }
+    } catch (error) {
+        console.error('Failed to load user:', error);
+        updateAuthUI(false);
+    }
+}
+
+function updateAuthUI(authenticated) {
+    const authSection = document.getElementById('auth-section');
+
+    if (authenticated && currentUser) {
+        authSection.innerHTML = `
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <div class="text-sm font-medium text-white">${currentUser.full_name || currentUser.username}</div>
+                    <div class="text-xs text-gray-400">Role: ${currentUser.role}</div>
+                </div>
+                <button onclick="handleAuth()"
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    Logout
+                </button>
+            </div>
+        `;
+    } else {
+        authSection.innerHTML = `
+            <button onclick="handleAuth()" id="auth-button"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                Login
+            </button>
+        `;
+    }
+}
+
+function handleAuth() {
+    if (authToken) {
+        // Logout
+        authToken = null;
+        currentUser = null;
+        localStorage.removeItem('auth_token');
+        window.location.href = `${API_BASE}/api/auth/logout`;
+    } else {
+        // Login via Authentik OIDC
+        window.location.href = `${API_BASE}/api/auth/login`;
+    }
+}
+
+// ============================================================================
+// OIDC Settings Management
+// ============================================================================
+
+async function loadOIDCSettings() {
+    try {
+        const response = await fetch(`${API_BASE}/api/settings/oidc`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const settings = await response.json();
+
+            // Populate form fields
+            document.getElementById('oidc-provider-url').value = settings.provider_url || '';
+            document.getElementById('oidc-client-id').value = settings.client_id || '';
+            // Don't populate client secret for security
+            document.getElementById('oidc-client-secret').value = '';
+            document.getElementById('oidc-redirect-uri').value = settings.redirect_uri || `${window.location.origin}/api/auth/callback`;
+
+            // Show status
+            showOIDCStatus('Settings loaded successfully', 'success');
+        } else {
+            throw new Error('Failed to load OIDC settings');
+        }
+    } catch (error) {
+        console.error('Failed to load OIDC settings:', error);
+        showOIDCStatus('Failed to load settings', 'error');
+    }
+}
+
+async function saveOIDCSettings() {
+    const settings = {
+        provider_url: document.getElementById('oidc-provider-url').value,
+        client_id: document.getElementById('oidc-client-id').value,
+        client_secret: document.getElementById('oidc-client-secret').value,
+        redirect_uri: document.getElementById('oidc-redirect-uri').value
+    };
+
+    // Validate required fields
+    if (!settings.provider_url || !settings.client_id) {
+        showOIDCStatus('Provider URL and Client ID are required', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/settings/oidc`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
+
+        if (response.ok) {
+            showOIDCStatus('Settings saved successfully! Backend will restart to apply changes.', 'success');
+            // Clear the client secret field after save
+            document.getElementById('oidc-client-secret').value = '';
+        } else {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to save settings');
+        }
+    } catch (error) {
+        console.error('Failed to save OIDC settings:', error);
+        showOIDCStatus(`Failed to save: ${error.message}`, 'error');
+    }
+}
+
+async function testOIDCConnection() {
+    showOIDCStatus('Testing connection...', 'info');
+
+    try {
+        const response = await fetch(`${API_BASE}/api/settings/oidc/test`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                provider_url: document.getElementById('oidc-provider-url').value,
+                client_id: document.getElementById('oidc-client-id').value
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showOIDCStatus(`✅ Connection successful! Provider: ${result.provider_name || 'Unknown'}`, 'success');
+        } else {
+            throw new Error(result.detail || 'Connection test failed');
+        }
+    } catch (error) {
+        console.error('OIDC connection test failed:', error);
+        showOIDCStatus(`❌ Connection failed: ${error.message}`, 'error');
+    }
+}
+
+function showOIDCStatus(message, type = 'info') {
+    const statusDiv = document.getElementById('oidc-status');
+
+    // Set color based on type
+    let colorClass = 'text-gray-400';
+    if (type === 'success') colorClass = 'text-green-400';
+    else if (type === 'error') colorClass = 'text-red-400';
+    else if (type === 'warning') colorClass = 'text-yellow-400';
+
+    statusDiv.className = `text-sm ${colorClass}`;
+    statusDiv.textContent = message;
+
+    // Clear status after 5 seconds
+    setTimeout(() => {
+        statusDiv.textContent = '';
+    }, 5000);
+}
+
+function getToken() {
+    return authToken || localStorage.getItem('auth_token');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============================================================================
+// API Client
+// ============================================================================
+
+async function apiRequest(endpoint, options = {}) {
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers
+    });
+
+    if (response.status === 401) {
+        // Unauthorized - redirect to login
+        authToken = null;
+        localStorage.removeItem('auth_token');
+        showError('Session expired. Please login again.');
+        updateAuthUI(false);
+        throw new Error('Unauthorized');
+    }
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+}
+
+// ============================================================================
+// Tab Navigation
+// ============================================================================
+
+function showTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('tab-active');
+        btn.classList.add('text-gray-400', 'hover:text-gray-200');
+    });
+
+    event.target.classList.add('tab-active');
+    event.target.classList.remove('text-gray-400', 'hover:text-gray-200');
+
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+
+    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+    // Load data for tab
+    switch(tabName) {
+        case 'dashboard':
+            loadStatus();
+            break;
+        case 'policies':
+            loadPolicies();
+            break;
+        case 'secrets':
+            loadSecrets();
+            break;
+        case 'devices':
+            loadDevices();
+            break;
+        case 'users':
+            loadUsers();
+            break;
+        case 'audit':
+            loadAuditLogs();
+            break;
+        case 'settings':
+            loadSettings();
+            break;
+        case 'rag-connectors':
+            loadConnectors();
+            break;
+        case 'voice-testing':
+            loadTestHistory();
+            break;
+    }
+}
+
+// ============================================================================
+// Dashboard Tab (Existing Service Status)
+// ============================================================================
+
+async function loadStatus() {
+    const errorContainer = document.getElementById('error-container');
+    const statsContainer = document.getElementById('stats-container');
+    const servicesContainer = document.getElementById('services-by-group-container');
+
+    errorContainer.innerHTML = '';
+
+    try {
+        const data = await apiRequest('/api/status');
+
+        // Update stats
+        document.getElementById('stat-healthy').textContent = data.healthy_services;
+        document.getElementById('stat-total').textContent = data.total_services;
+
+        const healthStat = document.getElementById('stat-health');
+        healthStat.textContent = data.overall_health.toUpperCase();
+        healthStat.className = `text-3xl font-bold ${
+            data.overall_health === 'healthy' ? 'text-green-400' :
+            data.overall_health === 'degraded' ? 'text-yellow-400' : 'text-red-400'
+        }`;
+
+        statsContainer.style.display = 'grid';
+
+        // Group services
+        const servicesByGroup = {
+            'Mac Studio': [],
+            'Mac mini': []
+        };
+
+        data.services.forEach(service => {
+            if (service.name.includes('studio')) {
+                servicesByGroup['Mac Studio'].push(service);
+            } else if (service.name.includes('mini')) {
+                servicesByGroup['Mac mini'].push(service);
+            }
+        });
+
+        // Render services by group
+        servicesContainer.innerHTML = Object.entries(servicesByGroup).map(([group, services]) => `
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-white mb-3">${group}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${services.map(service => `
+                        <div class="bg-dark-card border border-dark-border rounded-lg p-4">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-white">${service.name}</h4>
+                                    <p class="text-xs text-gray-400">Port ${service.port}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full ${
+                                        service.healthy ? 'bg-green-500' : 'bg-red-500'
+                                    }"></span>
+                                    <span class="text-xs ${
+                                        service.healthy ? 'text-green-400' : 'text-red-400'
+                                    }">${service.status}</span>
+                                </div>
+                            </div>
+                            ${service.version !== 'unknown' ? `
+                                <p class="text-xs text-gray-500">v${service.version}</p>
+                            ` : ''}
+                            ${service.error ? `
+                                <p class="text-xs text-red-400 mt-2">${service.error}</p>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        errorContainer.innerHTML = `
+            <div class="bg-red-900/20 border border-red-700/50 rounded-lg p-4 mb-4">
+                <p class="text-red-200">Failed to load system status: ${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+// ============================================================================
+// Policies Tab
+// ============================================================================
+
+async function loadPolicies() {
+    if (!authToken) {
+        document.getElementById('policies-container').innerHTML = `
+            <div class="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                <p class="text-yellow-200">Please login to manage policies</p>
+            </div>
+        `;
+        return;
+    }
+
+    try {
+        const policies = await apiRequest('/api/policies');
+
+        const container = document.getElementById('policies-container');
+
+        if (policies.length === 0) {
+            container.innerHTML = `
+                <div class="bg-dark-card border border-dark-border rounded-lg p-8 text-center">
+                    <p class="text-gray-400">No policies configured yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = policies.map(policy => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-white">${policy.mode.charAt(0).toUpperCase() + policy.mode.slice(1)} Mode</h3>
+                        <p class="text-sm text-gray-400 mt-1">${policy.description || 'No description'}</p>
+                        <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            <span>Mode: <span class="text-blue-400">${policy.mode}</span></span>
+                            <span>Version: ${policy.version}</span>
+                            <span>Created: ${new Date(policy.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${policy.active ?
+                            '<span class="px-2 py-1 bg-green-900/30 text-green-400 text-xs rounded">Active</span>' :
+                            '<span class="px-2 py-1 bg-gray-700 text-gray-400 text-xs rounded">Inactive</span>'
+                        }
+                        <button onclick="viewPolicyVersions(${policy.id})"
+                            class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors">
+                            Versions
+                        </button>
+                        <button onclick="editPolicy(${policy.id})"
+                            class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded transition-colors">
+                            Edit
+                        </button>
+                        <button onclick="deletePolicy(${policy.id}, '${policy.mode.charAt(0).toUpperCase() + policy.mode.slice(1)} Mode')"
+                            class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-dark-bg rounded p-3 text-xs">
+                    <pre class="text-gray-300 overflow-x-auto">${JSON.stringify(policy.config, null, 2)}</pre>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        showError(`Failed to load policies: ${error.message}`);
+    }
+}
+
+function showCreatePolicyModal() {
+    const modal = `
+        <div id="policy-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick="if(event.target.id==='policy-modal') closeModal()">
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <h2 class="text-xl font-semibold text-white mb-4">Create Policy</h2>
+                <form onsubmit="createPolicy(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+                        <input type="text" name="name" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                        <textarea name="description" rows="2"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Mode</label>
+                        <select name="mode" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500">
+                            <option value="fast">Fast (Phi-3 mini)</option>
+                            <option value="medium">Medium (Llama 3.1)</option>
+                            <option value="custom">Custom Configuration</option>
+                            <option value="rag">RAG with Knowledge Base</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Configuration (JSON)</label>
+                        <textarea name="config" rows="8" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white font-mono text-sm focus:outline-none focus:border-blue-500"
+                            placeholder='{"temperature": 0.7, "max_tokens": 500}'></textarea>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="active" id="policy-active" checked
+                            class="w-4 h-4 bg-dark-bg border-dark-border rounded">
+                        <label for="policy-active" class="text-sm text-gray-300">Active</label>
+                    </div>
+                    <div class="flex gap-2 pt-4">
+                        <button type="submit"
+                            class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                            Create Policy
+                        </button>
+                        <button type="button" onclick="closeModal('policy-modal')"
+                            class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    document.getElementById('modals-container').innerHTML = modal;
+}
+
+async function createPolicy(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    try {
+        const config = JSON.parse(formData.get('config'));
+
+        await apiRequest('/api/policies', {
+            method: 'POST',
+            body: JSON.stringify({
+                name: formData.get('name'),
+                description: formData.get('description'),
+                mode: formData.get('mode'),
+                config: config,
+                active: formData.get('active') === 'on'
+            })
+        });
+
+        closeModal();
+        loadPolicies();
+        showSuccess('Policy created successfully');
+    } catch (error) {
+        showError(`Failed to create policy: ${error.message}`);
+    }
+}
+
+async function deletePolicy(id, name) {
+    if (!confirm(`Delete policy "${name}"? This will soft-delete the policy (can be recovered).`)) {
+        return;
+    }
+
+    try {
+        await apiRequest(`/api/policies/${id}`, { method: 'DELETE' });
+        loadPolicies();
+        showSuccess('Policy deleted');
+    } catch (error) {
+        showError(`Failed to delete policy: ${error.message}`);
+    }
+}
+
+// ============================================================================
+// Secrets Tab
+// ============================================================================
+
+async function loadSecrets() {
+    if (!authToken) {
+        document.getElementById('secrets-container').innerHTML = `
+            <div class="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                <p class="text-yellow-200">Please login to manage secrets</p>
+            </div>
+        `;
+        return;
+    }
+
+    try {
+        const secrets = await apiRequest('/api/secrets');
+
+        const container = document.getElementById('secrets-container');
+
+        if (secrets.length === 0) {
+            container.innerHTML = `
+                <div class="bg-dark-card border border-dark-border rounded-lg p-8 text-center">
+                    <p class="text-gray-400">No secrets stored yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = secrets.map(secret => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-white">${secret.name}</h3>
+                        <p class="text-sm text-gray-400 mt-1">${secret.description || 'No description'}</p>
+                        <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            <span>Type: <span class="text-blue-400">${secret.secret_type}</span></span>
+                            <span>Updated: ${new Date(secret.updated_at).toLocaleDateString()}</span>
+                            ${secret.last_rotated ? `<span>Rotated: ${new Date(secret.last_rotated).toLocaleDateString()}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="revealSecret(${secret.id}, '${secret.name}')"
+                            class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs rounded transition-colors">
+                            Reveal
+                        </button>
+                        <button onclick="rotateSecret(${secret.id})"
+                            class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors">
+                            Rotate
+                        </button>
+                        <button onclick="deleteSecret(${secret.id}, '${secret.name}')"
+                            class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        showError(`Failed to load secrets: ${error.message}`);
+    }
+}
+
+function showCreateSecretModal() {
+    const modal = `
+        <div id="secret-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick="if(event.target.id==='secret-modal') closeModal()">
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-2xl w-full mx-4">
+                <h2 class="text-xl font-semibold text-white mb-4">Create Secret</h2>
+                <form onsubmit="createSecret(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+                        <input type="text" name="name" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Type</label>
+                        <select name="secret_type" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500">
+                            <option value="api_key">API Key</option>
+                            <option value="token">Token</option>
+                            <option value="password">Password</option>
+                            <option value="certificate">Certificate</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                        <textarea name="description" rows="2"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Secret Value</label>
+                        <textarea name="value" rows="4" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white font-mono text-sm focus:outline-none focus:border-blue-500"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Value will be encrypted before storage</p>
+                    </div>
+                    <div class="flex gap-2 pt-4">
+                        <button type="submit"
+                            class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                            Create Secret
+                        </button>
+                        <button type="button" onclick="closeModal('secret-modal')"
+                            class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    document.getElementById('modals-container').innerHTML = modal;
+}
+
+async function createSecret(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    try {
+        await apiRequest('/api/secrets', {
+            method: 'POST',
+            body: JSON.stringify({
+                name: formData.get('name'),
+                secret_type: formData.get('secret_type'),
+                description: formData.get('description'),
+                value: formData.get('value')
+            })
+        });
+
+        closeModal();
+        loadSecrets();
+        showSuccess('Secret created and encrypted successfully');
+    } catch (error) {
+        showError(`Failed to create secret: ${error.message}`);
+    }
+}
+
+async function revealSecret(id, name) {
+    const modal = `
+        <div id="reveal-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick="if(event.target.id==='reveal-modal') closeModal()">
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-2xl w-full mx-4">
+                <h2 class="text-xl font-semibold text-white mb-4">Reveal Secret: ${name}</h2>
+                <div class="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4 mb-4">
+                    <p class="text-yellow-200 text-sm">⚠️ This action will be logged in the audit trail</p>
+                </div>
+                <div id="secret-value-container" class="bg-dark-bg rounded p-4 mb-4">
+                    <p class="text-gray-400 text-center">Loading...</p>
+                </div>
+                <button onclick="closeModal('reveal-modal')"
+                    class="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    document.getElementById('modals-container').innerHTML = modal;
+
+    try {
+        const data = await apiRequest(`/api/secrets/${id}/reveal`);
+        document.getElementById('secret-value-container').innerHTML = `
+            <pre class="text-white font-mono text-sm overflow-x-auto">${data.value}</pre>
+        `;
+    } catch (error) {
+        document.getElementById('secret-value-container').innerHTML = `
+            <p class="text-red-400 text-center">${error.message}</p>
+        `;
+    }
+}
+
+async function deleteSecret(id, name) {
+    if (!confirm(`Delete secret "${name}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        await apiRequest(`/api/secrets/${id}`, { method: 'DELETE' });
+        loadSecrets();
+        showSuccess('Secret deleted');
+    } catch (error) {
+        showError(`Failed to delete secret: ${error.message}`);
+    }
+}
+
+// ============================================================================
+// Devices Tab
+// ============================================================================
+
+async function loadDevices() {
+    if (!authToken) {
+        document.getElementById('devices-container').innerHTML = `
+            <div class="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                <p class="text-yellow-200">Please login to view devices</p>
+            </div>
+        `;
+        return;
+    }
+
+    try {
+        const devices = await apiRequest('/api/devices');
+
+        const container = document.getElementById('devices-container');
+
+        if (devices.length === 0) {
+            container.innerHTML = `
+                <div class="bg-dark-card border border-dark-border rounded-lg p-8 text-center">
+                    <p class="text-gray-400">No devices registered yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Group by zone
+        const devicesByZone = {};
+        devices.forEach(device => {
+            if (!devicesByZone[device.zone]) {
+                devicesByZone[device.zone] = [];
+            }
+            devicesByZone[device.zone].push(device);
+        });
+
+        container.innerHTML = Object.entries(devicesByZone).map(([zone, zoneDevices]) => `
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-white mb-3">${zone}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${zoneDevices.map(device => {
+                        const statusColor = device.status === 'online' ? 'green' :
+                                          device.status === 'offline' ? 'red' :
+                                          device.status === 'degraded' ? 'yellow' : 'gray';
+
+                        return `
+                            <div class="bg-dark-card border border-dark-border rounded-lg p-4">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-white">${device.name}</h4>
+                                        <p class="text-xs text-gray-400">${device.device_type}</p>
+                                    </div>
+                                    <span class="px-2 py-1 bg-${statusColor}-900/30 text-${statusColor}-400 text-xs rounded">
+                                        ${device.status}
+                                    </span>
+                                </div>
+                                <div class="space-y-1 text-xs text-gray-500">
+                                    <div>IP: ${device.ip_address}</div>
+                                    ${device.last_seen ? `<div>Last seen: ${new Date(device.last_seen).toLocaleString()}</div>` : ''}
+                                </div>
+                                ${device.config && Object.keys(device.config).length > 0 ? `
+                                    <details class="mt-3">
+                                        <summary class="text-xs text-blue-400 cursor-pointer">Configuration</summary>
+                                        <pre class="text-xs text-gray-400 mt-2 overflow-x-auto">${JSON.stringify(device.config, null, 2)}</pre>
+                                    </details>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        showError(`Failed to load devices: ${error.message}`);
+    }
+}
+
+function showCreateDeviceModal() {
+    const modal = `
+        <div id="device-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick="if(event.target.id==='device-modal') closeModal()">
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-2xl w-full mx-4">
+                <h2 class="text-xl font-semibold text-white mb-4">Register Device</h2>
+                <form onsubmit="createDevice(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+                        <input type="text" name="name" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Device Type</label>
+                        <select name="device_type" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500">
+                            <option value="wyoming">Wyoming Voice Device</option>
+                            <option value="jetson">Jetson Edge Device</option>
+                            <option value="service">Service Container</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Zone</label>
+                        <input type="text" name="zone" required placeholder="e.g., Office, Kitchen"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">IP Address</label>
+                        <input type="text" name="ip_address" required placeholder="192.168.10.x"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Configuration (JSON, optional)</label>
+                        <textarea name="config" rows="4"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white font-mono text-sm focus:outline-none focus:border-blue-500"
+                            placeholder='{"port": 10700, "protocol": "wyoming"}'></textarea>
+                    </div>
+                    <div class="flex gap-2 pt-4">
+                        <button type="submit"
+                            class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                            Register Device
+                        </button>
+                        <button type="button" onclick="closeModal('device-modal')"
+                            class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    document.getElementById('modals-container').innerHTML = modal;
+}
+
+async function createDevice(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    try {
+        const configStr = formData.get('config');
+        const config = configStr ? JSON.parse(configStr) : {};
+
+        await apiRequest('/api/devices', {
+            method: 'POST',
+            body: JSON.stringify({
+                name: formData.get('name'),
+                device_type: formData.get('device_type'),
+                zone: formData.get('zone'),
+                ip_address: formData.get('ip_address'),
+                config: config
+            })
+        });
+
+        closeModal();
+        loadDevices();
+        showSuccess('Device registered successfully');
+    } catch (error) {
+        showError(`Failed to register device: ${error.message}`);
+    }
+}
+
+// ============================================================================
+// Users Tab
+// ============================================================================
+
+async function loadUsers() {
+    if (!authToken) {
+        document.getElementById('users-container').innerHTML = `
+            <div class="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                <p class="text-yellow-200">Please login to view users</p>
+            </div>
+        `;
+        return;
+    }
+
+    try {
+        const users = await apiRequest('/api/users');
+
+        const container = document.getElementById('users-container');
+
+        container.innerHTML = `
+            <div class="bg-dark-card border border-dark-border rounded-lg overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-dark-bg">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Last Login</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-dark-border">
+                        ${users.map(user => `
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="text-white font-medium">${user.full_name || user.username}</div>
+                                    <div class="text-xs text-gray-400">${user.email}</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 bg-blue-900/30 text-blue-400 text-xs rounded">${user.role}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    ${user.is_active ?
+                                        '<span class="px-2 py-1 bg-green-900/30 text-green-400 text-xs rounded">Active</span>' :
+                                        '<span class="px-2 py-1 bg-red-900/30 text-red-400 text-xs rounded">Inactive</span>'
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-400">
+                                    ${user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    ${currentUser && currentUser.id !== user.id ? `
+                                        <button onclick="updateUserRole(${user.id}, '${user.username}')"
+                                            class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors mr-2">
+                                            Change Role
+                                        </button>
+                                        ${user.is_active ?
+                                            `<button onclick="deactivateUser(${user.id}, '${user.username}')"
+                                                class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">
+                                                Deactivate
+                                            </button>` :
+                                            `<button onclick="reactivateUser(${user.id}, '${user.username}')"
+                                                class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors">
+                                                Reactivate
+                                            </button>`
+                                        }
+                                    ` : '<span class="text-xs text-gray-500">Current User</span>'}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+        showError(`Failed to load users: ${error.message}`);
+    }
+}
+
+async function updateUserRole(userId, username) {
+    const newRole = prompt(`Enter new role for ${username}:\n\nAvailable roles:\n- owner (full access)\n- operator (read/write)\n- viewer (read only)\n- support (read + audit)`, 'viewer');
+
+    if (!newRole) return;
+
+    const validRoles = ['owner', 'operator', 'viewer', 'support'];
+    if (!validRoles.includes(newRole)) {
+        showError('Invalid role');
+        return;
+    }
+
+    try {
+        await apiRequest(`/api/users/${userId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ role: newRole })
+        });
+        loadUsers();
+        showSuccess('User role updated');
+    } catch (error) {
+        showError(`Failed to update user: ${error.message}`);
+    }
+}
+
+async function deactivateUser(userId, username) {
+    if (!confirm(`Deactivate user ${username}? They will not be able to login.`)) {
+        return;
+    }
+
+    try {
+        await apiRequest(`/api/users/${userId}`, { method: 'DELETE' });
+        loadUsers();
+        showSuccess('User deactivated');
+    } catch (error) {
+        showError(`Failed to deactivate user: ${error.message}`);
+    }
+}
+
+async function reactivateUser(userId, username) {
+    try {
+        await apiRequest(`/api/users/${userId}/reactivate`, { method: 'POST' });
+        loadUsers();
+        showSuccess('User reactivated');
+    } catch (error) {
+        showError(`Failed to reactivate user: ${error.message}`);
+    }
+}
+
+// ============================================================================
+// Audit Logs Tab
+// ============================================================================
+
+async function loadAuditLogs() {
+    if (!authToken) {
+        document.getElementById('audit-container').innerHTML = `
+            <div class="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                <p class="text-yellow-200">Please login to view audit logs</p>
+            </div>
+        `;
+        return;
+    }
+
+    try {
+        const logs = await apiRequest('/api/audit?limit=50');
+
+        const container = document.getElementById('audit-container');
+
+        if (logs.length === 0) {
+            container.innerHTML = `
+                <div class="bg-dark-card border border-dark-border rounded-lg p-8 text-center">
+                    <p class="text-gray-400">No audit logs yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="bg-dark-card border border-dark-border rounded-lg overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-dark-bg">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Timestamp</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Action</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Resource</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-dark-border">
+                        ${logs.map(log => {
+                            const actionColor = log.action === 'create' ? 'green' :
+                                              log.action === 'delete' ? 'red' :
+                                              log.action === 'reveal' ? 'yellow' :
+                                              'blue';
+
+                            return `
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-400 whitespace-nowrap">
+                                        ${new Date(log.timestamp).toLocaleString()}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-white">
+                                        ${log.username}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 bg-${actionColor}-900/30 text-${actionColor}-400 text-xs rounded">
+                                            ${log.action}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-300">
+                                        ${log.resource_type}${log.resource_id ? ` #${log.resource_id}` : ''}
+                                    </td>
+                                    <td class="px-6 py-4 text-xs text-gray-500">
+                                        ${log.ip_address || 'N/A'}
+                                        ${log.details ? `<br><span class="text-gray-600">${JSON.stringify(log.details)}</span>` : ''}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+        showError(`Failed to load audit logs: ${error.message}`);
+    }
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+function closeModal() {
+    document.getElementById('modals-container').innerHTML = '';
+}
+
+function showSuccess(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function showError(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+// ============================================================================
+// SETTINGS TAB - Server Configuration & Service Registry
+// ============================================================================
+
+async function loadSettings() {
+    await Promise.all([loadServers(), loadServices()]);
+}
+
+async function loadServers() {
+    try {
+        const response = await fetch(`${API_BASE}/api/servers`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load servers');
+
+        const data = await response.json();
+        const container = document.getElementById('servers-container');
+
+        if (data.servers.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-gray-400 text-center py-8">No servers configured</div>';
+            return;
+        }
+
+        container.innerHTML = data.servers.map(server => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-4">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 class="text-lg font-semibold text-white">${escapeHtml(server.name)}</h4>
+                        <p class="text-sm text-gray-400">${escapeHtml(server.hostname || '')}</p>
+                    </div>
+                    <span class="px-2 py-1 rounded text-xs font-medium ${
+                        server.status === 'online' ? 'bg-green-900/30 text-green-400' :
+                        server.status === 'offline' ? 'bg-red-900/30 text-red-400' :
+                        server.status === 'degraded' ? 'bg-yellow-900/30 text-yellow-400' :
+                        'bg-gray-700 text-gray-300'
+                    }">${server.status}</span>
+                </div>
+
+                <div class="space-y-2 text-sm mb-4">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">IP Address:</span>
+                        <span class="text-gray-200 font-mono">${server.ip_address}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Role:</span>
+                        <span class="text-gray-200">${server.role || 'N/A'}</span>
+                    </div>
+                    ${server.last_checked ? `
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Last Checked:</span>
+                            <span class="text-gray-200">${new Date(server.last_checked).toLocaleString()}</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="checkServer(${server.id})"
+                        class="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors">
+                        Check Health
+                    </button>
+                    <button onclick="viewServerServices(${server.id})"
+                        class="flex-1 px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm font-medium transition-colors">
+                        View Services
+                    </button>
+                    <button onclick="deleteServer(${server.id})"
+                        class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Load servers error:', error);
+        showError('Failed to load servers');
+    }
+}
+
+async function loadServices() {
+    try {
+        const response = await fetch(`${API_BASE}/api/services`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load services');
+
+        const data = await response.json();
+        const container = document.getElementById('services-container');
+
+        if (data.services.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-gray-400 text-center py-8">No services registered</div>';
+            return;
+        }
+
+        container.innerHTML = data.services.map(service => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-4">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 class="text-lg font-semibold text-white">${escapeHtml(service.service_name)}</h4>
+                        <p class="text-sm text-gray-400">${escapeHtml(service.server_name || '')}</p>
+                    </div>
+                    <span class="px-2 py-1 rounded text-xs font-medium ${
+                        service.status === 'online' ? 'bg-green-900/30 text-green-400' :
+                        service.status === 'offline' ? 'bg-red-900/30 text-red-400' :
+                        service.status === 'degraded' ? 'bg-yellow-900/30 text-yellow-400' :
+                        'bg-gray-700 text-gray-300'
+                    }">${service.status}</span>
+                </div>
+
+                <div class="space-y-2 text-sm mb-4">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Port:</span>
+                        <span class="text-gray-200 font-mono">${service.port}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Protocol:</span>
+                        <span class="text-gray-200">${service.protocol || 'http'}</span>
+                    </div>
+                    ${service.health_endpoint ? `
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Health Endpoint:</span>
+                            <span class="text-gray-200 font-mono text-xs">${service.health_endpoint}</span>
+                        </div>
+                    ` : ''}
+                    ${service.last_response_time ? `
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Response Time:</span>
+                            <span class="text-gray-200">${service.last_response_time}ms</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <button onclick="checkService(${service.id})"
+                    class="w-full px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors">
+                    Check Health
+                </button>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Load services error:', error);
+        showError('Failed to load services');
+    }
+}
+
+async function checkServer(serverId) {
+    try {
+        const response = await fetch(`${API_BASE}/api/servers/${serverId}/check`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Health check failed');
+
+        showSuccess('Server health check completed');
+        await loadServers();
+
+    } catch (error) {
+        console.error('Check server error:', error);
+        showError('Server health check failed');
+    }
+}
+
+async function checkService(serviceId) {
+    try {
+        const response = await fetch(`${API_BASE}/api/services/${serviceId}/check`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Health check failed');
+
+        showSuccess('Service health check completed');
+        await loadServices();
+
+    } catch (error) {
+        console.error('Check service error:', error);
+        showError('Service health check failed');
+    }
+}
+
+async function refreshAllServices() {
+    try {
+        const response = await fetch(`${API_BASE}/api/services/status/all`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to refresh services');
+
+        const data = await response.json();
+        showSuccess(`Checked ${data.checked} services: ${data.healthy} healthy, ${data.unhealthy} unhealthy`);
+        await loadServices();
+
+    } catch (error) {
+        console.error('Refresh services error:', error);
+        showError('Failed to refresh all services');
+    }
+}
+
+function showCreateServerModal() {
+    const modal = `
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="create-server-modal">
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-semibold text-white mb-4">Add Server</h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Server Name</label>
+                        <input type="text" id="server-name" placeholder="mac-studio"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-200">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Hostname</label>
+                        <input type="text" id="server-hostname" placeholder="Jays-Mac-Studio.local"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-200">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">IP Address</label>
+                        <input type="text" id="server-ip" placeholder="192.168.10.167" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-200">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Role</label>
+                        <select id="server-role"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-200">
+                            <option value="compute">Compute</option>
+                            <option value="storage">Storage</option>
+                            <option value="integration">Integration</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button onclick="createServer()"
+                        class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                        Create Server
+                    </button>
+                    <button onclick="closeModal('create-server-modal')"
+                        class="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modals-container').innerHTML = modal;
+}
+
+async function createServer() {
+    const name = document.getElementById('server-name').value.trim();
+    const hostname = document.getElementById('server-hostname').value.trim();
+    const ip = document.getElementById('server-ip').value.trim();
+    const role = document.getElementById('server-role').value;
+
+    if (!name || !ip) {
+        showError('Name and IP address are required');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/servers`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ name, hostname, ip_address: ip, role })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to create server');
+        }
+
+        showSuccess('Server created successfully');
+        closeModal('create-server-modal');
+        await loadServers();
+
+    } catch (error) {
+        console.error('Create server error:', error);
+        showError(error.message);
+    }
+}
+
+async function deleteServer(serverId) {
+    if (!confirm('Are you sure you want to delete this server? All associated services will also be deleted.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/servers/${serverId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to delete server');
+
+        showSuccess('Server deleted successfully');
+        await loadServers();
+
+    } catch (error) {
+        console.error('Delete server error:', error);
+        showError('Failed to delete server');
+    }
+}
+
+async function viewServerServices(serverId) {
+    try {
+        const response = await fetch(`${API_BASE}/api/servers/${serverId}/services`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load server services');
+
+        const data = await response.json();
+
+        const modal = `
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="server-services-modal">
+                <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-auto">
+                    <h3 class="text-xl font-semibold text-white mb-4">Services on ${escapeHtml(data.server_name || 'Server')}</h3>
+
+                    ${data.services.length === 0 ?
+                        '<p class="text-gray-400">No services registered on this server</p>' :
+                        `<div class="space-y-3">
+                            ${data.services.map(service => `
+                                <div class="bg-dark-bg border border-dark-border rounded p-3">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h4 class="font-medium text-white">${escapeHtml(service.service_name)}</h4>
+                                            <p class="text-sm text-gray-400">Port ${service.port} (${service.protocol || 'http'})</p>
+                                        </div>
+                                        <span class="px-2 py-1 rounded text-xs font-medium ${
+                                            service.status === 'online' ? 'bg-green-900/30 text-green-400' :
+                                            service.status === 'offline' ? 'bg-red-900/30 text-red-400' :
+                                            service.status === 'degraded' ? 'bg-yellow-900/30 text-yellow-400' :
+                                            'bg-gray-700 text-gray-300'
+                                        }">${service.status}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>`
+                    }
+
+                    <button onclick="closeModal('server-services-modal')"
+                        class="w-full mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('modals-container').innerHTML = modal;
+
+    } catch (error) {
+        console.error('View server services error:', error);
+        showError('Failed to load server services');
+    }
+}
+
+// ============================================================================
+// RAG CONNECTORS TAB
+// ============================================================================
+
+async function loadConnectors() {
+    try {
+        const response = await fetch(`${API_BASE}/api/rag-connectors`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load connectors');
+
+        const data = await response.json();
+        const container = document.getElementById('connectors-container');
+
+        if (data.connectors.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-gray-400 text-center py-8">No RAG connectors configured</div>';
+            return;
+        }
+
+        container.innerHTML = data.connectors.map(connector => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-4">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 class="text-lg font-semibold text-white">${escapeHtml(connector.name)}</h4>
+                        <p class="text-sm text-gray-400">${connector.connector_type.replace('_', ' ')}</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" ${connector.enabled ? 'checked' : ''}
+                               onchange="toggleConnector(${connector.id}, this.checked)"
+                               class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer
+                                    peer-checked:after:translate-x-full peer-checked:after:border-white
+                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                    after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all
+                                    peer-checked:bg-green-600"></div>
+                    </label>
+                </div>
+
+                ${connector.service ? `
+                    <div class="space-y-2 text-sm mb-4">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Service:</span>
+                            <span class="text-gray-200">${escapeHtml(connector.service.service_name)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Server:</span>
+                            <span class="text-gray-200">${escapeHtml(connector.service.server.name)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Endpoint:</span>
+                            <span class="text-gray-200 font-mono text-xs">${connector.service.server.ip_address}:${connector.service.port}</span>
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${connector.last_test_at ? `
+                    <div class="bg-dark-bg rounded p-2 mb-4 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Last Test:</span>
+                            <span class="text-gray-200">${new Date(connector.last_test_at).toLocaleString()}</span>
+                        </div>
+                        ${connector.last_test_success !== null ? `
+                            <div class="flex justify-between mt-1">
+                                <span class="text-gray-400">Status:</span>
+                                <span class="${connector.last_test_success ? 'text-green-400' : 'text-red-400'}">
+                                    ${connector.last_test_success ? '✓ Success' : '✗ Failed'}
+                                </span>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+
+                <div class="flex gap-2">
+                    <button onclick="testConnector(${connector.id})"
+                        class="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors">
+                        Test
+                    </button>
+                    <button onclick="viewConnectorStats(${connector.id})"
+                        class="flex-1 px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm font-medium transition-colors">
+                        Stats
+                    </button>
+                    <button onclick="deleteConnector(${connector.id})"
+                        class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Load connectors error:', error);
+        showError('Failed to load RAG connectors');
+    }
+}
+
+async function testConnector(connectorId) {
+    try {
+        const response = await fetch(`${API_BASE}/api/rag-connectors/${connectorId}/test`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ test_query: 'test' })
+        });
+
+        if (!response.ok) throw new Error('Test failed');
+
+        const data = await response.json();
+
+        const resultHtml = `
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="test-result-modal">
+                <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-auto">
+                    <h3 class="text-xl font-semibold text-white mb-4">Connector Test Results</h3>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">${data.test_result.success ? '✅' : '❌'}</span>
+                            <span class="text-lg font-semibold ${data.test_result.success ? 'text-green-400' : 'text-red-400'}">
+                                ${data.test_result.success ? 'Test Passed' : 'Test Failed'}
+                            </span>
+                        </div>
+
+                        ${data.test_result.response_time ? `
+                            <div class="bg-dark-bg rounded p-3">
+                                <span class="text-gray-400">Response Time:</span>
+                                <span class="text-white font-semibold ml-2">${data.test_result.response_time}ms</span>
+                            </div>
+                        ` : ''}
+
+                        ${data.test_result.sample_data ? `
+                            <div class="bg-dark-bg rounded p-3">
+                                <div class="text-gray-400 mb-2">Sample Data:</div>
+                                <pre class="text-xs text-gray-200 overflow-auto">${JSON.stringify(data.test_result.sample_data, null, 2)}</pre>
+                            </div>
+                        ` : ''}
+
+                        ${data.test_result.error ? `
+                            <div class="bg-red-900/20 border border-red-700 rounded p-3">
+                                <div class="text-red-400 font-medium mb-1">Error:</div>
+                                <div class="text-red-300 text-sm">${escapeHtml(data.test_result.error)}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <button onclick="closeModal('test-result-modal'); loadConnectors();"
+                        class="w-full mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('modals-container').innerHTML = resultHtml;
+
+    } catch (error) {
+        console.error('Test connector error:', error);
+        showError('Connector test failed');
+    }
+}
+
+async function toggleConnector(connectorId, enabled) {
+    try {
+        const response = await fetch(`${API_BASE}/api/rag-connectors/${connectorId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ enabled })
+        });
+
+        if (!response.ok) throw new Error('Failed to toggle connector');
+
+        showSuccess(`Connector ${enabled ? 'enabled' : 'disabled'} successfully`);
+        await loadConnectors();
+
+    } catch (error) {
+        console.error('Toggle connector error:', error);
+        showError('Failed to toggle connector');
+        await loadConnectors(); // Reload to reset checkbox
+    }
+}
+
+async function deleteConnector(connectorId) {
+    if (!confirm('Are you sure you want to delete this RAG connector?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/rag-connectors/${connectorId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to delete connector');
+
+        showSuccess('Connector deleted successfully');
+        await loadConnectors();
+
+    } catch (error) {
+        console.error('Delete connector error:', error);
+        showError('Failed to delete connector');
+    }
+}
+
+async function viewConnectorStats(connectorId) {
+    try {
+        const response = await fetch(`${API_BASE}/api/rag-connectors/${connectorId}/stats`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load stats');
+
+        const data = await response.json();
+
+        const modal = `
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="stats-modal">
+                <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-2xl w-full mx-4">
+                    <h3 class="text-xl font-semibold text-white mb-4">Connector Statistics</h3>
+
+                    ${data.stats.length === 0 ?
+                        '<p class="text-gray-400">No usage statistics available</p>' :
+                        `<div class="space-y-3">
+                            ${data.stats.map(stat => `
+                                <div class="bg-dark-bg border border-dark-border rounded p-3">
+                                    <div class="grid grid-cols-2 gap-3 text-sm">
+                                        <div>
+                                            <span class="text-gray-400">Date:</span>
+                                            <span class="text-white ml-2">${new Date(stat.date).toLocaleDateString()}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400">Queries:</span>
+                                            <span class="text-white ml-2">${stat.query_count}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400">Avg Response:</span>
+                                            <span class="text-white ml-2">${stat.avg_response_time}ms</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400">Cache Hit Rate:</span>
+                                            <span class="text-white ml-2">${stat.cache_hit_rate.toFixed(1)}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>`
+                    }
+
+                    <button onclick="closeModal('stats-modal')"
+                        class="w-full mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('modals-container').innerHTML = modal;
+
+    } catch (error) {
+        console.error('View stats error:', error);
+        showError('Failed to load connector statistics');
+    }
+}
+
+function showCreateConnectorModal() {
+    // First, we need to load available services
+    fetch(`${API_BASE}/api/services`, {
+        headers: { 'Authorization': `Bearer ${getToken()}` }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const modal = `
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="create-connector-modal">
+                <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-md w-full mx-4">
+                    <h3 class="text-xl font-semibold text-white mb-4">Add RAG Connector</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Connector Name</label>
+                            <input type="text" id="connector-name" placeholder="weather"
+                                class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-200">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Type</label>
+                            <select id="connector-type"
+                                class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-200">
+                                <option value="external_api">External API</option>
+                                <option value="vector_db">Vector Database</option>
+                                <option value="cache">Cache</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Service</label>
+                            <select id="connector-service"
+                                class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-200">
+                                <option value="">None</option>
+                                ${data.services.map(service =>
+                                    `<option value="${service.id}">${service.service_name} (${service.server_name || 'Unknown'})</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="connector-enabled" checked
+                                    class="w-4 h-4 bg-dark-bg border border-dark-border rounded">
+                                <span class="text-sm text-gray-300">Enabled</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="createConnector()"
+                            class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                            Create Connector
+                        </button>
+                        <button onclick="closeModal('create-connector-modal')"
+                            class="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('modals-container').innerHTML = modal;
+    })
+    .catch(error => {
+        console.error('Load services error:', error);
+        showError('Failed to load services for connector creation');
+    });
+}
+
+async function createConnector() {
+    const name = document.getElementById('connector-name').value.trim();
+    const type = document.getElementById('connector-type').value;
+    const serviceId = document.getElementById('connector-service').value;
+    const enabled = document.getElementById('connector-enabled').checked;
+
+    if (!name || !type) {
+        showError('Name and type are required');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/rag-connectors`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({
+                name,
+                connector_type: type,
+                service_id: serviceId || null,
+                enabled,
+                config: {},
+                cache_config: type === 'cache' ? { ttl: 3600 } : null
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to create connector');
+        }
+
+        showSuccess('Connector created successfully');
+        closeModal('create-connector-modal');
+        await loadConnectors();
+
+    } catch (error) {
+        console.error('Create connector error:', error);
+        showError(error.message);
+    }
+}
+
+// ============================================================================
+// VOICE TESTING TAB
+// ============================================================================
+
+async function testLLM() {
+    const prompt = document.getElementById('llm-prompt').value.trim();
+    const model = document.getElementById('llm-model').value;
+    const resultsDiv = document.getElementById('llm-results');
+
+    if (!prompt) {
+        showError('Please enter a prompt');
+        return;
+    }
+
+    resultsDiv.innerHTML = '<div class="text-gray-400 text-sm">Running test...</div>';
+
+    try {
+        const response = await fetch(`${API_BASE}/api/voice-tests/llm/test`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ text: prompt, model })
+        });
+
+        if (!response.ok) throw new Error('LLM test failed');
+
+        const data = await response.json();
+
+        resultsDiv.innerHTML = `
+            <div class="bg-dark-bg rounded p-3 space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">${data.success ? '✅' : '❌'}</span>
+                    <span class="font-semibold ${data.success ? 'text-green-400' : 'text-red-400'}">
+                        ${data.success ? 'Test Passed' : 'Test Failed'}
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                        <span class="text-gray-400">Model:</span>
+                        <span class="text-white ml-2">${data.model}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Response Time:</span>
+                        <span class="text-white ml-2">${data.processing_time}ms</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Tokens:</span>
+                        <span class="text-white ml-2">${data.tokens}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Tokens/sec:</span>
+                        <span class="text-white ml-2">${data.tokens_per_second}</span>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <div class="text-gray-400 text-sm mb-1">Response:</div>
+                    <div class="text-white text-sm bg-dark-card border border-dark-border rounded p-2 max-h-48 overflow-auto">
+                        ${escapeHtml(data.response)}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        showSuccess('LLM test completed');
+
+    } catch (error) {
+        console.error('LLM test error:', error);
+        resultsDiv.innerHTML = `<div class="text-red-400 text-sm">Error: ${error.message}</div>`;
+        showError('LLM test failed');
+    }
+}
+
+function updateRAGPlaceholder() {
+    const connector = document.getElementById('rag-connector').value;
+    const queryInput = document.getElementById('rag-query');
+
+    const placeholders = {
+        'weather': 'Enter city name (e.g., Seattle, Boston)...',
+        'airports': 'Enter airport code (e.g., BOS, SEA, LAX)...',
+        'flights': 'Enter flight number (e.g., AA100, DL123)...'
+    };
+
+    queryInput.placeholder = placeholders[connector] || 'Enter query...';
+}
+
+async function testRAG() {
+    const query = document.getElementById('rag-query').value.trim();
+    const connector = document.getElementById('rag-connector').value;
+    const resultsDiv = document.getElementById('rag-results');
+
+    if (!query) {
+        showError('Please enter a query');
+        return;
+    }
+
+    resultsDiv.innerHTML = '<div class="text-gray-400 text-sm">Running test...</div>';
+
+    try {
+        const response = await fetch(`${API_BASE}/api/voice-tests/rag/test`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ text: query, connector })
+        });
+
+        if (!response.ok) throw new Error('RAG test failed');
+
+        const data = await response.json();
+
+        resultsDiv.innerHTML = `
+            <div class="bg-dark-bg rounded p-3 space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">${data.success ? '✅' : '❌'}</span>
+                    <span class="font-semibold ${data.success ? 'text-green-400' : 'text-red-400'}">
+                        ${data.success ? 'Test Passed' : 'Test Failed'}
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                        <span class="text-gray-400">Connector:</span>
+                        <span class="text-white ml-2">${data.connector}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Response Time:</span>
+                        <span class="text-white ml-2">${data.processing_time}ms</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Cached:</span>
+                        <span class="text-white ml-2">${data.cached ? 'Yes' : 'No'}</span>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <div class="text-gray-400 text-sm mb-1">Response:</div>
+                    <div class="text-white text-sm bg-dark-card border border-dark-border rounded p-2 max-h-48 overflow-auto">
+                        <pre class="text-xs">${JSON.stringify(data.response, null, 2)}</pre>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        showSuccess('RAG test completed');
+
+    } catch (error) {
+        console.error('RAG test error:', error);
+        resultsDiv.innerHTML = `<div class="text-red-400 text-sm">Error: ${error.message}</div>`;
+        showError('RAG test failed');
+    }
+}
+
+async function testFullPipeline() {
+    const text = document.getElementById('pipeline-text').value.trim();
+    const resultsDiv = document.getElementById('pipeline-results');
+    const timingsDiv = document.getElementById('pipeline-timings');
+
+    if (!text) {
+        showError('Please enter a query');
+        return;
+    }
+
+    resultsDiv.innerHTML = '<div class="text-gray-400 text-sm">Running full pipeline test...</div>';
+    timingsDiv.innerHTML = '';
+
+    try {
+        const response = await fetch(`${API_BASE}/api/voice-tests/pipeline/test`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ text })
+        });
+
+        if (!response.ok) throw new Error('Pipeline test failed');
+
+        const data = await response.json();
+
+        resultsDiv.innerHTML = `
+            <div class="bg-dark-bg rounded p-3 space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">${data.success ? '✅' : '❌'}</span>
+                    <span class="font-semibold ${data.success ? 'text-green-400' : 'text-red-400'}">
+                        ${data.success ? 'Test Passed' : 'Test Failed'}
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                        <span class="text-gray-400">Total Time:</span>
+                        <span class="text-white ml-2">${data.total_time}ms</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Target Met:</span>
+                        <span class="text-white ml-2">${data.target_met ? 'Yes (<5s)' : 'No (>5s)'}</span>
+                    </div>
+                </div>
+
+                ${data.note ? `
+                    <div class="text-yellow-400 text-sm mt-2">
+                        ℹ️ ${data.note}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        // Display stage timings
+        if (data.timings) {
+            const stages = Object.entries(data.timings);
+            timingsDiv.innerHTML = `
+                <div class="bg-dark-bg rounded p-3">
+                    <div class="text-gray-400 text-sm mb-2">Stage Timings:</div>
+                    <div class="space-y-2">
+                        ${stages.map(([stage, time]) => `
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-300 text-sm">${stage.toUpperCase()}:</span>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-32 bg-gray-700 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full"
+                                             style="width: ${Math.min(100, (time / data.total_time) * 100)}%"></div>
+                                    </div>
+                                    <span class="text-white text-sm font-mono w-16 text-right">${time}ms</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        showSuccess('Pipeline test completed');
+        await loadTestHistory();
+
+    } catch (error) {
+        console.error('Pipeline test error:', error);
+        resultsDiv.innerHTML = `<div class="text-red-400 text-sm">Error: ${error.message}</div>`;
+        showError('Pipeline test failed');
+    }
+}
+
+async function loadTestHistory() {
+    try {
+        const response = await fetch(`${API_BASE}/api/voice-tests/tests/history?limit=10`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load test history');
+
+        const data = await response.json();
+        const container = document.getElementById('test-history-container');
+
+        if (data.tests.length === 0) {
+            container.innerHTML = '<div class="text-gray-400 text-center py-8">No test history available</div>';
+            return;
+        }
+
+        container.innerHTML = data.tests.map(test => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h4 class="font-semibold text-white">${test.test_type.replace('_', ' ').toUpperCase()}</h4>
+                        <p class="text-sm text-gray-400">${new Date(test.executed_at).toLocaleString()}</p>
+                    </div>
+                    <span class="px-2 py-1 rounded text-xs font-medium ${
+                        test.success ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
+                    }">${test.success ? 'Success' : 'Failed'}</span>
+                </div>
+
+                <div class="text-sm text-gray-300 mb-2">
+                    <span class="text-gray-400">Input:</span> ${escapeHtml(test.test_input.substring(0, 100))}${test.test_input.length > 100 ? '...' : ''}
+                </div>
+
+                ${test.result && test.result.processing_time ? `
+                    <div class="text-sm text-gray-400">
+                        Response Time: <span class="text-white">${test.result.processing_time}ms</span>
+                    </div>
+                ` : ''}
+
+                ${!test.success && test.error_message ? `
+                    <div class="text-sm text-red-400 mt-2">
+                        Error: ${escapeHtml(test.error_message)}
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Load test history error:', error);
+        showError('Failed to load test history');
+    }
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.remove();
+    }
+}

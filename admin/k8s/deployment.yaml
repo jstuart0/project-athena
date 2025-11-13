@@ -24,25 +24,78 @@ spec:
       labels:
         app: athena-admin-backend
     spec:
+      serviceAccountName: athena-admin-backend
       containers:
       - name: backend
         image: 192.168.10.222:30500/athena-admin-backend:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always  # Always pull for development
         ports:
         - containerPort: 8080
           name: http
         env:
         - name: MAC_STUDIO_IP
           value: "192.168.10.167"
+        - name: MAC_MINI_IP
+          value: "192.168.10.181"
         - name: PORT
           value: "8080"
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        # Database credentials from secret
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: athena-admin-db
+              key: DATABASE_URL
+        # Session and JWT secrets
+        - name: SESSION_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: athena-admin-secrets
+              key: SESSION_SECRET_KEY
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: athena-admin-secrets
+              key: JWT_SECRET
+        # OIDC configuration from secret
+        - name: OIDC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: athena-admin-oidc
+              key: OIDC_CLIENT_ID
+        - name: OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: athena-admin-oidc
+              key: OIDC_CLIENT_SECRET
+        - name: OIDC_ISSUER
+          valueFrom:
+            secretKeyRef:
+              name: athena-admin-oidc
+              key: OIDC_ISSUER
+        - name: OIDC_REDIRECT_URI
+          valueFrom:
+            secretKeyRef:
+              name: athena-admin-oidc
+              key: OIDC_REDIRECT_URI
+        - name: OIDC_SCOPES
+          valueFrom:
+            secretKeyRef:
+              name: athena-admin-oidc
+              key: OIDC_SCOPES
+        - name: FRONTEND_URL
+          valueFrom:
+            secretKeyRef:
+              name: athena-admin-oidc
+              key: FRONTEND_URL
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: "256Mi"  # Increased for database ORM
+            cpu: "200m"
           limits:
-            memory: "256Mi"
-            cpu: "500m"
+            memory: "512Mi"
+            cpu: "1000m"
         livenessProbe:
           httpGet:
             path: /health
