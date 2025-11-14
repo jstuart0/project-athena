@@ -11,9 +11,9 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 from sqlalchemy import (
-    Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Index, UniqueConstraint
+    Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Index, UniqueConstraint, Float
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -492,8 +492,344 @@ class VoiceTest(Base):
         }
 
 
+class IntentCategory(Base):
+    """
+    Intent categories for organizing and configuring intent detection.
+
+    Provides hierarchical organization of intents (e.g., control, query, rag).
+    """
+    __tablename__ = 'intent_categories'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True, index=True)
+    display_name = Column(String(200), nullable=False)
+    description = Column(Text)
+    parent_id = Column(Integer, ForeignKey('intent_categories.id'))
+    enabled = Column(Boolean, default=True)
+    priority = Column(Integer, default=100)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    parent = relationship('IntentCategory', remote_side=[id], backref='children')
+    confidence_rules = relationship('ConfidenceScoreRule', back_populates='category', cascade='all, delete-orphan')
+    enhancement_rules = relationship('ResponseEnhancementRule', back_populates='category', cascade='all, delete-orphan')
+
+    __table_args__ = (
+        Index('idx_intent_categories_enabled', 'enabled'),
+        Index('idx_intent_categories_parent_id', 'parent_id'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'name': self.name,
+            'display_name': self.display_name,
+            'description': self.description,
+            'parent_id': self.parent_id,
+            'enabled': self.enabled,
+            'priority': self.priority,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class HallucinationCheck(Base):
+    """
+    Anti-hallucination validation rules.
+
+    Defines validation checks to prevent AI from generating false information.
+    """
+    __tablename__ = 'hallucination_checks'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True, index=True)
+    display_name = Column(String(200), nullable=False)
+    description = Column(Text)
+    check_type = Column(String(50), nullable=False)  # 'required_elements', 'fact_checking', 'confidence_threshold', 'cross_validation'
+    applies_to_categories = Column(ARRAY(String), default=[])  # Empty = all categories
+    enabled = Column(Boolean, default=True)
+    severity = Column(String(20), default='warning')  # 'error', 'warning', 'info'
+    configuration = Column(JSONB, nullable=False)  # Flexible config for different check types
+    error_message_template = Column(Text)
+    auto_fix_enabled = Column(Boolean, default=False)
+    auto_fix_prompt_template = Column(Text)
+    require_cross_model_validation = Column(Boolean, default=False)
+    confidence_threshold = Column(Float, default=0.7)
+    priority = Column(Integer, default=100)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_by = Column(String(100))
+
+    __table_args__ = (
+        Index('idx_hallucination_checks_enabled', 'enabled'),
+        Index('idx_hallucination_checks_categories', 'applies_to_categories'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'name': self.name,
+            'display_name': self.display_name,
+            'description': self.description,
+            'check_type': self.check_type,
+            'applies_to_categories': self.applies_to_categories,
+            'enabled': self.enabled,
+            'severity': self.severity,
+            'configuration': self.configuration,
+            'error_message_template': self.error_message_template,
+            'auto_fix_enabled': self.auto_fix_enabled,
+            'auto_fix_prompt_template': self.auto_fix_prompt_template,
+            'require_cross_model_validation': self.require_cross_model_validation,
+            'confidence_threshold': self.confidence_threshold,
+            'priority': self.priority,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'created_by': self.created_by,
+        }
+
+
+class CrossValidationModel(Base):
+    """
+    Cross-model validation configuration.
+
+    Configures multiple models for ensemble validation to reduce hallucinations.
+    """
+    __tablename__ = 'cross_validation_models'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True, index=True)
+    model_id = Column(String(100), nullable=False)  # e.g., 'phi3:mini', 'llama3.1:8b-q4'
+    model_type = Column(String(50), nullable=False)  # 'primary', 'validation', 'fallback'
+    endpoint_url = Column(String(500))
+    enabled = Column(Boolean, default=True)
+    use_for_categories = Column(ARRAY(String), default=[])
+    temperature = Column(Float, default=0.1)
+    max_tokens = Column(Integer, default=200)
+    timeout_seconds = Column(Integer, default=30)
+    weight = Column(Float, default=1.0)  # Weight for ensemble validation
+    min_confidence_required = Column(Float, default=0.5)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index('idx_cross_validation_enabled', 'enabled', 'model_type'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'name': self.name,
+            'model_id': self.model_id,
+            'model_type': self.model_type,
+            'endpoint_url': self.endpoint_url,
+            'enabled': self.enabled,
+            'use_for_categories': self.use_for_categories,
+            'temperature': self.temperature,
+            'max_tokens': self.max_tokens,
+            'timeout_seconds': self.timeout_seconds,
+            'weight': self.weight,
+            'min_confidence_required': self.min_confidence_required,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class MultiIntentConfig(Base):
+    """
+    Multi-intent processing configuration.
+
+    Controls how queries with multiple intents are parsed and processed.
+    """
+    __tablename__ = 'multi_intent_config'
+
+    id = Column(Integer, primary_key=True)
+    enabled = Column(Boolean, default=True)
+    max_intents_per_query = Column(Integer, default=3)
+    separators = Column(ARRAY(String), default=[' and ', ' then ', ' also ', ', then ', '; '])
+    context_preservation = Column(Boolean, default=True)  # Preserve context between split intents
+    parallel_processing = Column(Boolean, default=False)  # Process intents in parallel vs sequential
+    combination_strategy = Column(String(50), default='concatenate')  # 'concatenate', 'summarize', 'hierarchical'
+    min_words_per_intent = Column(Integer, default=2)
+    context_words_to_preserve = Column(ARRAY(String), default=[])  # Words to carry forward if missing
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'enabled': self.enabled,
+            'max_intents_per_query': self.max_intents_per_query,
+            'separators': self.separators,
+            'context_preservation': self.context_preservation,
+            'parallel_processing': self.parallel_processing,
+            'combination_strategy': self.combination_strategy,
+            'min_words_per_intent': self.min_words_per_intent,
+            'context_words_to_preserve': self.context_words_to_preserve,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class IntentChainRule(Base):
+    """
+    Intent chain rules for multi-step operations.
+
+    Defines sequences of intents triggered by patterns (e.g., "goodnight" routine).
+    """
+    __tablename__ = 'intent_chain_rules'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, index=True)
+    trigger_pattern = Column(String(500))  # Regex pattern that triggers this chain
+    intent_sequence = Column(ARRAY(String), nullable=False)  # Ordered list of intents to execute
+    enabled = Column(Boolean, default=True)
+    description = Column(Text)
+    examples = Column(ARRAY(String))
+    require_all = Column(Boolean, default=False)  # Whether all intents in chain must succeed
+    stop_on_error = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index('idx_chain_rules_enabled', 'enabled'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'name': self.name,
+            'trigger_pattern': self.trigger_pattern,
+            'intent_sequence': self.intent_sequence,
+            'enabled': self.enabled,
+            'description': self.description,
+            'examples': self.examples,
+            'require_all': self.require_all,
+            'stop_on_error': self.stop_on_error,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ValidationTestScenario(Base):
+    """
+    Validation test scenarios for testing anti-hallucination checks.
+
+    Stores test cases to verify validation rules work correctly.
+    """
+    __tablename__ = 'validation_test_scenarios'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(200), nullable=False, index=True)
+    test_query = Column(Text, nullable=False)
+    initial_response = Column(Text, nullable=False)
+    expected_validation_result = Column(String(20))  # 'pass', 'fail', 'warning'
+    expected_checks_triggered = Column(ARRAY(String))
+    expected_final_response = Column(Text)
+    category = Column(String(50))
+    enabled = Column(Boolean, default=True)
+    last_run_result = Column(JSONB)
+    last_run_date = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index('idx_validation_scenarios_enabled', 'enabled'),
+        Index('idx_validation_scenarios_category', 'category'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'name': self.name,
+            'test_query': self.test_query,
+            'initial_response': self.initial_response,
+            'expected_validation_result': self.expected_validation_result,
+            'expected_checks_triggered': self.expected_checks_triggered,
+            'expected_final_response': self.expected_final_response,
+            'category': self.category,
+            'enabled': self.enabled,
+            'last_run_result': self.last_run_result,
+            'last_run_date': self.last_run_date.isoformat() if self.last_run_date else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ConfidenceScoreRule(Base):
+    """
+    Confidence score adjustment rules.
+
+    Defines factors that boost or penalize confidence scores for intent classification.
+    """
+    __tablename__ = 'confidence_score_rules'
+
+    id = Column(Integer, primary_key=True)
+    category_id = Column(Integer, ForeignKey('intent_categories.id', ondelete='CASCADE'))
+    factor_name = Column(String(100), nullable=False)  # 'pattern_match_count', 'entity_presence', 'query_length'
+    factor_type = Column(String(50), nullable=False)  # 'boost', 'penalty', 'multiplier'
+    condition = Column(JSONB)  # e.g., {"min_matches": 2, "required_entities": ["room", "device"]}
+    adjustment_value = Column(Float, nullable=False)  # Amount to adjust confidence by
+    max_impact = Column(Float, default=0.2)  # Maximum impact this rule can have
+    enabled = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    category = relationship('IntentCategory', back_populates='confidence_rules')
+
+    __table_args__ = (
+        Index('idx_confidence_rules_category', 'category_id', 'enabled'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'category_id': self.category_id,
+            'category_name': self.category.name if self.category else None,
+            'factor_name': self.factor_name,
+            'factor_type': self.factor_type,
+            'condition': self.condition,
+            'adjustment_value': self.adjustment_value,
+            'max_impact': self.max_impact,
+            'enabled': self.enabled,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ResponseEnhancementRule(Base):
+    """
+    Response enhancement rules.
+
+    Defines rules for enhancing AI responses with additional context or formatting.
+    """
+    __tablename__ = 'response_enhancement_rules'
+
+    id = Column(Integer, primary_key=True)
+    category_id = Column(Integer, ForeignKey('intent_categories.id', ondelete='CASCADE'))
+    enhancement_type = Column(String(50), nullable=False)  # 'add_context', 'format_data', 'add_suggestions', 'clarify_ambiguity'
+    trigger_condition = Column(JSONB)  # When to apply this enhancement
+    enhancement_template = Column(Text)
+    enabled = Column(Boolean, default=True)
+    priority = Column(Integer, default=100)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    category = relationship('IntentCategory', back_populates='enhancement_rules')
+
+    __table_args__ = (
+        Index('idx_enhancement_rules_category', 'category_id', 'enabled'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'category_id': self.category_id,
+            'category_name': self.category.name if self.category else None,
+            'enhancement_type': self.enhancement_type,
+            'trigger_condition': self.trigger_condition,
+            'enhancement_template': self.enhancement_template,
+            'enabled': self.enabled,
+            'priority': self.priority,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 # Export all models for Alembic
 __all__ = [
     'Base', 'User', 'Policy', 'PolicyVersion', 'Secret', 'Device', 'AuditLog',
-    'ServerConfig', 'ServiceRegistry', 'RAGConnector', 'RAGStats', 'VoiceTest'
+    'ServerConfig', 'ServiceRegistry', 'RAGConnector', 'RAGStats', 'VoiceTest',
+    'IntentCategory', 'HallucinationCheck', 'CrossValidationModel', 'MultiIntentConfig',
+    'IntentChainRule', 'ValidationTestScenario', 'ConfidenceScoreRule', 'ResponseEnhancementRule'
 ]

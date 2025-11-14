@@ -20,6 +20,38 @@ depends_on = None
 def upgrade():
     """Add tables for anti-hallucination and multi-intent configuration"""
 
+    # 0. Intent Categories (must be first for foreign keys)
+    op.create_table(
+        'intent_categories',
+        sa.Column('id', sa.Integer(), primary_key=True),
+        sa.Column('name', sa.String(100), nullable=False, unique=True),
+        sa.Column('display_name', sa.String(200), nullable=False),
+        sa.Column('description', sa.Text()),
+        sa.Column('parent_id', sa.Integer(), sa.ForeignKey('intent_categories.id')),
+        sa.Column('enabled', sa.Boolean(), default=True),
+        sa.Column('priority', sa.Integer(), default=100),
+        sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'))
+    )
+
+    # Create indexes for intent_categories
+    op.create_index('idx_intent_categories_enabled', 'intent_categories', ['enabled'])
+    op.create_index('idx_intent_categories_parent_id', 'intent_categories', ['parent_id'])
+
+    # Seed initial intent categories
+    op.execute("""
+        INSERT INTO intent_categories
+        (name, display_name, description, enabled, priority)
+        VALUES
+        ('control', 'Device Control', 'Home automation device control intents', true, 100),
+        ('query', 'Information Query', 'General information and knowledge queries', true, 90),
+        ('rag', 'RAG Queries', 'Queries requiring external data sources', true, 80),
+        ('weather', 'Weather', 'Weather information queries', true, 70),
+        ('sports', 'Sports', 'Sports scores and information', true, 70),
+        ('flights', 'Flights', 'Flight tracking and airport information', true, 70),
+        ('routine', 'Routines', 'Multi-step automated routines', true, 60)
+    """)
+
     # 1. Anti-Hallucination Validation Rules (Enhanced)
     op.create_table(
         'hallucination_checks',
@@ -240,3 +272,4 @@ def downgrade():
     op.drop_table('multi_intent_config')
     op.drop_table('cross_validation_models')
     op.drop_table('hallucination_checks')
+    op.drop_table('intent_categories')

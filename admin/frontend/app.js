@@ -42,7 +42,7 @@ function checkAuthStatus() {
 
 async function loadCurrentUser() {
     try {
-        const response = await fetch(`${API_BASE}/auth/me`, {
+        const response = await fetch(`${API_BASE}/api/auth/me`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
@@ -271,14 +271,20 @@ async function apiRequest(endpoint, options = {}) {
 // ============================================================================
 
 function showTab(tabName) {
-    // Update tab buttons
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('tab-active');
-        btn.classList.add('text-gray-400', 'hover:text-gray-200');
+    // Update sidebar buttons - remove active state from all
+    document.querySelectorAll('.sidebar-item').forEach(btn => {
+        btn.classList.remove('bg-gray-700', 'text-white');
+        btn.classList.add('text-gray-400');
     });
 
-    event.target.classList.add('tab-active');
-    event.target.classList.remove('text-gray-400', 'hover:text-gray-200');
+    // Add active state to clicked button (find by checking onclick attribute)
+    document.querySelectorAll('.sidebar-item').forEach(btn => {
+        const onclick = btn.getAttribute('onclick');
+        if (onclick && onclick.includes(`'${tabName}'`)) {
+            btn.classList.add('bg-gray-700', 'text-white');
+            btn.classList.remove('text-gray-400');
+        }
+    });
 
     // Update tab content
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -315,6 +321,16 @@ function showTab(tabName) {
             break;
         case 'voice-testing':
             loadTestHistory();
+            break;
+        case 'hallucination-checks':
+            loadHallucinationChecks();
+            break;
+        case 'multi-intent':
+            loadMultiIntentConfig();
+            loadIntentChains();
+            break;
+        case 'validation-models':
+            loadValidationModels();
             break;
     }
 }
@@ -2189,6 +2205,236 @@ async function loadTestHistory() {
         console.error('Load test history error:', error);
         showError('Failed to load test history');
     }
+}
+
+// ============================================================================
+// Hallucination Checks Tab
+// ============================================================================
+
+async function loadHallucinationChecks() {
+    try {
+        const response = await fetch(`${API_BASE}/api/hallucination-checks`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load hallucination checks');
+
+        const data = await response.json();
+        const container = document.getElementById('hallucination-checks-container');
+
+        if (data.hallucination_checks.length === 0) {
+            container.innerHTML = '<p class="text-gray-400">No hallucination checks configured yet.</p>';
+            return;
+        }
+
+        container.innerHTML = data.hallucination_checks.map(check => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">${check.display_name}</h3>
+                        <p class="text-sm text-gray-400 mt-1">${check.description || 'No description'}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium ${check.enabled ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'}">
+                        ${check.enabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-400">Type:</span>
+                        <span class="text-white ml-2">${check.check_type}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Severity:</span>
+                        <span class="text-white ml-2">${check.severity}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Priority:</span>
+                        <span class="text-white ml-2">${check.priority}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Confidence:</span>
+                        <span class="text-white ml-2">${check.confidence_threshold}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load hallucination checks:', error);
+        showError('Failed to load hallucination checks');
+    }
+}
+
+function showCreateHallucinationCheckModal() {
+    showError('Creating hallucination checks via UI is coming soon. Use the API for now.');
+}
+
+// ============================================================================
+// Multi-Intent Config Tab
+// ============================================================================
+
+async function loadMultiIntentConfig() {
+    try {
+        const response = await fetch(`${API_BASE}/api/multi-intent/config`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load multi-intent config');
+
+        const config = await response.json();
+        const container = document.getElementById('multi-intent-config-container');
+
+        container.innerHTML = `
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Enabled</label>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium ${config.enabled ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'}">
+                        ${config.enabled ? 'Yes' : 'No'}
+                    </span>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Max Intents Per Query</label>
+                    <span class="text-white">${config.max_intents_per_query}</span>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Parallel Processing</label>
+                    <span class="text-white">${config.parallel_processing ? 'Yes' : 'No'}</span>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Combination Strategy</label>
+                    <span class="text-white">${config.combination_strategy}</span>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Separators</label>
+                    <div class="flex flex-wrap gap-2">
+                        ${config.separators.map(sep => `
+                            <span class="px-2 py-1 bg-dark-bg rounded text-xs text-gray-300">"${sep}"</span>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Failed to load multi-intent config:', error);
+        showError('Failed to load multi-intent configuration');
+    }
+}
+
+async function loadIntentChains() {
+    try {
+        const response = await fetch(`${API_BASE}/api/multi-intent/chains`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load intent chains');
+
+        const data = await response.json();
+        const container = document.getElementById('intent-chains-container');
+
+        if (data.intent_chains.length === 0) {
+            container.innerHTML = '<p class="text-gray-400">No intent chain rules configured yet.</p>';
+            return;
+        }
+
+        container.innerHTML = data.intent_chains.map(chain => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">${chain.name}</h3>
+                        <p class="text-sm text-gray-400 mt-1">${chain.description || 'No description'}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium ${chain.enabled ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'}">
+                        ${chain.enabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                </div>
+                <div class="mb-3">
+                    <span class="text-sm text-gray-400">Trigger Pattern:</span>
+                    <code class="ml-2 text-xs bg-dark-bg px-2 py-1 rounded text-blue-400">${chain.trigger_pattern || 'N/A'}</code>
+                </div>
+                <div>
+                    <span class="text-sm text-gray-400">Intent Sequence:</span>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        ${chain.intent_sequence.map((intent, idx) => `
+                            <span class="px-2 py-1 bg-dark-bg rounded text-xs text-white">
+                                ${idx + 1}. ${intent}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load intent chains:', error);
+        showError('Failed to load intent chains');
+    }
+}
+
+function showCreateIntentChainModal() {
+    showError('Creating intent chains via UI is coming soon. Use the API for now.');
+}
+
+// ============================================================================
+// Validation Models Tab
+// ============================================================================
+
+async function loadValidationModels() {
+    try {
+        const response = await fetch(`${API_BASE}/api/validation-models`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load validation models');
+
+        const data = await response.json();
+        const container = document.getElementById('validation-models-container');
+
+        if (data.validation_models.length === 0) {
+            container.innerHTML = '<p class="text-gray-400 col-span-3">No validation models configured yet.</p>';
+            return;
+        }
+
+        container.innerHTML = data.validation_models.map(model => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">${model.name}</h3>
+                        <p class="text-sm text-gray-400 mt-1">${model.model_id}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium ${model.enabled ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'}">
+                        ${model.enabled ? 'Active' : 'Inactive'}
+                    </span>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div>
+                        <span class="text-gray-400">Type:</span>
+                        <span class="text-white ml-2 capitalize">${model.model_type}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Temperature:</span>
+                        <span class="text-white ml-2">${model.temperature}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Max Tokens:</span>
+                        <span class="text-white ml-2">${model.max_tokens}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Weight:</span>
+                        <span class="text-white ml-2">${model.weight}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Min Confidence:</span>
+                        <span class="text-white ml-2">${model.min_confidence_required}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Failed to load validation models:', error);
+        showError('Failed to load validation models');
+    }
+}
+
+function showCreateValidationModelModal() {
+    showError('Creating validation models via UI is coming soon. Use the API for now.');
 }
 
 // ============================================================================

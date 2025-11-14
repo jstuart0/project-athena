@@ -30,7 +30,10 @@ from app.auth.oidc import (
 from app.models import User
 
 # Import API route modules
-from app.routes import policies, secrets, devices, audit, users, servers, services, rag_connectors, voice_tests
+from app.routes import (
+    policies, secrets, devices, audit, users, servers, services, rag_connectors, voice_tests,
+    hallucination_checks, multi_intent, validation_models
+)
 
 logger = structlog.get_logger()
 
@@ -95,6 +98,9 @@ app.include_router(servers.router)
 app.include_router(services.router)
 app.include_router(rag_connectors.router)
 app.include_router(voice_tests.router)
+app.include_router(hallucination_checks.router)
+app.include_router(multi_intent.router)
+app.include_router(validation_models.router)
 
 
 # Startup event: Initialize database and check connections
@@ -121,14 +127,47 @@ async def startup_event():
 
 # Authentication routes
 @app.get("/auth/login")
-async def auth_login(request: Request):
+@app.get("/api/auth/login")
+async def auth_login(request: Request, db: Session = Depends(get_db)):
     """Initiate OIDC login flow with Authentik."""
+    # Demo mode bypass for development/testing
+    if os.getenv("DEMO_MODE", "false").lower() == "true" or os.getenv("OIDC_CLIENT_ID") == "demo-mode":
+        # Create demo userinfo dictionary
+        demo_userinfo = {
+            "sub": "demo-admin",
+            "email": "admin@demo.local",
+            "preferred_username": "admin",
+            "name": "Demo Admin",
+            "groups": ["admin"]
+        }
+
+        # Create or get demo user using the proper function signature
+        demo_user = get_or_create_user(db=db, userinfo=demo_userinfo)
+
+        # Create demo token with proper data structure
+        demo_token = create_access_token(
+            data={
+                "sub": demo_user.authentik_id,
+                "user_id": demo_user.id,  # Required by get_current_user
+                "email": demo_user.email,
+                "username": demo_user.username,
+                "full_name": demo_user.full_name,
+                "groups": ["admin"]
+            }
+        )
+
+        frontend_url = os.getenv("FRONTEND_URL", "https://athena-admin.xmojo.net")
+        return RedirectResponse(url=f"{frontend_url}?token={demo_token}")
+
+    # Normal OAuth flow
     # Use explicit HTTPS redirect URI from environment (not request.url_for which returns HTTP)
     redirect_uri = os.getenv("OIDC_REDIRECT_URI", "https://athena-admin.xmojo.net/auth/callback")
+    logger.info("auth_login_redirect", redirect_uri=redirect_uri)
     return await oauth.authentik.authorize_redirect(request, redirect_uri)
 
 
 @app.get("/auth/callback")
+@app.get("/api/auth/callback")
 async def auth_callback(request: Request, db: Session = Depends(get_db)):
     """
     OIDC callback endpoint.
@@ -136,6 +175,7 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
     Exchanges authorization code for tokens, fetches user info,
     creates/updates user in database, and returns JWT token.
     """
+    logger.info("auth_callback_received", query_params=str(request.query_params))
     try:
         # Exchange authorization code for tokens
         # Skip ID token validation - we fetch userinfo directly
@@ -181,6 +221,7 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
 
 
 @app.get("/auth/logout")
+@app.get("/api/auth/logout")
 async def auth_logout(request: Request):
     """Logout user and clear session."""
     request.session.clear()
@@ -191,6 +232,7 @@ async def auth_logout(request: Request):
 
 
 @app.get("/auth/me")
+@app.get("/api/auth/me")
 async def auth_me(current_user: User = Depends(get_current_user)):
     """Get current authenticated user information."""
     return {
@@ -375,6 +417,7 @@ async def health_check():
     }
 
 
+@app.get("/status", response_model=SystemStatus)
 @app.get("/api/status", response_model=SystemStatus)
 async def get_system_status():
     """Get status of all Athena services."""
@@ -513,7 +556,7 @@ async def get_system_status():
     )
 
 
-@app.get("/api/services")
+@app.get("/services")
 async def list_services():
     """List all configured services."""
     return {
@@ -524,7 +567,7 @@ async def list_services():
     }
 
 
-@app.post("/api/test-query")
+@app.post("/test-query")
 async def test_query(query: str = "what is 2+2?"):
     """Test a query against the orchestrator."""
     async with httpx.AsyncClient(timeout=15.0) as client:
