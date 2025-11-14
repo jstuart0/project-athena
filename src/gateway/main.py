@@ -178,7 +178,12 @@ def is_athena_query(messages: List[ChatMessage]) -> bool:
         # Sports
         "game", "score", "ravens", "orioles", "team",
         # Location context
-        "baltimore", "home", "office", "bedroom", "kitchen"
+        "baltimore", "home", "office", "bedroom", "kitchen",
+        # Recipes and cooking (RAG + web search)
+        "recipe", "cook", "how to make", "ingredients", "cooking",
+        # Entertainment and events (web search)
+        "concert", "perform", "tour", "show", "event", "when does",
+        "who is", "what is", "tell me about"
     ]
 
     return any(pattern in last_user_msg for pattern in athena_patterns)

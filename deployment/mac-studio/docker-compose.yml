@@ -137,7 +137,7 @@ services:
       # Service URLs
       - STT_SERVICE_URL=http://whisper-stt:10300
       - TTS_SERVICE_URL=http://piper-tts:10200
-      - ORCHESTRATOR_SERVICE_URL=http://orchestrator:8001
+      - ORCHESTRATOR_SERVICE_URL=http://host.docker.internal:8001  # Orchestrator on host
       - LLM_SERVICE_URL=http://host.docker.internal:11434  # Ollama on host
       # RAG service URLs
       - RAG_WEATHER_URL=http://host.docker.internal:8010
@@ -147,6 +147,8 @@ services:
       - QDRANT_URL=http://192.168.10.181:6333
       # Redis cache (on Mac mini)
       - REDIS_URL=redis://192.168.10.181:6379
+      # API Key (dummy-key disables auth for development)
+      - GATEWAY_API_KEY=dummy-key
 
     # Health check
     healthcheck:
@@ -215,6 +217,9 @@ services:
       - RAG_FLIGHTS_URL=http://host.docker.internal:8012
       - QDRANT_URL=http://192.168.10.181:6333
       - REDIS_URL=redis://192.168.10.181:6379
+      # Home Assistant integration
+      - HA_URL=http://192.168.10.168:8123
+      - HA_TOKEN=${HA_TOKEN}
 
     # Health check
     healthcheck:

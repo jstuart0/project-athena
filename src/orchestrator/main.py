@@ -33,6 +33,10 @@ from shared.ha_client import HomeAssistantClient
 from shared.ollama_client import OllamaClient
 from shared.cache import CacheClient
 
+# Parallel search imports
+from orchestrator.search_providers.parallel_search import ParallelSearchEngine
+from orchestrator.search_providers.result_fusion import ResultFusion
+
 # Configure logging
 logger = configure_logging("orchestrator")
 
@@ -109,6 +113,7 @@ class OrchestratorState(BaseModel):
     # Validation
     validation_passed: bool = True
     validation_reason: Optional[str] = None
+    validation_details: List[str] = Field(default_factory=list)
 
     # Metadata
     request_id: str = Field(default_factory=lambda: hashlib.md5(str(time.time()).encode()).hexdigest()[:8])
@@ -119,7 +124,7 @@ class OrchestratorState(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifecycle."""
-    global ha_client, ollama_client, cache_client, rag_clients
+    global ha_client, ollama_client, cache_client, rag_clients, parallel_search_engine, result_fusion
 
     # Startup
     logger.info("Starting Orchestrator service")
@@ -128,6 +133,17 @@ async def lifespan(app: FastAPI):
     ha_client = HomeAssistantClient()
     ollama_client = OllamaClient(url=OLLAMA_URL)
     cache_client = CacheClient()
+
+    # Initialize parallel search engine
+    parallel_search_engine = ParallelSearchEngine.from_environment()
+    logger.info("Parallel search engine initialized")
+
+    # Initialize result fusion
+    result_fusion = ResultFusion(
+        similarity_threshold=0.7,
+        min_confidence=0.5
+    )
+    logger.info("Result fusion initialized")
 
     # Initialize RAG service clients
     rag_clients = {
@@ -157,6 +173,8 @@ async def lifespan(app: FastAPI):
         await ollama_client.close()
     if cache_client:
         await cache_client.close()
+    if parallel_search_engine:
+        await parallel_search_engine.close_all()
     for client in rag_clients.values():
         await client.aclose()
 
@@ -402,9 +420,47 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
                 state.citations.append(f"Sports data from TheSportsDB for {team}")
 
         else:
-            # No RAG retrieval needed for general info
-            state.retrieved_data = {}
-            state.data_source = "LLM knowledge"
+            # Use intent-based parallel web search for unknown/general queries
+            logger.info("Attempting intent-based parallel search")
+
+            # Execute parallel search with automatic intent classification
+            intent, search_results = await parallel_search_engine.search(
+                query=state.query,
+                location="Baltimore, MD",
+                limit_per_provider=5
+            )
+
+            logger.info(f"Search intent classified as: '{intent}'")
+
+            if search_results:
+                # Fuse and rank results based on classified intent
+                fused_results = result_fusion.get_top_results(
+                    results=search_results,
+                    query=state.query,
+                    intent=intent,
+                    limit=5
+                )
+
+                logger.info(f"Parallel search returned {len(fused_results)} fused results (intent: {intent})")
+
+                # Convert to dict format for LLM
+                search_data = {
+                    "intent": intent,
+                    "results": [r.to_dict() for r in fused_results],
+                    "sources": list(set(r.source for r in fused_results)),
+                    "total_results": len(search_results),
+                    "fused_results": len(fused_results)
+                }
+
+                state.retrieved_data = search_data
+                state.data_source = f"Parallel Search ({intent}): {', '.join(search_data['sources'])}"
+                state.citations.extend([f"Search result from {r.source}" for r in fused_results])
+                logger.info(f"Parallel search completed: intent={intent}, sources={search_data['sources']}")
+            else:
+                # Fallback to LLM knowledge
+                state.retrieved_data = {}
+                state.data_source = "LLM knowledge"
+                logger.info(f"Parallel search returned no results (intent: {intent}), using LLM knowledge")
 
         logger.info(f"Retrieved data from {state.data_source}")
 
@@ -428,22 +484,35 @@ async def synthesize_node(state: OrchestratorState) -> OrchestratorState:
         # Build synthesis prompt with retrieved data
         if state.retrieved_data:
             context = json.dumps(state.retrieved_data, indent=2)
-            synthesis_prompt = f"""Answer the following question using the provided context.
+            synthesis_prompt = f"""Answer the following question using ONLY the provided context.
 
 Question: {state.query}
 
 Context Data:
 {context}
 
-Instructions:
-1. Provide a natural, conversational response
-2. Include specific details from the context
-3. Be concise but informative
-4. If the context doesn't contain enough information, say so
+CRITICAL INSTRUCTIONS:
+1. ONLY use facts from the Context Data above
+2. If the context doesn't have the information, say "I don't have current information about that"
+3. NEVER make up specific facts, dates, names, or numbers
+4. Be concise but accurate
+5. Cite your source when possible
 
 Response:"""
         else:
-            synthesis_prompt = state.query
+            # No data retrieved - must be explicit about lack of information
+            synthesis_prompt = f"""Question: {state.query}
+
+CRITICAL: You do NOT have access to current or specific information to answer this question.
+
+You must respond with:
+1. Acknowledge you don't have current/specific information
+2. Suggest where the user can find this information
+3. NEVER make up specific facts, dates, names, numbers, or events
+
+Respond honestly about your limitations.
+
+Response:"""
 
         # Use selected model tier
         messages = [
@@ -480,25 +549,128 @@ Response:"""
 
 async def validate_node(state: OrchestratorState) -> OrchestratorState:
     """
-    Validate the generated response for quality and safety.
+    Multi-layer anti-hallucination validation.
+
+    Layer 1: Basic checks (length, error patterns)
+    Layer 2: Pattern detection (specific facts without data)
+    Layer 3: LLM-based fact checking
+    Layer 4: Uncertainty marker detection
     """
     start = time.time()
 
-    # Basic validation for Phase 1
+    # Layer 1: Basic validation
     if not state.answer or len(state.answer) < 10:
         state.validation_passed = False
         state.validation_reason = "Response too short"
-    elif len(state.answer) > 2000:
+        logger.warning(f"Validation failed: {state.validation_reason}")
+        state.node_timings["validate"] = time.time() - start
+        return state
+
+    if len(state.answer) > 2000:
         state.validation_passed = False
         state.validation_reason = "Response too long"
-    elif "error" in state.answer.lower() and "sorry" in state.answer.lower():
-        state.validation_passed = False
-        state.validation_reason = "Response indicates error"
-    else:
-        state.validation_passed = True
-
-    if not state.validation_passed:
         logger.warning(f"Validation failed: {state.validation_reason}")
+        state.node_timings["validate"] = time.time() - start
+        return state
+
+    # Layer 2: Pattern detection for hallucinations
+    # Look for specific patterns that indicate fabricated information
+    import re
+
+    # Detect specific dates (Month DD, YYYY or MM/DD/YYYY)
+    date_patterns = re.findall(r'(\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}\b|\b\d{1,2}/\d{1,2}/\d{2,4}\b)', state.answer)
+
+    # Detect specific times (HH:MM AM/PM)
+    time_patterns = re.findall(r'\b\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)\b', state.answer)
+
+    # Detect specific dollar amounts
+    money_patterns = re.findall(r'\$\d+(?:,\d{3})*(?:\.\d{2})?', state.answer)
+
+    # Detect phone numbers
+    phone_patterns = re.findall(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', state.answer)
+
+    has_specific_facts = bool(date_patterns or time_patterns or money_patterns or phone_patterns)
+
+    # Layer 3: Check if we have data to support specific facts
+    has_supporting_data = bool(state.retrieved_data)
+
+    if has_specific_facts and not has_supporting_data:
+        logger.warning(f"Response contains specific facts but no supporting data retrieved")
+        logger.warning(f"Dates: {date_patterns}, Times: {time_patterns}, Money: {money_patterns}, Phones: {phone_patterns}")
+
+        # Layer 4: LLM-based fact checking
+        try:
+            fact_check_prompt = f"""You are a fact-checking assistant. Analyze this response for hallucinations.
+
+Original Query: {state.query}
+
+Retrieved Data Available: {'Yes' if state.retrieved_data else 'No'}
+{f"Retrieved Data: {json.dumps(state.retrieved_data, indent=2)}" if state.retrieved_data else "No data was retrieved from external sources."}
+
+Generated Response:
+{state.answer}
+
+Question: Does this response contain specific factual claims (dates, times, names, phone numbers, prices, events) that are NOT present in the Retrieved Data?
+
+IMPORTANT: If no Retrieved Data is available, ANY specific factual claims are likely hallucinations.
+
+Respond ONLY with valid JSON:
+{{"contains_hallucinations": true/false, "reason": "brief explanation", "specific_claims": ["list of suspicious claims"]}}"""
+
+            messages = [
+                {"role": "system", "content": "You are a precise fact-checking assistant. Always respond with valid JSON."},
+                {"role": "user", "content": fact_check_prompt}
+            ]
+
+            fact_check_response = ""
+            async for chunk in ollama_client.chat(
+                model=ModelTier.FAST.value,  # Use fast model for validation
+                messages=messages,
+                temperature=0.1,  # Low temperature for consistent checking
+                stream=False
+            ):
+                if chunk.get("done"):
+                    fact_check_response = chunk.get("message", {}).get("content", "")
+                    break
+
+            # Parse fact check response
+            try:
+                # Extract JSON from response (handle markdown code blocks)
+                json_match = re.search(r'\{.*\}', fact_check_response, re.DOTALL)
+                if json_match:
+                    fact_check_result = json.loads(json_match.group())
+
+                    if fact_check_result.get("contains_hallucinations", False):
+                        state.validation_passed = False
+                        state.validation_reason = f"Hallucination detected: {fact_check_result.get('reason', 'Unknown')}"
+                        state.validation_details = fact_check_result.get("specific_claims", [])
+                        logger.warning(f"Hallucination detected by LLM fact checker: {state.validation_reason}")
+                        logger.warning(f"Suspicious claims: {state.validation_details}")
+                    else:
+                        state.validation_passed = True
+                        logger.info("Response passed LLM fact checking")
+                else:
+                    logger.warning(f"Could not parse fact check response as JSON: {fact_check_response}")
+                    # Default to failing validation if we can't parse
+                    state.validation_passed = False
+                    state.validation_reason = "Could not verify response accuracy"
+
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse fact check JSON: {e}")
+                # Default to failing validation if we can't parse
+                state.validation_passed = False
+                state.validation_reason = "Could not verify response accuracy"
+
+        except Exception as e:
+            logger.error(f"Fact checking error: {e}", exc_info=True)
+            # If fact checking fails, be conservative and fail validation
+            state.validation_passed = False
+            state.validation_reason = f"Validation error: {str(e)}"
+
+    else:
+        # No specific facts or we have supporting data
+        state.validation_passed = True
+        logger.info("Response passed validation (no specific facts or has supporting data)")
 
     state.node_timings["validate"] = time.time() - start
     return state
@@ -510,8 +682,13 @@ async def finalize_node(state: OrchestratorState) -> OrchestratorState:
     start = time.time()
 
     if not state.validation_passed:
-        # Provide fallback response
-        if state.error:
+        # Provide fallback response based on validation failure reason
+        logger.warning(f"Validation failed, providing fallback response: {state.validation_reason}")
+
+        if "hallucination" in state.validation_reason.lower():
+            # Hallucination detected - provide helpful fallback
+            state.answer = f"I don't have current information to answer that accurately. I recommend checking reliable sources for up-to-date information about {state.query.lower()}."
+        elif state.error:
             state.answer = "I encountered an issue processing your request. Please try rephrasing your question."
         else:
             state.answer = "I'm not confident in my response. Could you please rephrase your question?"
