@@ -9,7 +9,7 @@ import os
 import json
 import time
 import uuid
-from typing import AsyncIterator, Dict, Any, List, Optional
+from typing import AsyncIterator, Dict, Any, List, Optional, Union
 from contextlib import asynccontextmanager
 
 import httpx
@@ -25,6 +25,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from shared.logging_config import configure_logging
 from shared.ollama_client import OllamaClient
+from gateway.device_session_manager import get_device_session_manager, DeviceSessionManager
 
 # Configure logging
 logger = configure_logging("gateway")
@@ -44,6 +45,7 @@ request_duration = Histogram(
 # Global clients
 orchestrator_client: Optional[httpx.AsyncClient] = None
 ollama_client: Optional[OllamaClient] = None
+device_session_mgr: Optional[DeviceSessionManager] = None
 
 # Configuration
 ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_SERVICE_URL", "http://localhost:8001")
@@ -60,7 +62,7 @@ MODEL_MAPPING = {
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifecycle."""
-    global orchestrator_client, ollama_client
+    global orchestrator_client, ollama_client, device_session_mgr
 
     # Startup
     logger.info("Starting Gateway service")
@@ -69,6 +71,8 @@ async def lifespan(app: FastAPI):
         timeout=60.0
     )
     ollama_client = OllamaClient(url=OLLAMA_URL)
+    device_session_mgr = await get_device_session_manager()
+    logger.info("Device session manager initialized")
 
     # Check orchestrator health
     try:
@@ -84,6 +88,8 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down Gateway service")
+    if device_session_mgr:
+        await device_session_mgr.close()
     if orchestrator_client:
         await orchestrator_client.aclose()
     if ollama_client:
@@ -127,6 +133,30 @@ class ChatCompletionResponse(BaseModel):
     model: str
     choices: List[ChatChoice]
     usage: Dict[str, int]
+
+# Home Assistant Conversation API models
+class HAConversationRequest(BaseModel):
+    """
+    Home Assistant conversation request from Voice PE devices.
+
+    This matches the format that Home Assistant sends when a voice device
+    (Wyoming protocol) triggers a conversation.
+    """
+    text: str = Field(..., description="User's voice query transcribed to text")
+    language: str = Field("en", description="Language code (default: en)")
+    conversation_id: Optional[str] = Field(None, description="HA conversation ID (optional)")
+    device_id: Optional[str] = Field(None, description="Voice PE device identifier (e.g., 'office', 'kitchen')")
+    agent_id: Optional[str] = Field(None, description="HA agent ID")
+
+class HAConversationResponse(BaseModel):
+    """
+    Home Assistant conversation response format.
+
+    This is returned to Home Assistant which then synthesizes it to speech
+    and plays it back through the Voice PE device.
+    """
+    response: Dict[str, Any] = Field(..., description="Response structure")
+    conversation_id: Optional[str] = Field(None, description="Session ID for conversation context")
 
 # API key validation (optional for Phase 1)
 async def validate_api_key(request: Request):
@@ -189,9 +219,23 @@ def is_athena_query(messages: List[ChatMessage]) -> bool:
     return any(pattern in last_user_msg for pattern in athena_patterns)
 
 async def route_to_orchestrator(
-    request: ChatCompletionRequest
-) -> ChatCompletionResponse:
-    """Route request to Athena orchestrator."""
+    request: ChatCompletionRequest,
+    device_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    return_session_id: bool = False
+) -> Union[ChatCompletionResponse, tuple]:
+    """
+    Route request to Athena orchestrator.
+
+    Args:
+        request: OpenAI-compatible chat completion request
+        device_id: Optional Voice PE device identifier for session management
+        session_id: Optional session ID to continue conversation
+        return_session_id: If True, returns tuple of (response, session_id)
+
+    Returns:
+        ChatCompletionResponse with orchestrator's answer, or tuple if return_session_id=True
+    """
     try:
         # Extract user message
         user_message = ""
@@ -199,24 +243,27 @@ async def route_to_orchestrator(
             if msg.role == "user":
                 user_message = msg.content
 
-        # Call orchestrator
+        # Call orchestrator with session support
         with request_duration.labels(endpoint="orchestrator").time():
-            response = await orchestrator_client.post(
-                "/query",
-                json={
-                    "query": user_message,
-                    "mode": "owner",  # Default to owner mode
-                    "room": "unknown",  # Could be enriched later
-                    "temperature": request.temperature,
-                    "model": MODEL_MAPPING.get(request.model, "phi3:mini")
-                }
-            )
+            payload = {
+                "query": user_message,
+                "mode": "owner",  # Default to owner mode
+                "room": device_id or "unknown",  # Use device_id as room if available
+                "temperature": request.temperature,
+                "model": MODEL_MAPPING.get(request.model, "phi3:mini")
+            }
+
+            # Include session_id if provided (for conversation context)
+            if session_id:
+                payload["session_id"] = session_id
+
+            response = await orchestrator_client.post("/query", json=payload)
             response.raise_for_status()
 
         result = response.json()
 
         # Format as OpenAI response
-        return ChatCompletionResponse(
+        chat_response = ChatCompletionResponse(
             id=f"chatcmpl-{uuid.uuid4().hex[:8]}",
             created=int(time.time()),
             model=request.model,
@@ -237,12 +284,22 @@ async def route_to_orchestrator(
             }
         )
 
+        # Return session_id if requested (for HA conversation endpoint)
+        if return_session_id:
+            orchestrator_session_id = result.get("session_id", f"session-{uuid.uuid4().hex[:8]}")
+            return chat_response, orchestrator_session_id
+
+        return chat_response
+
     except httpx.HTTPStatusError as e:
         logger.error(f"Orchestrator error: {e}")
         raise HTTPException(status_code=502, detail="Orchestrator error")
     except Exception as e:
         logger.error(f"Failed to route to orchestrator: {e}", exc_info=True)
         # Fall back to Ollama
+        if return_session_id:
+            fallback_response = await route_to_ollama(request)
+            return fallback_response, f"session-{uuid.uuid4().hex[:8]}"
         return await route_to_ollama(request)
 
 async def route_to_ollama(
@@ -424,6 +481,103 @@ async def list_models():
             {"id": "gpt-4", "object": "model", "owned_by": "athena"}
         ]
     }
+
+@app.post("/ha/conversation", response_model=HAConversationResponse)
+async def ha_conversation(request: HAConversationRequest):
+    """
+    Home Assistant conversation endpoint for Voice PE devices.
+
+    This endpoint receives voice queries from Home Assistant's conversation integration
+    (Wyoming protocol). It manages device-to-session mapping to maintain conversation
+    context across multiple interactions with the same Voice PE device.
+
+    Flow:
+    1. Voice PE device captures wake word + voice input
+    2. Wyoming protocol sends audio to HA
+    3. HA transcribes to text and calls this endpoint
+    4. Gateway gets/creates session for device
+    5. Routes to orchestrator with session_id for context
+    6. Updates device session mapping
+    7. Returns response to HA
+    8. HA synthesizes to speech and plays on Voice PE device
+
+    Args:
+        request: HAConversationRequest with text, device_id, etc.
+
+    Returns:
+        HAConversationResponse with answer and session_id
+    """
+    request_counter.labels(endpoint="ha_conversation", status="started").inc()
+
+    try:
+        device_id = request.device_id or "unknown"
+        logger.info(f"HA conversation request from device: {device_id}, query: {request.text}")
+
+        # Get active session for this device (or None to create new)
+        existing_session_id = await device_session_mgr.get_session_for_device(device_id)
+
+        if existing_session_id:
+            logger.info(f"Using existing session {existing_session_id} for device {device_id}")
+        else:
+            logger.info(f"Creating new session for device {device_id}")
+
+        # Create OpenAI-compatible request for routing
+        chat_request = ChatCompletionRequest(
+            model="gpt-4",  # Default model
+            messages=[
+                ChatMessage(role="user", content=request.text)
+            ],
+            temperature=0.7
+        )
+
+        # Route to orchestrator with device and session info
+        with request_duration.labels(endpoint="ha_conversation").time():
+            chat_response, orchestrator_session_id = await route_to_orchestrator(
+                request=chat_request,
+                device_id=device_id,
+                session_id=existing_session_id,
+                return_session_id=True
+            )
+
+        # Extract answer from chat response
+        answer = chat_response.choices[0].message.content if chat_response.choices else "I couldn't process that request."
+
+        # Update device session mapping with the orchestrator's session_id
+        await device_session_mgr.update_session_for_device(device_id, orchestrator_session_id)
+        logger.info(f"Updated session mapping: device {device_id} → session {orchestrator_session_id}")
+
+        # Format response for Home Assistant
+        ha_response = HAConversationResponse(
+            response={
+                "speech": {
+                    "plain": {
+                        "speech": answer,
+                        "extra_data": None
+                    }
+                },
+                "card": {},
+                "language": request.language,
+                "response_type": "action_done",
+                "data": {
+                    "success": True,
+                    "targets": []
+                }
+            },
+            conversation_id=orchestrator_session_id
+        )
+
+        request_counter.labels(endpoint="ha_conversation", status="success").inc()
+        logger.info(f"HA conversation completed: device {device_id}, session {orchestrator_session_id}")
+
+        return ha_response
+
+    except HTTPException:
+        request_counter.labels(endpoint="ha_conversation", status="error").inc()
+        raise
+    except Exception as e:
+        request_counter.labels(endpoint="ha_conversation", status="error").inc()
+        logger.error(f"HA conversation error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
     import uvicorn

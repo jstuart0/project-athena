@@ -32,7 +32,7 @@ from app.models import User
 # Import API route modules
 from app.routes import (
     policies, secrets, devices, audit, users, servers, services, rag_connectors, voice_tests,
-    hallucination_checks, multi_intent, validation_models
+    hallucination_checks, multi_intent, validation_models, conversation
 )
 
 logger = structlog.get_logger()
@@ -101,6 +101,7 @@ app.include_router(voice_tests.router)
 app.include_router(hallucination_checks.router)
 app.include_router(multi_intent.router)
 app.include_router(validation_models.router)
+app.include_router(conversation.router)
 
 
 # Startup event: Initialize database and check connections

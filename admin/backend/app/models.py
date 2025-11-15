@@ -826,10 +826,209 @@ class ResponseEnhancementRule(Base):
         }
 
 
+class ConversationSettings(Base):
+    """
+    Conversation context management settings.
+
+    Global settings for conversation session management, history tracking,
+    and context preservation between queries.
+    """
+    __tablename__ = 'conversation_settings'
+
+    id = Column(Integer, primary_key=True)
+    enabled = Column(Boolean, nullable=False, default=True)
+    use_context = Column(Boolean, nullable=False, default=True)
+    max_messages = Column(Integer, nullable=False, default=20)
+    timeout_seconds = Column(Integer, nullable=False, default=1800)  # 30 minutes
+    cleanup_interval_seconds = Column(Integer, nullable=False, default=60)
+    session_ttl_seconds = Column(Integer, nullable=False, default=3600)  # 1 hour
+    max_llm_history_messages = Column(Integer, nullable=False, default=10)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert conversation settings to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'enabled': self.enabled,
+            'use_context': self.use_context,
+            'max_messages': self.max_messages,
+            'timeout_seconds': self.timeout_seconds,
+            'cleanup_interval_seconds': self.cleanup_interval_seconds,
+            'session_ttl_seconds': self.session_ttl_seconds,
+            'max_llm_history_messages': self.max_llm_history_messages,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class ClarificationSettings(Base):
+    """
+    Global clarification system settings.
+
+    Controls whether clarifying questions are enabled and global timeout values.
+    """
+    __tablename__ = 'clarification_settings'
+
+    id = Column(Integer, primary_key=True)
+    enabled = Column(Boolean, nullable=False, default=True)
+    timeout_seconds = Column(Integer, nullable=False, default=300)  # 5 minutes
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert clarification settings to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'enabled': self.enabled,
+            'timeout_seconds': self.timeout_seconds,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class ClarificationType(Base):
+    """
+    Individual clarification type configurations.
+
+    Defines different types of clarifying questions (device, location, time, sports_team)
+    with individual enable/disable controls and priority ordering.
+    """
+    __tablename__ = 'clarification_types'
+
+    id = Column(Integer, primary_key=True)
+    type = Column(String(50), nullable=False, unique=True, index=True)
+    enabled = Column(Boolean, nullable=False, default=True)
+    timeout_seconds = Column(Integer)  # Override global timeout if set
+    priority = Column(Integer, nullable=False, default=0)
+    description = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index('idx_clarification_types_enabled', 'enabled'),
+        Index('idx_clarification_types_priority', 'priority'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert clarification type to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'type': self.type,
+            'enabled': self.enabled,
+            'timeout_seconds': self.timeout_seconds,
+            'priority': self.priority,
+            'description': self.description,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class SportsTeamDisambiguation(Base):
+    """
+    Sports team disambiguation rules.
+
+    Maps ambiguous team names (Giants, Cardinals, etc.) to specific options
+    with JSONB data containing full team information.
+    """
+    __tablename__ = 'sports_team_disambiguation'
+
+    id = Column(Integer, primary_key=True)
+    team_name = Column(String(100), nullable=False, index=True)
+    requires_disambiguation = Column(Boolean, nullable=False, default=True)
+    options = Column(JSONB, nullable=False)  # [{"id": "ny-giants", "label": "NY Giants (NFL)", "sport": "football"}]
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index('idx_sports_team_name', 'team_name'),
+        Index('idx_sports_disambiguation_required', 'requires_disambiguation'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert sports team disambiguation to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'team_name': self.team_name,
+            'requires_disambiguation': self.requires_disambiguation,
+            'options': self.options,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class DeviceDisambiguationRule(Base):
+    """
+    Device disambiguation rules for Home Assistant devices.
+
+    Defines when to ask clarifying questions for device types (lights, switches, etc.)
+    based on number of matching entities.
+    """
+    __tablename__ = 'device_disambiguation_rules'
+
+    id = Column(Integer, primary_key=True)
+    device_type = Column(String(50), nullable=False, unique=True, index=True)
+    requires_disambiguation = Column(Boolean, nullable=False, default=True)
+    min_entities_for_clarification = Column(Integer, nullable=False, default=2)
+    include_all_option = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index('idx_device_type_enabled', 'device_type', 'requires_disambiguation'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert device disambiguation rule to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'device_type': self.device_type,
+            'requires_disambiguation': self.requires_disambiguation,
+            'min_entities_for_clarification': self.min_entities_for_clarification,
+            'include_all_option': self.include_all_option,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class ConversationAnalytics(Base):
+    """
+    Analytics event tracking for conversation features.
+
+    Records events like session creation, follow-up detection, and clarification triggers
+    for monitoring and optimization.
+    """
+    __tablename__ = 'conversation_analytics'
+
+    id = Column(Integer, primary_key=True)
+    session_id = Column(String(255), nullable=False, index=True)
+    event_type = Column(String(50), nullable=False, index=True)
+    event_metadata = Column('metadata', JSONB)  # Maps Python attr 'event_metadata' to DB column 'metadata'
+    timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+    __table_args__ = (
+        Index('idx_analytics_event_type', 'event_type'),
+        Index('idx_analytics_timestamp', 'timestamp'),
+        Index('idx_analytics_session_id', 'session_id'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert conversation analytics to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'session_id': self.session_id,
+            'event_type': self.event_type,
+            'metadata': self.event_metadata,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+        }
+
+
 # Export all models for Alembic
 __all__ = [
     'Base', 'User', 'Policy', 'PolicyVersion', 'Secret', 'Device', 'AuditLog',
     'ServerConfig', 'ServiceRegistry', 'RAGConnector', 'RAGStats', 'VoiceTest',
     'IntentCategory', 'HallucinationCheck', 'CrossValidationModel', 'MultiIntentConfig',
-    'IntentChainRule', 'ValidationTestScenario', 'ConfidenceScoreRule', 'ResponseEnhancementRule'
+    'IntentChainRule', 'ValidationTestScenario', 'ConfidenceScoreRule', 'ResponseEnhancementRule',
+    'ConversationSettings', 'ClarificationSettings', 'ClarificationType',
+    'SportsTeamDisambiguation', 'DeviceDisambiguationRule', 'ConversationAnalytics'
 ]

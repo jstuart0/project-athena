@@ -37,6 +37,10 @@ from shared.cache import CacheClient
 from orchestrator.search_providers.parallel_search import ParallelSearchEngine
 from orchestrator.search_providers.result_fusion import ResultFusion
 
+# Session manager imports
+from orchestrator.session_manager import get_session_manager, SessionManager
+from orchestrator.config_loader import get_config
+
 # Configure logging
 logger = configure_logging("orchestrator")
 
@@ -61,6 +65,7 @@ node_duration = Histogram(
 ha_client: Optional[HomeAssistantClient] = None
 ollama_client: Optional[OllamaClient] = None
 cache_client: Optional[CacheClient] = None
+session_manager: Optional[SessionManager] = None
 rag_clients: Dict[str, httpx.AsyncClient] = {}
 
 # Configuration
@@ -93,6 +98,10 @@ class OrchestratorState(BaseModel):
     mode: Literal["owner", "guest"] = Field("owner", description="User mode")
     room: str = Field("unknown", description="Room/zone identifier")
     temperature: float = Field(0.7, description="LLM temperature")
+    session_id: Optional[str] = Field(None, description="Conversation session ID")
+
+    # Conversation context
+    conversation_history: List[Dict[str, str]] = Field(default_factory=list, description="Previous conversation messages")
 
     # Classification
     intent: Optional[IntentCategory] = None
@@ -124,7 +133,7 @@ class OrchestratorState(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifecycle."""
-    global ha_client, ollama_client, cache_client, rag_clients, parallel_search_engine, result_fusion
+    global ha_client, ollama_client, cache_client, session_manager, rag_clients, parallel_search_engine, result_fusion
 
     # Startup
     logger.info("Starting Orchestrator service")
@@ -133,6 +142,10 @@ async def lifespan(app: FastAPI):
     ha_client = HomeAssistantClient()
     ollama_client = OllamaClient(url=OLLAMA_URL)
     cache_client = CacheClient()
+
+    # Initialize session manager
+    session_manager = await get_session_manager()
+    logger.info("Session manager initialized")
 
     # Initialize parallel search engine
     parallel_search_engine = ParallelSearchEngine.from_environment()
@@ -173,6 +186,8 @@ async def lifespan(app: FastAPI):
         await ollama_client.close()
     if cache_client:
         await cache_client.close()
+    if session_manager:
+        await session_manager.close()
     if parallel_search_engine:
         await parallel_search_engine.close_all()
     for client in rag_clients.values():
@@ -502,7 +517,7 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
 
 async def synthesize_node(state: OrchestratorState) -> OrchestratorState:
     """
-    Generate natural language response using LLM with retrieved data.
+    Generate natural language response using LLM with retrieved data and conversation history.
     """
     start = time.time()
 
@@ -540,11 +555,18 @@ Respond honestly about your limitations.
 
 Response:"""
 
-        # Use selected model tier
+        # Build message list with conversation history
         messages = [
-            {"role": "system", "content": "You are Athena, a helpful home assistant. Provide clear, concise answers."},
-            {"role": "user", "content": synthesis_prompt}
+            {"role": "system", "content": "You are Athena, a helpful home assistant. Provide clear, concise answers."}
         ]
+
+        # Add conversation history if available
+        if state.conversation_history:
+            messages.extend(state.conversation_history)
+            logger.info(f"Including {len(state.conversation_history)} previous messages in LLM context")
+
+        # Add current query
+        messages.append({"role": "user", "content": synthesis_prompt})
 
         response_text = ""
         async for chunk in ollama_client.chat(
@@ -815,6 +837,7 @@ class QueryRequest(BaseModel):
     room: str = Field("unknown", description="Room identifier")
     temperature: float = Field(0.7, ge=0, le=2, description="LLM temperature")
     model: Optional[str] = Field(None, description="Preferred model")
+    session_id: Optional[str] = Field(None, description="Conversation session ID (optional, will create new if not provided)")
 
 class QueryResponse(BaseModel):
     """Response model for query endpoint."""
@@ -823,6 +846,7 @@ class QueryResponse(BaseModel):
     confidence: float = Field(..., description="Classification confidence")
     citations: List[str] = Field(default_factory=list, description="Data sources")
     request_id: str = Field(..., description="Request tracking ID")
+    session_id: str = Field(..., description="Conversation session ID")
     processing_time: float = Field(..., description="Total processing time")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
@@ -841,12 +865,34 @@ async def process_query(request: QueryRequest) -> QueryResponse:
     request_counter.labels(intent="unknown", status="started").inc()
 
     try:
-        # Create initial state
+        # Session management: get or create session
+        session = await session_manager.get_or_create_session(
+            session_id=request.session_id,
+            user_id=request.mode,  # Use mode as user_id for now
+            zone=request.room
+        )
+
+        logger.info(f"Processing query in session {session.session_id}")
+
+        # Get conversation history for LLM context
+        config = await get_config()
+        conv_settings = await config.get_conversation_settings()
+
+        # Only load history if conversation context is enabled
+        conversation_history = []
+        if conv_settings.get("enabled", True) and conv_settings.get("use_context", True):
+            max_history = conv_settings.get("max_llm_history_messages", 10)
+            conversation_history = session.get_llm_history(max_history)
+            logger.info(f"Loaded {len(conversation_history)} previous messages from session")
+
+        # Create initial state with conversation history
         initial_state = OrchestratorState(
             query=request.query,
             mode=request.mode,
             room=request.room,
-            temperature=request.temperature
+            temperature=request.temperature,
+            session_id=session.session_id,
+            conversation_history=conversation_history
         )
 
         # Run through state machine
@@ -867,22 +913,67 @@ async def process_query(request: QueryRequest) -> QueryResponse:
             status="success"
         ).inc()
 
-        # Build response
+        # Add messages to session history
+        answer = final_state.get("answer") or "I couldn't process that request."
+
+        # Extract model_tier for session metadata
         model_tier = final_state.get("model_tier")
+
+        # Add user message to session
+        session.add_message(
+            role="user",
+            content=request.query,
+            metadata={
+                "intent": intent_str,
+                "confidence": final_state.get("confidence"),
+                "room": request.room
+            }
+        )
+
+        # Add assistant response to session
+        session.add_message(
+            role="assistant",
+            content=answer,
+            metadata={
+                "model_tier": model_tier.value if model_tier and hasattr(model_tier, "value") else str(model_tier),
+                "data_source": final_state.get("data_source"),
+                "validation_passed": final_state.get("validation_passed")
+            }
+        )
+
+        # Save session (with trimming based on config)
+        await session_manager.add_message(
+            session_id=session.session_id,
+            role="user",
+            content=request.query,
+            metadata={"intent": intent_str, "confidence": final_state.get("confidence")}
+        )
+        await session_manager.add_message(
+            session_id=session.session_id,
+            role="assistant",
+            content=answer,
+            metadata={"model_tier": model_tier.value if model_tier and hasattr(model_tier, "value") else str(model_tier)}
+        )
+
+        logger.info(f"Session {session.session_id} updated with {len(session.messages)} total messages")
+
+        # Build response
         model_tier_str = model_tier.value if model_tier and hasattr(model_tier, "value") else model_tier
 
         return QueryResponse(
-            answer=final_state.get("answer") or "I couldn't process that request.",
+            answer=answer,
             intent=intent_str if intent_str != "unknown" else IntentCategory.UNKNOWN.value,
             confidence=final_state.get("confidence"),
             citations=final_state.get("citations"),
             request_id=final_state.get("request_id"),
+            session_id=session.session_id,
             processing_time=time.time() - final_state.get("start_time", time.time()),
             metadata={
                 "model_used": model_tier_str,
                 "data_source": final_state.get("data_source"),
                 "validation_passed": final_state.get("validation_passed"),
-                "node_timings": final_state.get("node_timings")
+                "node_timings": final_state.get("node_timings"),
+                "conversation_turns": len(session.messages) // 2
             }
         )
 
@@ -947,6 +1038,156 @@ async def health_check():
 async def metrics():
     """Prometheus metrics endpoint."""
     return Response(content=generate_latest(), media_type="text/plain")
+
+# ============================================================================
+# Session Management Endpoints (Phase 2)
+# ============================================================================
+
+class SessionListResponse(BaseModel):
+    """Response model for session list."""
+    sessions: List[Dict[str, Any]] = Field(default_factory=list)
+    total: int = Field(..., description="Total number of sessions")
+
+class SessionDetailResponse(BaseModel):
+    """Response model for session details."""
+    session_id: str
+    user_id: Optional[str]
+    zone: Optional[str]
+    created_at: str
+    last_activity: str
+    message_count: int
+    messages: List[Dict[str, Any]]
+    metadata: Dict[str, Any]
+
+@app.get("/sessions", response_model=SessionListResponse)
+async def list_sessions(
+    limit: int = 50,
+    offset: int = 0
+) -> SessionListResponse:
+    """
+    List all active conversation sessions.
+
+    Query Parameters:
+    - limit: Maximum number of sessions to return (default 50)
+    - offset: Number of sessions to skip (default 0)
+    """
+    # Note: This is a simplified implementation
+    # In production, you'd want to add pagination support to the session manager
+
+    # For now, we'll return an empty list since session_manager stores sessions in Redis/memory
+    # and doesn't have a built-in list_all method
+
+    logger.info(f"Listing sessions (limit={limit}, offset={offset})")
+
+    return SessionListResponse(
+        sessions=[],
+        total=0
+    )
+
+@app.get("/sessions/{session_id}", response_model=SessionDetailResponse)
+async def get_session_details(session_id: str) -> SessionDetailResponse:
+    """
+    Get details of a specific session including message history.
+
+    Path Parameters:
+    - session_id: Session identifier
+    """
+    session = await session_manager.get_session(session_id)
+
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    logger.info(f"Retrieved session {session_id} with {len(session.messages)} messages")
+
+    return SessionDetailResponse(
+        session_id=session.session_id,
+        user_id=session.user_id,
+        zone=session.zone,
+        created_at=session.created_at.isoformat(),
+        last_activity=session.last_activity.isoformat(),
+        message_count=len(session.messages),
+        messages=session.messages,
+        metadata=session.metadata
+    )
+
+@app.delete("/sessions/{session_id}")
+async def delete_session(session_id: str):
+    """
+    Delete a conversation session.
+
+    Path Parameters:
+    - session_id: Session identifier
+    """
+    session = await session_manager.get_session(session_id)
+
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    await session_manager.delete_session(session_id)
+
+    logger.info(f"Deleted session {session_id}")
+
+    return {"status": "success", "message": f"Session {session_id} deleted"}
+
+@app.get("/sessions/{session_id}/export")
+async def export_session_history(session_id: str, format: str = "json"):
+    """
+    Export session history in various formats.
+
+    Path Parameters:
+    - session_id: Session identifier
+
+    Query Parameters:
+    - format: Export format (json, text, markdown) - default: json
+    """
+    session = await session_manager.get_session(session_id)
+
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    if format == "json":
+        return {
+            "session_id": session.session_id,
+            "messages": session.messages,
+            "created_at": session.created_at.isoformat(),
+            "last_activity": session.last_activity.isoformat()
+        }
+
+    elif format == "text":
+        lines = [f"Conversation Session: {session.session_id}"]
+        lines.append(f"Created: {session.created_at.isoformat()}")
+        lines.append(f"Last Activity: {session.last_activity.isoformat()}")
+        lines.append("=" * 80)
+        lines.append("")
+
+        for msg in session.messages:
+            role = msg["role"].upper()
+            content = msg["content"]
+            timestamp = msg.get("timestamp", "")
+            lines.append(f"[{timestamp}] {role}:")
+            lines.append(content)
+            lines.append("")
+
+        return Response(content="\n".join(lines), media_type="text/plain")
+
+    elif format == "markdown":
+        lines = [f"# Conversation Session: {session.session_id}"]
+        lines.append(f"**Created:** {session.created_at.isoformat()}")
+        lines.append(f"**Last Activity:** {session.last_activity.isoformat()}")
+        lines.append("")
+
+        for msg in session.messages:
+            role = msg["role"].capitalize()
+            content = msg["content"]
+            timestamp = msg.get("timestamp", "")
+            lines.append(f"### {role} ({timestamp})")
+            lines.append(content)
+            lines.append("")
+
+        return Response(content="\n".join(lines), media_type="text/markdown")
+
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {format}")
 
 if __name__ == "__main__":
     import uvicorn
