@@ -34,24 +34,31 @@ SERVICE_PORT = int(os.getenv("AIRPORTS_SERVICE_PORT", "8011"))
 # FlightAware API base URL
 FLIGHTAWARE_BASE_URL = "https://aeroapi.flightaware.com/aeroapi"
 
-# Cache client
+# Cache client and HTTP client
 cache = None
+http_client = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown."""
-    global cache
+    global cache, http_client
 
     # Startup
     logger.info("Starting Airports RAG service")
-    cache = CacheClient(redis_url=REDIS_URL)
+    cache = CacheClient(url=REDIS_URL)
     await cache.connect()
+
+    # OPTIMIZATION: Create reusable HTTP client
+    http_client = httpx.AsyncClient(timeout=10.0)
+    logger.info("HTTP client initialized")
 
     yield
 
     # Shutdown
     logger.info("Shutting down Airports RAG service")
+    if http_client:
+        await http_client.aclose()
     if cache:
         await cache.disconnect()
 
@@ -92,10 +99,10 @@ async def search_airports_api(query: str) -> List[Dict[str, Any]]:
         "x-apikey": FLIGHTAWARE_API_KEY
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
 
 
 @cached(ttl=3600, key_prefix="airport_info")  # Cache for 1 hour
@@ -116,10 +123,10 @@ async def get_airport_info_api(code: str) -> Dict[str, Any]:
         "x-apikey": FLIGHTAWARE_API_KEY
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
 
 
 @cached(ttl=300, key_prefix="flight_info")  # Cache for 5 minutes
@@ -140,10 +147,10 @@ async def get_flight_info_api(flight_id: str) -> Dict[str, Any]:
         "x-apikey": FLIGHTAWARE_API_KEY
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
 
 
 @app.get("/airports/search")

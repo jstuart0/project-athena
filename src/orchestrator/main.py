@@ -191,10 +191,25 @@ app = FastAPI(
 
 async def classify_node(state: OrchestratorState) -> OrchestratorState:
     """
-    Classify user intent using LLM.
+    Classify user intent using LLM with Redis caching.
     Determines: control vs info, specific category, entities.
     """
     start = time.time()
+
+    # OPTIMIZATION: Check cache first
+    cache_key = f"intent:{hashlib.md5(state.query.lower().encode()).hexdigest()}"
+
+    try:
+        cached = await cache_client.get(cache_key)
+        if cached:
+            state.intent = IntentCategory(cached["intent"])
+            state.confidence = cached.get("confidence", 0.9)
+            state.entities = cached.get("entities", {})
+            state.node_timings["classify"] = time.time() - start
+            logger.info(f"Intent cache HIT for '{state.query}': {state.intent}")
+            return state
+    except Exception as e:
+        logger.warning(f"Intent cache lookup failed: {e}")
 
     try:
         # Build classification prompt
@@ -252,6 +267,17 @@ Respond in JSON format:
             state.confidence = 0.7
 
         logger.info(f"Classified query as {state.intent} with confidence {state.confidence}")
+
+        # OPTIMIZATION: Cache the result (5 minute TTL)
+        try:
+            await cache_client.set(cache_key, {
+                "intent": state.intent.value,
+                "confidence": state.confidence,
+                "entities": state.entities
+            }, ttl=300)
+            logger.info(f"Intent classification cached for '{state.query}'")
+        except Exception as e:
+            logger.warning(f"Intent cache write failed: {e}")
 
     except Exception as e:
         logger.error(f"Classification error: {e}", exc_info=True)
@@ -624,7 +650,7 @@ Respond ONLY with valid JSON:
 
             fact_check_response = ""
             async for chunk in ollama_client.chat(
-                model=ModelTier.FAST.value,  # Use fast model for validation
+                model=ModelTier.SMALL.value,  # OPTIMIZATION: Fix bug - use SMALL model for validation
                 messages=messages,
                 temperature=0.1,  # Low temperature for consistent checking
                 stream=False

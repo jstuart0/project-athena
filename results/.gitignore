@@ -1,0 +1,7 @@
+# Ignore all JSON result files
+*.json
+
+# Keep directory structure
+!.gitignore
+!.gitkeep
+!README.md

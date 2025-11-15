@@ -30,24 +30,31 @@ OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 REDIS_URL = os.getenv("REDIS_URL", "redis://192.168.10.181:6379/0")
 SERVICE_PORT = int(os.getenv("WEATHER_SERVICE_PORT", "8010"))
 
-# Cache client
+# Cache client and HTTP client
 cache = None
+http_client = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown."""
-    global cache
+    global cache, http_client
 
     # Startup
     logger.info("Starting Weather RAG service")
-    cache = CacheClient(redis_url=REDIS_URL)
+    cache = CacheClient(url=REDIS_URL)
     await cache.connect()
+
+    # OPTIMIZATION: Create reusable HTTP client
+    http_client = httpx.AsyncClient(timeout=10.0)
+    logger.info("HTTP client initialized")
 
     yield
 
     # Shutdown
     logger.info("Shutting down Weather RAG service")
+    if http_client:
+        await http_client.aclose()
     if cache:
         await cache.disconnect()
 
@@ -90,21 +97,21 @@ async def geocode_location(location: str) -> Dict[str, Any]:
         "appid": OPENWEATHER_API_KEY
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
 
-        if not data:
-            raise ValueError(f"Location not found: {location}")
+    if not data:
+        raise ValueError(f"Location not found: {location}")
 
-        result = data[0]
-        return {
-            "lat": result["lat"],
-            "lon": result["lon"],
-            "name": result["name"],
-            "country": result.get("country", "")
-        }
+    result = data[0]
+    return {
+        "lat": result["lat"],
+        "lon": result["lon"],
+        "name": result["name"],
+        "country": result.get("country", "")
+    }
 
 
 @cached(ttl=300, key_prefix="weather")  # Cache for 5 minutes
@@ -129,10 +136,10 @@ async def get_current_weather(lat: float, lon: float) -> Dict[str, Any]:
         "units": "imperial"  # Fahrenheit
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, params=params)
+    response.raise_for_status()
+    return response.json()
 
 
 @cached(ttl=600, key_prefix="forecast")  # Cache for 10 minutes
@@ -159,10 +166,10 @@ async def get_weather_forecast(lat: float, lon: float, days: int = 5) -> Dict[st
         "cnt": days * 8  # 8 data points per day (every 3 hours)
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, params=params)
+    response.raise_for_status()
+    return response.json()
 
 
 @app.get("/weather/current")

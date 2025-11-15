@@ -54,6 +54,18 @@ class CacheClient:
         await self.client.aclose()
 
 
+# Global cache client singleton
+_global_cache_client: Optional[CacheClient] = None
+
+
+def get_cache_client() -> CacheClient:
+    """Get or create global cache client singleton."""
+    global _global_cache_client
+    if _global_cache_client is None:
+        _global_cache_client = CacheClient()
+    return _global_cache_client
+
+
 def cached(ttl: int = 3600, key_prefix: str = "athena"):
     """Decorator to cache async function results
     
@@ -66,20 +78,29 @@ def cached(ttl: int = 3600, key_prefix: str = "athena"):
         async def wrapper(*args, **kwargs):
             # Generate cache key from function name and args
             cache_key = f"{key_prefix}:{func.__name__}:{hash(str(args) + str(kwargs))}"
-            
-            # Try to get from cache
-            cache = CacheClient()
-            cached_result = await cache.get(cache_key)
-            
-            if cached_result is not None:
-                await cache.close()
-                return cached_result
-            
+
+            # OPTIMIZATION: Reuse global cache client
+            cache = get_cache_client()
+
+            try:
+                # Try to get from cache
+                cached_result = await cache.get(cache_key)
+
+                if cached_result is not None:
+                    return cached_result
+            except Exception:
+                # Cache read error, continue to function call
+                pass
+
             # Call function and cache result
             result = await func(*args, **kwargs)
-            await cache.set(cache_key, result, ttl)
-            await cache.close()
-            
+
+            try:
+                await cache.set(cache_key, result, ttl)
+            except Exception:
+                # Cache write error, return result anyway
+                pass
+
             return result
         return wrapper
     return decorator

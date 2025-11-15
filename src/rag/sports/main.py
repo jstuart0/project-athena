@@ -35,24 +35,31 @@ SERVICE_PORT = int(os.getenv("SPORTS_SERVICE_PORT", "8012"))
 # TheSportsDB API base URL
 THESPORTSDB_BASE_URL = "https://www.thesportsdb.com/api/v1/json"
 
-# Cache client
+# Cache client and HTTP client
 cache = None
+http_client = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown."""
-    global cache
+    global cache, http_client
 
     # Startup
     logger.info("Starting Sports RAG service")
-    cache = CacheClient(redis_url=REDIS_URL)
+    cache = CacheClient(url=REDIS_URL)
     await cache.connect()
+
+    # OPTIMIZATION: Create reusable HTTP client
+    http_client = httpx.AsyncClient(timeout=10.0)
+    logger.info("HTTP client initialized")
 
     yield
 
     # Shutdown
     logger.info("Shutting down Sports RAG service")
+    if http_client:
+        await http_client.aclose()
     if cache:
         await cache.disconnect()
 
@@ -91,11 +98,11 @@ async def search_teams_api(query: str) -> List[Dict[str, Any]]:
     url = f"{THESPORTSDB_BASE_URL}/{THESPORTSDB_API_KEY}/searchteams.php"
     params = {"t": query}
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("teams", []) or []
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+    return data.get("teams", []) or []
 
 
 @cached(ttl=3600, key_prefix="team_info")  # Cache for 1 hour
@@ -114,14 +121,14 @@ async def get_team_info_api(team_id: str) -> Dict[str, Any]:
     url = f"{THESPORTSDB_BASE_URL}/{THESPORTSDB_API_KEY}/lookupteam.php"
     params = {"id": team_id}
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        teams = data.get("teams", [])
-        if not teams:
-            raise ValueError(f"Team not found: {team_id}")
-        return teams[0]
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+    teams = data.get("teams", [])
+    if not teams:
+        raise ValueError(f"Team not found: {team_id}")
+    return teams[0]
 
 
 @cached(ttl=600, key_prefix="next_events")  # Cache for 10 minutes
@@ -140,11 +147,11 @@ async def get_next_events_api(team_id: str) -> List[Dict[str, Any]]:
     url = f"{THESPORTSDB_BASE_URL}/{THESPORTSDB_API_KEY}/eventsnext.php"
     params = {"id": team_id}
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("events", []) or []
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+    return data.get("events", []) or []
 
 
 @cached(ttl=600, key_prefix="last_events")  # Cache for 10 minutes
@@ -163,11 +170,11 @@ async def get_last_events_api(team_id: str) -> List[Dict[str, Any]]:
     url = f"{THESPORTSDB_BASE_URL}/{THESPORTSDB_API_KEY}/eventslast.php"
     params = {"id": team_id}
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("results", []) or []
+    # OPTIMIZATION: Use global HTTP client
+    response = await http_client.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+    return data.get("results", []) or []
 
 
 @app.get("/sports/teams/search")
