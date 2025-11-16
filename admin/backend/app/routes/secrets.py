@@ -5,12 +5,14 @@ Provides CRUD operations for encrypted API keys and credentials.
 Uses application-level encryption before storing in database.
 """
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from datetime import datetime
 import structlog
 import os
+import hmac
+import hashlib
 
 from app.database import get_db
 from app.auth.oidc import get_current_user
@@ -20,6 +22,9 @@ from app.utils.encryption import encrypt_value, decrypt_value
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="/api/secrets", tags=["secrets"])
+
+# Service-to-service API key (for orchestrator, gateway, etc.)
+SERVICE_API_KEY = os.getenv("SERVICE_API_KEY", "dev-service-key-change-in-production")
 
 
 class SecretCreate(BaseModel):
@@ -306,3 +311,56 @@ async def delete_secret(
                    user=current_user.username)
 
     return None
+
+
+# ============================================================================
+# Service-to-Service API (for orchestrator, gateway, etc.)
+# ============================================================================
+
+def verify_service_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
+    """
+    Verify service-to-service API key.
+
+    This allows internal services (orchestrator, gateway) to fetch secrets
+    without user authentication.
+    """
+    if not hmac.compare_digest(x_api_key, SERVICE_API_KEY):
+        logger.warning("service_api_key_invalid", provided_key=x_api_key[:8] + "...")
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    return True
+
+
+@router.get("/service/{service_name}", response_model=SecretValueResponse)
+async def get_service_secret(
+    service_name: str,
+    db: Session = Depends(get_db),
+    _verified: bool = Depends(verify_service_api_key)
+):
+    """
+    Get decrypted secret value for a service (service-to-service endpoint).
+
+    This endpoint is used by internal services (orchestrator, gateway, RAG services)
+    to fetch configuration secrets like API tokens.
+
+    Authentication: Requires X-API-Key header with valid service API key.
+    """
+    secret = db.query(Secret).filter(Secret.service_name == service_name).first()
+    if not secret:
+        logger.warning("service_secret_not_found", service_name=service_name)
+        raise HTTPException(status_code=404, detail=f"Secret '{service_name}' not found")
+
+    # Decrypt value
+    try:
+        decrypted_value = decrypt_value(secret.encrypted_value)
+    except Exception as e:
+        logger.error("service_secret_decryption_failed", service_name=service_name, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to decrypt secret")
+
+    logger.info("service_secret_retrieved", service_name=service_name)
+
+    return SecretValueResponse(
+        id=secret.id,
+        service_name=secret.service_name,
+        value=decrypted_value,
+        description=secret.description
+    )

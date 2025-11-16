@@ -7,12 +7,14 @@ Routes queries to appropriate search provider sets based on classified intent.
 from typing import Dict, List, Optional
 import logging
 import os
+import asyncio
 
 from .base import SearchProvider
 from .duckduckgo import DuckDuckGoProvider
 from .brave import BraveSearchProvider
 from .ticketmaster import TicketmasterProvider
 from .eventbrite import EventbriteProvider
+from shared.admin_config import get_admin_client
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +119,70 @@ class ProviderRouter:
 
         logger.info(f"Provider router initialized with {len(self.all_providers)} providers: {list(self.all_providers.keys())}")
 
+        # Database routing cache (loaded lazily on first use)
+        self._db_provider_routing: Optional[Dict[str, List[str]]] = None
+        self._db_routing_config: Optional[Dict[str, Dict]] = None
+        self._db_load_attempted = False
+        self._db_load_task: Optional[asyncio.Task] = None
+
+    def _ensure_db_loading_started(self):
+        """
+        Ensure database loading has been started (non-blocking).
+        Creates a background task on first call to load routing from database.
+        """
+        if not self._db_load_attempted:
+            self._db_load_attempted = True
+            try:
+                # Try to get the current event loop
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # Create background task to load routing
+                    self._db_load_task = loop.create_task(self._load_db_routing_async())
+                    logger.info("Started background task to load routing configuration from database")
+                else:
+                    logger.info("No running event loop, using hardcoded routing configuration")
+            except RuntimeError:
+                logger.info("No event loop available, using hardcoded routing configuration")
+
+    async def _load_db_routing_async(self):
+        """Background task to load routing configuration from database."""
+        try:
+            result = await self._fetch_db_routing()
+            if result:
+                self._db_provider_routing, self._db_routing_config = result
+                logger.info(
+                    f"Loaded routing config from database: "
+                    f"{len(self._db_provider_routing or {})} provider mappings, "
+                    f"{len(self._db_routing_config or {})} routing configs"
+                )
+            else:
+                logger.info("Database routing configuration not available, using hardcoded fallback")
+        except Exception as e:
+            logger.warning(f"Failed to load routing from database: {e}. Using hardcoded fallback.")
+
+    async def _fetch_db_routing(self) -> Optional[tuple]:
+        """
+        Fetch routing configuration from Admin API.
+        Returns (provider_routing, routing_config) or None on error.
+        """
+        try:
+            client = get_admin_client()
+            provider_routing = await client.get_provider_routing()
+            routing_config = await client.get_intent_routing()
+
+            if not provider_routing and not routing_config:
+                return None
+
+            return (provider_routing or {}, routing_config or {})
+
+        except Exception as e:
+            logger.warning(f"Error fetching DB routing: {e}")
+            return None
+
     def get_providers_for_intent(self, intent: str) -> List[SearchProvider]:
         """
         Get provider instances for given intent.
+        Loads from database if available, otherwise uses hardcoded configuration.
 
         Args:
             intent: Query intent type
@@ -127,8 +190,18 @@ class ProviderRouter:
         Returns:
             List of SearchProvider instances appropriate for this intent
         """
-        # Get provider names for this intent
-        provider_names = self.INTENT_PROVIDER_SETS.get(intent, ["duckduckgo"])
+        # Ensure database loading has started (lazy loading)
+        self._ensure_db_loading_started()
+
+        # Try database configuration first
+        provider_names = None
+        if self._db_provider_routing and intent in self._db_provider_routing:
+            provider_names = self._db_provider_routing[intent]
+            logger.debug(f"Using DB provider routing for intent '{intent}': {provider_names}")
+        else:
+            # Fall back to hardcoded configuration
+            provider_names = self.INTENT_PROVIDER_SETS.get(intent, ["duckduckgo"])
+            logger.debug(f"Using hardcoded provider routing for intent '{intent}': {provider_names}")
 
         # Filter to only available providers
         providers = []
@@ -152,6 +225,7 @@ class ProviderRouter:
     def should_use_rag(self, intent: str) -> bool:
         """
         Check if intent should be handled by RAG service instead of web search.
+        Loads from database if available, otherwise uses hardcoded configuration.
 
         Args:
             intent: Classified intent
@@ -159,7 +233,19 @@ class ProviderRouter:
         Returns:
             True if RAG should handle, False if web search should handle
         """
-        is_rag = intent in self.RAG_INTENTS
+        # Ensure database loading has started (lazy loading)
+        self._ensure_db_loading_started()
+
+        # Try database configuration first
+        is_rag = False
+        if self._db_routing_config and intent in self._db_routing_config:
+            is_rag = self._db_routing_config[intent].get("use_rag", False)
+            logger.debug(f"Using DB routing config for intent '{intent}': use_rag={is_rag}")
+        else:
+            # Fall back to hardcoded configuration
+            is_rag = intent in self.RAG_INTENTS
+            logger.debug(f"Using hardcoded RAG config for intent '{intent}': use_rag={is_rag}")
+
         if is_rag:
             logger.info(f"Intent '{intent}' should be handled by RAG service")
         return is_rag

@@ -58,6 +58,152 @@
         .sidebar::-webkit-scrollbar-thumb:hover, .main-content::-webkit-scrollbar-thumb:hover {
             background: #444;
         }
+
+        /* Metrics page styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #60a5fa;
+        }
+        .stats-breakdown {
+            margin-top: 1.5rem;
+        }
+        .stats-breakdown h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+        }
+        .stats-breakdown h3:first-child {
+            margin-top: 0;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        .data-table thead {
+            background: #0f0f0f;
+        }
+        .data-table th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            color: #9ca3af;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid #333;
+            color: #d1d5db;
+        }
+        .data-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .metric-value {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .tag-model {
+            background: rgba(147, 51, 234, 0.2);
+            color: #c084fc;
+        }
+        .tag-backend {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+        }
+        .session-id {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        .chart {
+            width: 100%;
+        }
+        .chart h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            height: 200px;
+            margin-bottom: 0.5rem;
+        }
+        .chart-bar-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            height: 100%;
+        }
+        .chart-bar {
+            width: 100%;
+            background: linear-gradient(to top, #3b82f6, #60a5fa);
+            border-radius: 0.25rem 0.25rem 0 0;
+            min-height: 2px;
+            transition: all 0.3s ease;
+        }
+        .chart-bar-container:hover .chart-bar {
+            background: linear-gradient(to top, #2563eb, #3b82f6);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+        .chart-label {
+            font-size: 0.625rem;
+            color: #6b7280;
+        }
+        .chart-legend {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #9ca3af;
+        }
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ef4444;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #9ca3af;
+        }
     </style>
 </head>
 <body class="bg-dark-bg text-gray-200">
@@ -133,6 +279,14 @@
                 <button onclick="showTab('intent-routing')" class="sidebar-item w-full text-left px-4 py-3 text-sm font-medium text-gray-400 flex items-center gap-3 transition-all">
                     <span class="text-lg">🧭</span>
                     <span>Intent Routing</span>
+                </button>
+                <button onclick="showTab('performance-metrics')" class="sidebar-item w-full text-left px-4 py-3 text-sm font-medium text-gray-400 flex items-center gap-3 transition-all">
+                    <span class="text-lg">📈</span>
+                    <span>Performance Metrics</span>
+                </button>
+                <button onclick="showTab('features')" class="sidebar-item w-full text-left px-4 py-3 text-sm font-medium text-gray-400 flex items-center gap-3 transition-all">
+                    <span class="text-lg">🎛️</span>
+                    <span>Feature Flags</span>
                 </button>
 
                 <div class="px-4 py-2 mt-4">
@@ -627,6 +781,90 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Performance Metrics Tab -->
+            <div id="tab-performance-metrics" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-white">LLM Performance Metrics</h2>
+                    <div class="flex gap-3">
+                        <button onclick="clearFilters()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors">
+                            Clear Filters
+                        </button>
+                        <button onclick="applyFilters()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-dark-card border border-dark-border rounded-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Filters</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Model</label>
+                            <input type="text" id="filter-model" placeholder="e.g., phi3:mini"
+                                class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Backend</label>
+                            <select id="filter-backend" class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-blue-500">
+                                <option value="">All Backends</option>
+                                <option value="ollama">Ollama</option>
+                                <option value="mlx">MLX</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Limit</label>
+                            <select id="filter-limit" class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-blue-500">
+                                <option value="100">100 records</option>
+                                <option value="250">250 records</option>
+                                <option value="500">500 records</option>
+                                <option value="1000">1000 records</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Summary -->
+                <div id="metrics-stats-container" class="mb-6">
+                    <!-- Stats will be loaded here -->
+                </div>
+
+                <!-- Performance Chart -->
+                <div id="metrics-chart-container" class="bg-dark-card border border-dark-border rounded-lg p-6 mb-6">
+                    <!-- Chart will be loaded here -->
+                </div>
+
+                <!-- Metrics Table -->
+                <div class="bg-dark-card border border-dark-border rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Recent Metrics</h3>
+                    <div id="metrics-table-container" class="overflow-x-auto">
+                        <!-- Table will be loaded here -->
+                        <div class="text-center text-gray-400 py-8">
+                            <div class="text-2xl mb-2">⏳</div>
+                            <p>Click Refresh to load metrics...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Tab -->
+            <div id="tab-features" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-white">Feature Flags</h2>
+                    <button onclick="initFeaturesPage()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+                        🔄 Refresh
+                    </button>
+                </div>
+                <div id="features-container">
+                    <!-- Features will be loaded here -->
+                    <div class="text-center text-gray-400 py-8">
+                        <div class="text-2xl mb-2">🎛️</div>
+                        <p>Click Refresh to load feature flags...</p>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -636,5 +874,7 @@
     <script src="/app.js"></script>
     <script src="/conversation.js"></script>
     <script src="/routing.js"></script>
+    <script src="/metrics.js"></script>
+    <script src="/features.js"></script>
 </body>
 </html>

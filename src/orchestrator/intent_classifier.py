@@ -7,6 +7,8 @@ from typing import List, Dict, Any, Optional, Tuple
 from enum import Enum
 import re
 import logging
+import asyncio
+from shared.admin_config import get_admin_client
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +137,86 @@ class EnhancedIntentClassifier:
             "outlet", "switch", "plug", "camera", "doorbell"
         ]
 
+        # Database pattern loading (lazy-loaded on first use)
+        self._db_patterns: Optional[Dict[IntentCategory, List[str]]] = None
+        self._db_load_attempted = False
+        self._db_load_task: Optional[asyncio.Task] = None
+
+    def _ensure_db_loading_started(self):
+        """
+        Ensure database loading has been started (non-blocking).
+        Creates a background task on first call to load patterns from database.
+        """
+        if not self._db_load_attempted:
+            self._db_load_attempted = True
+            try:
+                # Try to get the current event loop
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # Create background task to load patterns
+                    self._db_load_task = loop.create_task(self._load_db_patterns_async())
+                    logger.info("Started background task to load intent patterns from database")
+                else:
+                    logger.info("No running event loop, using hardcoded intent patterns")
+            except RuntimeError:
+                logger.info("No event loop available, using hardcoded intent patterns")
+
+    async def _load_db_patterns_async(self):
+        """Background task to load intent patterns from database."""
+        try:
+            db_patterns = await self._fetch_db_patterns()
+            if db_patterns:
+                # Merge/replace hardcoded patterns with database patterns
+                self._db_patterns = db_patterns
+                self.info_patterns.update(db_patterns)
+                logger.info(
+                    f"Loaded {sum(len(kws) for kws in db_patterns.values())} intent patterns "
+                    f"from database across {len(db_patterns)} categories"
+                )
+            else:
+                logger.info("Database patterns not available, using hardcoded fallback")
+        except Exception as e:
+            logger.warning(f"Failed to load patterns from database: {e}. Using hardcoded fallback.")
+
+    async def _fetch_db_patterns(self) -> Dict[IntentCategory, List[str]]:
+        """
+        Fetch patterns from Admin API and convert to classifier format.
+        Returns Dict[IntentCategory, List[str]] or empty dict on error.
+        """
+        try:
+            client = get_admin_client()
+            raw_patterns = await client.get_intent_patterns()
+
+            if not raw_patterns:
+                return {}
+
+            # Convert from Dict[category_string, List[keywords]]
+            # to Dict[IntentCategory, List[keywords]]
+            converted: Dict[IntentCategory, List[str]] = {}
+            category_map = {
+                "control": IntentCategory.CONTROL,
+                "weather": IntentCategory.WEATHER,
+                "sports": IntentCategory.SPORTS,
+                "airports": IntentCategory.AIRPORTS,
+                "transit": IntentCategory.TRANSIT,
+                "food": IntentCategory.FOOD,
+                "emergency": IntentCategory.EMERGENCY,
+                "events": IntentCategory.EVENTS,
+                "location": IntentCategory.LOCATION,
+                "general_info": IntentCategory.GENERAL_INFO
+            }
+
+            for category_str, keywords in raw_patterns.items():
+                intent_cat = category_map.get(category_str)
+                if intent_cat:
+                    converted[intent_cat] = keywords
+
+            return converted
+
+        except Exception as e:
+            logger.warning(f"Error fetching DB patterns: {e}")
+            return {}
+
     async def classify(self, query: str) -> IntentClassification:
         """
         Classify intent using layered approach:
@@ -142,6 +224,9 @@ class EnhancedIntentClassifier:
         2. Entity extraction
         3. Complexity detection for LLM routing
         """
+        # Ensure database loading has started (lazy loading)
+        self._ensure_db_loading_started()
+
         result = IntentClassification()
         query_lower = query.lower().strip()
 

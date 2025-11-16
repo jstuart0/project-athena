@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers
 revision = '003'
-down_revision = '002'
+down_revision = None  # Base migration
 branch_labels = None
 depends_on = None
 

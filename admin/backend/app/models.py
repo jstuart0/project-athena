@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 from sqlalchemy import (
-    Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Index, UniqueConstraint, Float
+    Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Index, UniqueConstraint, Float, Numeric
 )
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.ext.declarative import declarative_base
@@ -1023,6 +1023,318 @@ class ConversationAnalytics(Base):
         }
 
 
+class LLMBackend(Base):
+    """
+    LLM backend configuration for model routing.
+
+    Supports per-model backend selection (Ollama, MLX, Auto) with performance
+    tracking and runtime configuration. Enables hybrid deployment with multiple
+    LLM backends running simultaneously.
+    """
+    __tablename__ = 'llm_backends'
+
+    id = Column(Integer, primary_key=True)
+    model_name = Column(String(255), unique=True, nullable=False, index=True)
+    backend_type = Column(String(32), nullable=False)  # ollama, mlx, auto
+    endpoint_url = Column(String(500), nullable=False)
+    enabled = Column(Boolean, default=True, nullable=False)
+    priority = Column(Integer, default=100)  # Lower = higher priority for 'auto' mode
+
+    # Performance tracking
+    avg_tokens_per_sec = Column(Float)
+    avg_latency_ms = Column(Float)
+    total_requests = Column(Integer, default=0)
+    total_errors = Column(Integer, default=0)
+
+    # Configuration
+    max_tokens = Column(Integer, default=2048)
+    temperature_default = Column(Float, default=0.7)
+    timeout_seconds = Column(Integer, default=60)
+
+    # Metadata
+    description = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_by_id = Column(Integer, ForeignKey('users.id'))
+
+    # Relationships
+    creator = relationship('User')
+
+    __table_args__ = (
+        Index('idx_llm_backends_enabled', 'enabled'),
+        Index('idx_llm_backends_backend_type', 'backend_type'),
+        Index('idx_llm_backends_model_name', 'model_name'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert LLM backend to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'model_name': self.model_name,
+            'backend_type': self.backend_type,
+            'endpoint_url': self.endpoint_url,
+            'enabled': self.enabled,
+            'priority': self.priority,
+            'avg_tokens_per_sec': self.avg_tokens_per_sec,
+            'avg_latency_ms': self.avg_latency_ms,
+            'total_requests': self.total_requests,
+            'total_errors': self.total_errors,
+            'max_tokens': self.max_tokens,
+            'temperature_default': self.temperature_default,
+            'timeout_seconds': self.timeout_seconds,
+            'description': self.description,
+            'created_by': self.creator.username if self.creator else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class Feature(Base):
+    """
+    System feature flags for performance tracking and optimization.
+
+    Tracks individual features in the system (intent classification, RAG services,
+    caching, etc.) with enable/disable state and latency contribution.
+    """
+    __tablename__ = 'features'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(200), nullable=False)
+    description = Column(Text)
+    category = Column(String(50), nullable=False, index=True)  # 'processing', 'rag', 'optimization', 'integration'
+    enabled = Column(Boolean, default=True, nullable=False, index=True)
+
+    # Performance impact
+    avg_latency_ms = Column(Float)  # Average latency contribution
+    hit_rate = Column(Float)  # For caching features
+
+    # Configuration
+    required = Column(Boolean, default=False)  # Cannot be disabled
+    priority = Column(Integer, default=100)
+
+    # Metadata
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index('idx_features_enabled', 'enabled'),
+        Index('idx_features_category', 'category'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert feature to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'display_name': self.display_name,
+            'description': self.description,
+            'category': self.category,
+            'enabled': self.enabled,
+            'avg_latency_ms': self.avg_latency_ms,
+            'hit_rate': self.hit_rate,
+            'required': self.required,
+            'priority': self.priority,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class LLMPerformanceMetric(Base):
+    """
+    LLM performance metrics for monitoring and analysis.
+
+    Stores detailed performance metrics for each LLM request including latency,
+    token generation speed, and contextual information for debugging and optimization.
+    Enables historical analysis and performance regression detection.
+    """
+    __tablename__ = 'llm_performance_metrics'
+
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
+    model = Column(String(100), nullable=False, index=True)
+    backend = Column(String(50), nullable=False, index=True)
+    latency_seconds = Column(Numeric(8, 3), nullable=False)
+    tokens_generated = Column(Integer, nullable=False)
+    tokens_per_second = Column(Numeric(10, 2), nullable=False)
+
+    # Component latencies (milliseconds)
+    gateway_latency_ms = Column(Float)
+    intent_classification_latency_ms = Column(Float)
+    rag_lookup_latency_ms = Column(Float)
+    llm_inference_latency_ms = Column(Float)
+    response_assembly_latency_ms = Column(Float)
+    cache_lookup_latency_ms = Column(Float)
+
+    # Feature flags (JSONB for flexibility)
+    features_enabled = Column(JSONB)  # {"intent_classification": true, "rag": true, "caching": false}
+
+    # Optional context fields
+    prompt_tokens = Column(Integer, nullable=True)
+    request_id = Column(String(100), nullable=True, index=True)
+    session_id = Column(String(100), nullable=True, index=True)
+    user_id = Column(String(100), nullable=True)
+    zone = Column(String(100), nullable=True)
+    intent = Column(String(100), nullable=True, index=True)
+
+    __table_args__ = (
+        Index('idx_llm_metrics_timestamp', 'timestamp'),
+        Index('idx_llm_metrics_model', 'model'),
+        Index('idx_llm_metrics_backend', 'backend'),
+        Index('idx_llm_metrics_intent', 'intent'),
+        Index('idx_llm_metrics_composite', 'timestamp', 'model', 'backend'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert LLM performance metric to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'model': self.model,
+            'backend': self.backend,
+            'latency_seconds': float(self.latency_seconds) if self.latency_seconds else None,
+            'gateway_latency_ms': self.gateway_latency_ms,
+            'intent_classification_latency_ms': self.intent_classification_latency_ms,
+            'rag_lookup_latency_ms': self.rag_lookup_latency_ms,
+            'llm_inference_latency_ms': self.llm_inference_latency_ms,
+            'response_assembly_latency_ms': self.response_assembly_latency_ms,
+            'cache_lookup_latency_ms': self.cache_lookup_latency_ms,
+            'features_enabled': self.features_enabled,
+            'tokens_generated': self.tokens_generated,
+            'tokens_per_second': float(self.tokens_per_second) if self.tokens_per_second else None,
+            'prompt_tokens': self.prompt_tokens,
+            'request_id': self.request_id,
+            'session_id': self.session_id,
+            'user_id': self.user_id,
+            'zone': self.zone,
+            'intent': self.intent,
+        }
+
+
+class IntentPattern(Base):
+    """
+    Intent classification patterns for configurable routing.
+
+    Maps keywords to intent categories with confidence weights.
+    Replaces hardcoded patterns in intent_classifier.py.
+    """
+    __tablename__ = 'intent_patterns'
+
+    id = Column(Integer, primary_key=True)
+    intent_category = Column(String(50), nullable=False, index=True)
+    pattern_type = Column(String(50), nullable=False)  # e.g., "basic", "dimming", "temperature"
+    keyword = Column(String(100), nullable=False, index=True)
+    confidence_weight = Column(Float, nullable=False, default=1.0)
+    enabled = Column(Boolean, nullable=False, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('intent_category', 'pattern_type', 'keyword', name='uq_intent_pattern_keyword'),
+        Index('idx_intent_patterns_category', 'intent_category'),
+        Index('idx_intent_patterns_enabled', 'enabled'),
+        Index('idx_intent_patterns_keyword', 'keyword'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert intent pattern to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'intent_category': self.intent_category,
+            'pattern_type': self.pattern_type,
+            'keyword': self.keyword,
+            'confidence_weight': self.confidence_weight,
+            'enabled': self.enabled,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class IntentRouting(Base):
+    """
+    Intent routing configuration.
+
+    Defines how each intent category should be routed:
+    - To RAG services (weather, sports, etc.)
+    - To web search providers
+    - To LLM for processing
+
+    Replaces hardcoded RAG_INTENTS list in provider_router.py.
+    """
+    __tablename__ = 'intent_routing'
+
+    id = Column(Integer, primary_key=True)
+    intent_category = Column(String(50), nullable=False, unique=True, index=True)
+    use_rag = Column(Boolean, nullable=False, default=False)
+    rag_service_url = Column(String(255), nullable=True)  # e.g., "http://localhost:8010"
+    use_web_search = Column(Boolean, nullable=False, default=False)
+    use_llm = Column(Boolean, nullable=False, default=True)
+    priority = Column(Integer, nullable=False, default=100, index=True)  # Higher = checked first
+    enabled = Column(Boolean, nullable=False, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('intent_category', name='uq_intent_routing_category'),
+        Index('idx_intent_routing_category', 'intent_category'),
+        Index('idx_intent_routing_enabled', 'enabled'),
+        Index('idx_intent_routing_priority', 'priority'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert intent routing to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'intent_category': self.intent_category,
+            'use_rag': self.use_rag,
+            'rag_service_url': self.rag_service_url,
+            'use_web_search': self.use_web_search,
+            'use_llm': self.use_llm,
+            'priority': self.priority,
+            'enabled': self.enabled,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class ProviderRouting(Base):
+    """
+    Web search provider routing configuration.
+
+    Defines provider priority for each intent category.
+    Replaces hardcoded INTENT_PROVIDER_SETS in provider_router.py.
+    """
+    __tablename__ = 'provider_routing'
+
+    id = Column(Integer, primary_key=True)
+    intent_category = Column(String(50), nullable=False, index=True)
+    provider_name = Column(String(50), nullable=False, index=True)  # e.g., "duckduckgo", "brave"
+    priority = Column(Integer, nullable=False, index=True)  # 1 = first, 2 = second, etc.
+    enabled = Column(Boolean, nullable=False, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('intent_category', 'provider_name', name='uq_provider_routing_category_provider'),
+        Index('idx_provider_routing_category', 'intent_category'),
+        Index('idx_provider_routing_provider', 'provider_name'),
+        Index('idx_provider_routing_enabled', 'enabled'),
+        Index('idx_provider_routing_priority', 'priority'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert provider routing to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'intent_category': self.intent_category,
+            'provider_name': self.provider_name,
+            'priority': self.priority,
+            'enabled': self.enabled,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 # Export all models for Alembic
 __all__ = [
     'Base', 'User', 'Policy', 'PolicyVersion', 'Secret', 'Device', 'AuditLog',
@@ -1030,5 +1342,7 @@ __all__ = [
     'IntentCategory', 'HallucinationCheck', 'CrossValidationModel', 'MultiIntentConfig',
     'IntentChainRule', 'ValidationTestScenario', 'ConfidenceScoreRule', 'ResponseEnhancementRule',
     'ConversationSettings', 'ClarificationSettings', 'ClarificationType',
-    'SportsTeamDisambiguation', 'DeviceDisambiguationRule', 'ConversationAnalytics'
+    'SportsTeamDisambiguation', 'DeviceDisambiguationRule', 'ConversationAnalytics',
+    'LLMBackend', 'LLMPerformanceMetric', 'Feature',
+    'IntentPattern', 'IntentRouting', 'ProviderRouting'
 ]

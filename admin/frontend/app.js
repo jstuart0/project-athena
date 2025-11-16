@@ -335,6 +335,15 @@ function showTab(tabName) {
         case 'llm-backends':
             loadLLMBackends();
             break;
+        case 'conversation-context':
+            loadConversationSettings();
+            break;
+        case 'intent-routing':
+            // Loaded by routing.js
+            break;
+        case 'performance-metrics':
+            initMetricsPage();
+            break;
     }
 }
 

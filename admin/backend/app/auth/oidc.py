@@ -3,6 +3,9 @@ OIDC (OpenID Connect) authentication with Authentik.
 
 Provides SSO integration for Athena Admin interface using Authentik
 as the identity provider.
+
+Configuration is loaded from database (secrets table) on startup,
+with fallback to environment variables if database is unavailable.
 """
 import os
 from datetime import datetime, timedelta
@@ -14,19 +17,28 @@ from fastapi import Request, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
 import structlog
 
 from app.database import get_db
-from app.models import User
+from app.models import User, Secret
+from app.utils.encryption import decrypt_value
 
 logger = structlog.get_logger()
 
-# OIDC configuration from environment
-OIDC_CLIENT_ID = os.getenv("OIDC_CLIENT_ID", "")
-OIDC_CLIENT_SECRET = os.getenv("OIDC_CLIENT_SECRET", "")
-OIDC_ISSUER = os.getenv("OIDC_ISSUER", "https://auth.xmojo.net/application/o/athena-admin/")
-OIDC_REDIRECT_URI = os.getenv("OIDC_REDIRECT_URI", "https://athena-admin.xmojo.net/auth/callback")
-OIDC_SCOPES = os.getenv("OIDC_SCOPES", "openid profile email")
+# Default OIDC configuration from environment (fallback)
+DEFAULT_OIDC_CLIENT_ID = os.getenv("OIDC_CLIENT_ID", "")
+DEFAULT_OIDC_CLIENT_SECRET = os.getenv("OIDC_CLIENT_SECRET", "")
+DEFAULT_OIDC_ISSUER = os.getenv("OIDC_ISSUER", "https://auth.xmojo.net/application/o/athena-admin/")
+DEFAULT_OIDC_REDIRECT_URI = os.getenv("OIDC_REDIRECT_URI", "https://athena-admin.xmojo.net/auth/callback")
+DEFAULT_OIDC_SCOPES = os.getenv("OIDC_SCOPES", "openid profile email")
+
+# Active OIDC configuration (set during startup)
+OIDC_CLIENT_ID = DEFAULT_OIDC_CLIENT_ID
+OIDC_CLIENT_SECRET = DEFAULT_OIDC_CLIENT_SECRET
+OIDC_ISSUER = DEFAULT_OIDC_ISSUER
+OIDC_REDIRECT_URI = DEFAULT_OIDC_REDIRECT_URI
+OIDC_SCOPES = DEFAULT_OIDC_SCOPES
 
 # Session configuration
 SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY", "")  # Must be set in production
@@ -40,19 +52,101 @@ JWT_EXPIRATION = int(os.getenv("JWT_EXPIRATION", str(60 * 60 * 8)))  # 8 hours
 # Security
 security = HTTPBearer()
 
-# OAuth client configuration
+# OAuth client configuration (configured during startup)
 oauth = OAuth()
 
-# Configure Authentik OIDC provider
-oauth.register(
-    name='authentik',
-    client_id=OIDC_CLIENT_ID,
-    client_secret=OIDC_CLIENT_SECRET,
-    server_metadata_url=f'{OIDC_ISSUER}.well-known/openid-configuration',
-    client_kwargs={
-        'scope': OIDC_SCOPES,
-    }
-)
+
+def load_oidc_config_from_db() -> Dict[str, str]:
+    """
+    Load OIDC configuration from database.
+
+    Returns:
+        Dict with OIDC configuration loaded from database,
+        or empty dict if database is unavailable.
+    """
+    try:
+        # Create database connection
+        database_url = os.getenv("DATABASE_URL", "postgresql://psadmin@postgres-01.xmojo.net:5432/athena_admin")
+        engine = create_engine(database_url)
+
+        with engine.connect() as conn:
+            # Query secrets table for OIDC configuration
+            from sqlalchemy import text
+
+            secrets = {}
+            for secret_name in ['oidc_provider_url', 'oidc_client_id', 'oidc_client_secret', 'oidc_redirect_uri']:
+                result = conn.execute(
+                    text("SELECT encrypted_value FROM secrets WHERE service_name = :name"),
+                    {"name": secret_name}
+                ).fetchone()
+
+                if result:
+                    # Decrypt the value
+                    encrypted_value = result[0]
+                    decrypted_value = decrypt_value(encrypted_value)
+                    secrets[secret_name] = decrypted_value
+
+            if secrets:
+                logger.info(
+                    "oidc_config_loaded_from_database",
+                    has_provider=bool(secrets.get('oidc_provider_url')),
+                    has_client_id=bool(secrets.get('oidc_client_id')),
+                    has_secret=bool(secrets.get('oidc_client_secret')),
+                    has_redirect=bool(secrets.get('oidc_redirect_uri'))
+                )
+                return secrets
+            else:
+                logger.info("oidc_config_not_in_database_using_env_fallback")
+                return {}
+
+    except Exception as e:
+        logger.warning("oidc_config_db_load_failed_using_env_fallback", error=str(e))
+        return {}
+
+
+def configure_oauth_client():
+    """
+    Configure OAuth client with OIDC settings from database or environment.
+
+    This should be called during application startup after database is available.
+    """
+    global OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_ISSUER, OIDC_REDIRECT_URI, OIDC_SCOPES
+
+    # Try loading from database first
+    db_config = load_oidc_config_from_db()
+
+    if db_config:
+        # Use database configuration
+        OIDC_ISSUER = db_config.get('oidc_provider_url', DEFAULT_OIDC_ISSUER)
+        OIDC_CLIENT_ID = db_config.get('oidc_client_id', DEFAULT_OIDC_CLIENT_ID)
+        OIDC_CLIENT_SECRET = db_config.get('oidc_client_secret', DEFAULT_OIDC_CLIENT_SECRET)
+        OIDC_REDIRECT_URI = db_config.get('oidc_redirect_uri', DEFAULT_OIDC_REDIRECT_URI)
+        logger.info("oidc_using_database_configuration")
+    else:
+        # Use environment variable defaults
+        OIDC_CLIENT_ID = DEFAULT_OIDC_CLIENT_ID
+        OIDC_CLIENT_SECRET = DEFAULT_OIDC_CLIENT_SECRET
+        OIDC_ISSUER = DEFAULT_OIDC_ISSUER
+        OIDC_REDIRECT_URI = DEFAULT_OIDC_REDIRECT_URI
+        logger.info("oidc_using_environment_configuration")
+
+    # Register OAuth client with active configuration
+    oauth.register(
+        name='authentik',
+        client_id=OIDC_CLIENT_ID,
+        client_secret=OIDC_CLIENT_SECRET,
+        server_metadata_url=f'{OIDC_ISSUER}.well-known/openid-configuration',
+        client_kwargs={
+            'scope': OIDC_SCOPES,
+        }
+    )
+
+    logger.info(
+        "oauth_client_configured",
+        issuer=OIDC_ISSUER,
+        client_id_set=bool(OIDC_CLIENT_ID),
+        client_secret_set=bool(OIDC_CLIENT_SECRET)
+    )
 
 
 async def get_authentik_userinfo(access_token: str) -> Dict[str, Any]:

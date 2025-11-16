@@ -30,8 +30,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from shared.logging_config import configure_logging
 from shared.ha_client import HomeAssistantClient
-from shared.ollama_client import OllamaClient
+from shared.llm_router import get_llm_router, LLMRouter
 from shared.cache import CacheClient
+from shared.admin_config import get_admin_client
 
 # Parallel search imports
 from orchestrator.search_providers.parallel_search import ParallelSearchEngine
@@ -63,7 +64,7 @@ node_duration = Histogram(
 
 # Global clients
 ha_client: Optional[HomeAssistantClient] = None
-ollama_client: Optional[OllamaClient] = None
+llm_router: Optional[LLMRouter] = None
 cache_client: Optional[CacheClient] = None
 session_manager: Optional[SessionManager] = None
 rag_clients: Dict[str, httpx.AsyncClient] = {}
@@ -133,14 +134,14 @@ class OrchestratorState(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifecycle."""
-    global ha_client, ollama_client, cache_client, session_manager, rag_clients, parallel_search_engine, result_fusion
+    global ha_client, llm_router, cache_client, session_manager, rag_clients, parallel_search_engine, result_fusion
 
     # Startup
     logger.info("Starting Orchestrator service")
 
     # Initialize clients
     ha_client = HomeAssistantClient()
-    ollama_client = OllamaClient(url=OLLAMA_URL)
+    llm_router = get_llm_router()
     cache_client = CacheClient()
 
     # Initialize session manager
@@ -182,8 +183,8 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Orchestrator service")
     if ha_client:
         await ha_client.close()
-    if ollama_client:
-        await ollama_client.close()
+    if llm_router:
+        await llm_router.close()
     if cache_client:
         await cache_client.close()
     if session_manager:
@@ -199,6 +200,44 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+async def get_rag_service_url(intent: str) -> Optional[str]:
+    """
+    Get RAG service URL for intent from database configuration.
+    Falls back to environment variables if database unavailable.
+
+    Args:
+        intent: Intent category (e.g., "weather", "sports", "airports")
+
+    Returns:
+        RAG service URL or None
+    """
+    try:
+        client = get_admin_client()
+        routing_config = await client.get_intent_routing()
+
+        if routing_config and intent in routing_config:
+            url = routing_config[intent].get("rag_service_url")
+            if url:
+                logger.info(f"Using database RAG URL for '{intent}': {url}")
+                return url
+    except Exception as e:
+        logger.warning(f"Failed to get RAG URL from database for '{intent}': {e}")
+
+    # Fallback to environment variables
+    url_map = {
+        "weather": WEATHER_SERVICE_URL,
+        "airports": AIRPORTS_SERVICE_URL,
+        "sports": SPORTS_SERVICE_URL
+    }
+    fallback_url = url_map.get(intent)
+    if fallback_url:
+        logger.info(f"Using environment variable RAG URL for '{intent}': {fallback_url}")
+    return fallback_url
 
 # ============================================================================
 # Node Implementations
@@ -253,21 +292,20 @@ Respond in JSON format:
 }}"""
 
         # Use small model for classification
-        messages = [
-            {"role": "system", "content": "You are an intent classifier. Respond only with valid JSON."},
-            {"role": "user", "content": classification_prompt}
-        ]
+        # Combine system and user messages into a single prompt
+        full_prompt = f"You are an intent classifier. Respond only with valid JSON.\n\n{classification_prompt}"
 
-        response_text = ""
-        async for chunk in ollama_client.chat(
+        result = await llm_router.generate(
             model=ModelTier.SMALL.value,
-            messages=messages,
+            prompt=full_prompt,
             temperature=0.3,  # Lower temperature for consistent classification
-            stream=False
-        ):
-            if chunk.get("done"):
-                response_text = chunk.get("message", {}).get("content", "")
-                break
+            request_id=state.request_id,
+            session_id=state.session_id,
+            user_id=state.mode,
+            zone=state.room
+        )
+
+        response_text = result.get("response", "")
 
         # Parse classification result
         try:
@@ -410,55 +448,76 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
 
     try:
         if state.intent == IntentCategory.WEATHER:
-            # Call weather service
+            # Get dynamic RAG service URL
+            service_url = await get_rag_service_url("weather")
+            if not service_url:
+                logger.error("Weather RAG service URL not configured")
+                state.error = "Weather service not available"
+                state.node_timings["retrieve"] = time.time() - start
+                return state
+
+            # Call weather service with dynamic URL
             location = state.entities.get("location", "Baltimore, MD")
-            client = rag_clients["weather"]
+            async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
+                response = await client.get(
+                    "/weather/current",
+                    params={"location": location}
+                )
+                response.raise_for_status()
 
-            response = await client.get(
-                "/weather/current",
-                params={"location": location}
-            )
-            response.raise_for_status()
-
-            state.retrieved_data = response.json()
-            state.data_source = "OpenWeatherMap"
-            state.citations.append(f"Weather data from OpenWeatherMap for {location}")
+                state.retrieved_data = response.json()
+                state.data_source = "OpenWeatherMap"
+                state.citations.append(f"Weather data from OpenWeatherMap for {location}")
 
         elif state.intent == IntentCategory.AIRPORTS:
-            # Call airports service
+            # Get dynamic RAG service URL
+            service_url = await get_rag_service_url("airports")
+            if not service_url:
+                logger.error("Airports RAG service URL not configured")
+                state.error = "Airports service not available"
+                state.node_timings["retrieve"] = time.time() - start
+                return state
+
+            # Call airports service with dynamic URL
             airport = state.entities.get("airport", "BWI")
-            client = rag_clients["airports"]
+            async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
+                response = await client.get(f"/airports/{airport}")
+                response.raise_for_status()
 
-            response = await client.get(f"/airports/{airport}")
-            response.raise_for_status()
-
-            state.retrieved_data = response.json()
-            state.data_source = "FlightAware"
-            state.citations.append(f"Flight data from FlightAware for {airport}")
+                state.retrieved_data = response.json()
+                state.data_source = "FlightAware"
+                state.citations.append(f"Flight data from FlightAware for {airport}")
 
         elif state.intent == IntentCategory.SPORTS:
-            # Call sports service
+            # Get dynamic RAG service URL
+            service_url = await get_rag_service_url("sports")
+            if not service_url:
+                logger.error("Sports RAG service URL not configured")
+                state.error = "Sports service not available"
+                state.node_timings["retrieve"] = time.time() - start
+                return state
+
+            # Call sports service with dynamic URL
             team = state.entities.get("team", "Ravens")
-            client = rag_clients["sports"]
+            async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
+                # Search for team
+                search_response = await client.get(
+                    "/sports/teams/search",
+                    params={"query": team}
+                )
+                search_response.raise_for_status()
+                search_data = search_response.json()
 
-            # Search for team
-            search_response = await client.get(
-                "/sports/teams/search",
-                params={"query": team}
-            )
-            search_response.raise_for_status()
-            search_data = search_response.json()
+                if search_data.get("teams"):
+                    team_id = search_data["teams"][0]["idTeam"]
 
-            if search_data.get("teams"):
-                team_id = search_data["teams"][0]["idTeam"]
+                    # Get next event
+                    events_response = await client.get(f"/sports/events/{team_id}/next")
+                    events_response.raise_for_status()
 
-                # Get next event
-                events_response = await client.get(f"/sports/events/{team_id}/next")
-                events_response.raise_for_status()
-
-                state.retrieved_data = events_response.json()
-                state.data_source = "TheSportsDB"
-                state.citations.append(f"Sports data from TheSportsDB for {team}")
+                    state.retrieved_data = events_response.json()
+                    state.data_source = "TheSportsDB"
+                    state.citations.append(f"Sports data from TheSportsDB for {team}")
 
         else:
             # Use intent-based parallel web search for unknown/general queries
@@ -555,31 +614,35 @@ Respond honestly about your limitations.
 
 Response:"""
 
-        # Build message list with conversation history
-        messages = [
-            {"role": "system", "content": "You are Athena, a helpful home assistant. Provide clear, concise answers."}
-        ]
+        # Build prompt with system context
+        system_context = "You are Athena, a helpful home assistant. Provide clear, concise answers.\n\n"
 
-        # Add conversation history if available
+        # Format conversation history for LLM context
+        history_context = ""
         if state.conversation_history:
-            messages.extend(state.conversation_history)
-            logger.info(f"Including {len(state.conversation_history)} previous messages in LLM context")
+            logger.info(f"Including {len(state.conversation_history)} previous messages in context")
+            history_context = "Previous conversation:\n"
+            for msg in state.conversation_history:
+                role = msg["role"].capitalize()
+                content = msg["content"]
+                history_context += f"{role}: {content}\n"
+            history_context += "\n"
 
-        # Add current query
-        messages.append({"role": "user", "content": synthesis_prompt})
+        # Combine system context, history, and synthesis prompt
+        full_prompt = system_context + history_context + synthesis_prompt
 
-        response_text = ""
-        async for chunk in ollama_client.chat(
+        result = await llm_router.generate(
             model=state.model_tier.value if state.model_tier else ModelTier.MEDIUM.value,
-            messages=messages,
+            prompt=full_prompt,
             temperature=state.temperature,
-            stream=False
-        ):
-            if chunk.get("done"):
-                response_text = chunk.get("message", {}).get("content", "")
-                break
+            request_id=state.request_id,
+            session_id=state.session_id,
+            user_id=state.mode,
+            zone=state.room,
+            intent=state.intent.value if state.intent else None
+        )
 
-        state.answer = response_text
+        state.answer = result.get("response", "")
 
         # Add data attribution
         if state.citations:
@@ -665,21 +728,20 @@ IMPORTANT: If no Retrieved Data is available, ANY specific factual claims are li
 Respond ONLY with valid JSON:
 {{"contains_hallucinations": true/false, "reason": "brief explanation", "specific_claims": ["list of suspicious claims"]}}"""
 
-            messages = [
-                {"role": "system", "content": "You are a precise fact-checking assistant. Always respond with valid JSON."},
-                {"role": "user", "content": fact_check_prompt}
-            ]
+            # Combine system and user prompts
+            full_fact_check_prompt = f"You are a precise fact-checking assistant. Always respond with valid JSON.\n\n{fact_check_prompt}"
 
-            fact_check_response = ""
-            async for chunk in ollama_client.chat(
+            result = await llm_router.generate(
                 model=ModelTier.SMALL.value,  # OPTIMIZATION: Fix bug - use SMALL model for validation
-                messages=messages,
+                prompt=full_fact_check_prompt,
                 temperature=0.1,  # Low temperature for consistent checking
-                stream=False
-            ):
-                if chunk.get("done"):
-                    fact_check_response = chunk.get("message", {}).get("content", "")
-                    break
+                request_id=state.request_id,
+                session_id=state.session_id,
+                user_id=state.mode,
+                zone=state.room
+            )
+
+            fact_check_response = result.get("response", "")
 
             # Parse fact check response
             try:
@@ -1003,12 +1065,11 @@ async def health_check():
     except:
         health["components"]["home_assistant"] = False
 
-    # Check Ollama
+    # Check LLM Router (supports Ollama, MLX, etc.)
     try:
-        models = await ollama_client.list_models() if ollama_client else {}
-        health["components"]["ollama"] = len(models.get("models", [])) > 0
+        health["components"]["llm_router"] = llm_router is not None
     except:
-        health["components"]["ollama"] = False
+        health["components"]["llm_router"] = False
 
     # Check Redis
     try:
@@ -1026,7 +1087,7 @@ async def health_check():
             health["components"][f"rag_{name}"] = False
 
     # Determine overall health
-    critical_components = ["ollama", "redis"]
+    critical_components = ["llm_router", "redis"]
     if not all(health["components"].get(c, False) for c in critical_components):
         health["status"] = "unhealthy"
     elif not all(health["components"].values()):
@@ -1038,6 +1099,26 @@ async def health_check():
 async def metrics():
     """Prometheus metrics endpoint."""
     return Response(content=generate_latest(), media_type="text/plain")
+
+@app.get("/llm-metrics")
+async def llm_metrics():
+    """
+    Get LLM performance metrics from the router.
+
+    Returns aggregated metrics including:
+    - Overall average latency and tokens/sec
+    - Per-model breakdown
+    - Per-backend breakdown
+    """
+    try:
+        metrics_data = llm_router.report_metrics()
+        return metrics_data
+    except Exception as e:
+        logger.error(f"Failed to retrieve LLM metrics: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve metrics: {str(e)}"
+        )
 
 # ============================================================================
 # Session Management Endpoints (Phase 2)

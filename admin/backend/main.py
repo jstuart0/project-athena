@@ -32,7 +32,8 @@ from app.models import User
 # Import API route modules
 from app.routes import (
     policies, secrets, devices, audit, users, servers, services, rag_connectors, voice_tests,
-    hallucination_checks, multi_intent, validation_models, conversation
+    hallucination_checks, multi_intent, validation_models, conversation, llm_backends, settings,
+    intent_routing, features
 )
 
 logger = structlog.get_logger()
@@ -102,6 +103,10 @@ app.include_router(hallucination_checks.router)
 app.include_router(multi_intent.router)
 app.include_router(validation_models.router)
 app.include_router(conversation.router)
+app.include_router(llm_backends.router)
+app.include_router(settings.router)
+app.include_router(intent_routing.router)
+app.include_router(features.router)
 
 
 # Startup event: Initialize database and check connections
@@ -120,6 +125,14 @@ async def startup_event():
             logger.info("database_schema_initialized")
         except Exception as e:
             logger.error("database_schema_init_failed", error=str(e))
+
+        # Configure OAuth/OIDC from database
+        try:
+            from app.auth.oidc import configure_oauth_client
+            configure_oauth_client()
+            logger.info("oidc_configuration_loaded")
+        except Exception as e:
+            logger.error("oidc_configuration_failed", error=str(e))
     else:
         logger.error("database_connection_failed")
 
@@ -244,150 +257,6 @@ async def auth_me(current_user: User = Depends(get_current_user)):
         "role": current_user.role,
         "last_login": current_user.last_login.isoformat() if current_user.last_login else None,
     }
-
-
-# ============================================================================
-# OIDC Settings Management
-# ============================================================================
-
-class OIDCSettings(BaseModel):
-    """OIDC configuration settings."""
-    provider_url: str
-    client_id: str
-    client_secret: str = None  # Optional in GET responses
-    redirect_uri: str
-
-
-class OIDCTestRequest(BaseModel):
-    """OIDC connection test request."""
-    provider_url: str
-    client_id: str
-
-
-@app.get("/settings/oidc")
-async def get_oidc_settings(current_user: User = Depends(get_current_user)):
-    """Get current OIDC configuration (without secrets)."""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-
-    return OIDCSettings(
-        provider_url=os.getenv("OIDC_PROVIDER_URL", ""),
-        client_id=os.getenv("OIDC_CLIENT_ID", ""),
-        client_secret=None,  # Never return secret
-        redirect_uri=os.getenv("OIDC_REDIRECT_URI", f"{os.getenv('FRONTEND_URL', 'https://athena-admin.xmojo.net')}/api/auth/callback")
-    )
-
-
-@app.put("/settings/oidc")
-async def update_oidc_settings(
-    settings: OIDCSettings,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Update OIDC configuration and restart backend to apply changes."""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-
-    try:
-        logger.info("OIDC settings update requested",
-                   provider_url=settings.provider_url,
-                   client_id=settings.client_id)
-
-        # Update Kubernetes secret using kubectl
-        # This assumes the pod has kubectl and appropriate RBAC permissions
-        namespace = "athena-admin"
-        secret_name = "athena-admin-oidc"
-
-        # Only update if client_secret is provided (not empty)
-        if settings.client_secret:
-            # Delete and recreate the secret with new values
-            delete_cmd = f"kubectl -n {namespace} delete secret {secret_name} --ignore-not-found=true"
-            subprocess.run(delete_cmd, shell=True, check=False)
-
-            # Create new secret with updated values
-            create_cmd = [
-                "kubectl", "-n", namespace, "create", "secret", "generic", secret_name,
-                f"--from-literal=OIDC_CLIENT_ID={settings.client_id}",
-                f"--from-literal=OIDC_CLIENT_SECRET={settings.client_secret}",
-                f"--from-literal=OIDC_ISSUER={settings.provider_url}",
-                f"--from-literal=OIDC_REDIRECT_URI={settings.redirect_uri}",
-                "--from-literal=OIDC_SCOPES=openid profile email",
-                f"--from-literal=FRONTEND_URL={os.getenv('FRONTEND_URL', 'https://athena-admin.xmojo.net')}"
-            ]
-            result = subprocess.run(create_cmd, capture_output=True, text=True)
-
-            if result.returncode != 0:
-                raise Exception(f"Failed to update secret: {result.stderr}")
-
-            # Restart the deployment to pick up new secrets
-            restart_cmd = f"kubectl -n {namespace} rollout restart deployment/athena-admin-backend"
-            subprocess.run(restart_cmd, shell=True, check=True)
-
-            return {
-                "status": "success",
-                "message": "OIDC settings updated successfully. Backend is restarting to apply changes.",
-                "settings": {
-                    "provider_url": settings.provider_url,
-                    "client_id": settings.client_id,
-                    "redirect_uri": settings.redirect_uri
-                }
-            }
-        else:
-            # If no client_secret provided, only update non-secret fields
-            # This would require patching the existing secret, which is more complex
-            return {
-                "status": "warning",
-                "message": "Client secret not provided. To fully update OIDC settings, please provide all fields including the client secret.",
-                "settings": {
-                    "provider_url": settings.provider_url,
-                    "client_id": settings.client_id,
-                    "redirect_uri": settings.redirect_uri
-                }
-            }
-    except subprocess.CalledProcessError as e:
-        logger.error("Failed to execute kubectl command", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to update Kubernetes secrets: {str(e)}")
-    except Exception as e:
-        logger.error("Failed to update OIDC settings", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to update settings: {str(e)}")
-
-
-@app.post("/settings/oidc/test")
-async def test_oidc_connection(
-    test_request: OIDCTestRequest,
-    current_user: User = Depends(get_current_user)
-):
-    """Test OIDC provider connection."""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-
-    try:
-        # Attempt to fetch OIDC discovery document
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            # Remove trailing slash and add .well-known path
-            provider_url = test_request.provider_url.rstrip('/')
-            discovery_url = f"{provider_url}/.well-known/openid-configuration"
-
-            response = await client.get(discovery_url)
-
-            if response.status_code == 200:
-                config = response.json()
-                return {
-                    "status": "success",
-                    "provider_name": config.get("issuer", "Unknown"),
-                    "authorization_endpoint": config.get("authorization_endpoint"),
-                    "token_endpoint": config.get("token_endpoint"),
-                    "userinfo_endpoint": config.get("userinfo_endpoint")
-                }
-            else:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Provider returned {response.status_code}: Unable to fetch OIDC configuration"
-                )
-    except httpx.TimeoutException:
-        raise HTTPException(status_code=400, detail="Connection timeout - provider not reachable")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Connection failed: {str(e)}")
 
 
 class ServiceStatus(BaseModel):
