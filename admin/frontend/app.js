@@ -332,6 +332,9 @@ function showTab(tabName) {
         case 'validation-models':
             loadValidationModels();
             break;
+        case 'llm-backends':
+            loadLLMBackends();
+            break;
     }
 }
 
@@ -2435,6 +2438,281 @@ async function loadValidationModels() {
 
 function showCreateValidationModelModal() {
     showError('Creating validation models via UI is coming soon. Use the API for now.');
+}
+
+// ============================================================================
+// LLM BACKEND MANAGEMENT
+// ============================================================================
+
+async function loadLLMBackends() {
+    try {
+        const backends = await apiRequest('/api/llm-backends');
+
+        // Calculate stats
+        const totalBackends = backends.length;
+        const enabledBackends = backends.filter(b => b.enabled).length;
+        const avgTokensPerSec = backends.reduce((sum, b) => sum + (b.avg_tokens_per_sec || 0), 0) / (backends.filter(b => b.avg_tokens_per_sec).length || 1);
+        const totalRequests = backends.reduce((sum, b) => sum + (b.total_requests || 0), 0);
+
+        // Update stats
+        document.getElementById('stat-total-backends').textContent = totalBackends;
+        document.getElementById('stat-enabled-backends').textContent = enabledBackends;
+        document.getElementById('stat-avg-tokens-per-sec').textContent = avgTokensPerSec.toFixed(1);
+        document.getElementById('stat-total-requests').textContent = totalRequests.toLocaleString();
+
+        // Render backends list
+        const container = document.getElementById('llm-backends-container');
+        if (backends.length === 0) {
+            container.innerHTML = `
+                <div class="bg-dark-card border border-dark-border rounded-lg p-8 text-center">
+                    <div class="text-4xl mb-4">⚡</div>
+                    <h3 class="text-lg font-semibold text-white mb-2">No Backends Configured</h3>
+                    <p class="text-gray-400 mb-4">Get started by adding your first LLM backend</p>
+                    <button onclick="showCreateBackendModal()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors">
+                        ➕ Add Backend
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = backends.map(backend => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h3 class="text-lg font-semibold text-white">${backend.model_name}</h3>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${
+                                backend.backend_type === 'ollama' ? 'bg-blue-900/30 text-blue-400' :
+                                backend.backend_type === 'mlx' ? 'bg-purple-900/30 text-purple-400' :
+                                'bg-orange-900/30 text-orange-400'
+                            }">
+                                ${backend.backend_type.toUpperCase()}
+                            </span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${
+                                backend.enabled ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'
+                            }">
+                                ${backend.enabled ? 'Enabled' : 'Disabled'}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-400">${backend.endpoint_url}</p>
+                        ${backend.description ? `<p class="text-sm text-gray-500 mt-1">${backend.description}</p>` : ''}
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="toggleBackend(${backend.id})"
+                            class="px-3 py-1 ${backend.enabled ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'} text-white rounded text-sm transition-colors"
+                            title="${backend.enabled ? 'Disable' : 'Enable'}">
+                            ${backend.enabled ? '⏸️' : '▶️'}
+                        </button>
+                        <button onclick="showEditBackendModal(${backend.id})"
+                            class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
+                            title="Edit">
+                            ✏️
+                        </button>
+                        <button onclick="deleteBackend(${backend.id}, '${backend.model_name}')"
+                            class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+                            title="Delete">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div>
+                        <div class="text-2xl font-bold text-yellow-400">${backend.avg_tokens_per_sec ? backend.avg_tokens_per_sec.toFixed(1) : '-'}</div>
+                        <div class="text-xs text-gray-400">Avg Tokens/Sec</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-purple-400">${backend.avg_latency_ms ? backend.avg_latency_ms.toFixed(0) : '-'}</div>
+                        <div class="text-xs text-gray-400">Avg Latency (ms)</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-blue-400">${backend.total_requests || 0}</div>
+                        <div class="text-xs text-gray-400">Total Requests</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold ${backend.total_errors > 0 ? 'text-red-400' : 'text-green-400'}">${backend.total_errors || 0}</div>
+                        <div class="text-xs text-gray-400">Errors</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div>
+                        <span class="text-gray-400">Priority:</span>
+                        <span class="text-white ml-2">${backend.priority}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Max Tokens:</span>
+                        <span class="text-white ml-2">${backend.max_tokens}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Temp Default:</span>
+                        <span class="text-white ml-2">${backend.temperature_default}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Timeout:</span>
+                        <span class="text-white ml-2">${backend.timeout_seconds}s</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Failed to load LLM backends:', error);
+        showError('Failed to load LLM backends');
+    }
+}
+
+function showCreateBackendModal() {
+    const modal = document.createElement('div');
+    modal.id = 'create-backend-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-white">Add LLM Backend</h2>
+                <button onclick="closeModal('create-backend-modal')" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+
+            <form onsubmit="createBackend(event)" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Model Name *</label>
+                        <input type="text" id="backend-model-name" required
+                            placeholder="e.g., phi3:mini, llama3.1:8b"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Backend Type *</label>
+                        <select id="backend-type" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white">
+                            <option value="ollama">Ollama</option>
+                            <option value="mlx">MLX</option>
+                            <option value="auto">Auto (MLX → Ollama fallback)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Endpoint URL *</label>
+                    <input type="text" id="backend-endpoint" required
+                        placeholder="http://localhost:11434"
+                        class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Description</label>
+                    <input type="text" id="backend-description"
+                        placeholder="Optional description"
+                        class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Priority</label>
+                        <input type="number" id="backend-priority" value="100"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white">
+                        <p class="text-xs text-gray-500 mt-1">Lower = higher priority for auto mode</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Timeout (seconds)</label>
+                        <input type="number" id="backend-timeout" value="60"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Max Tokens</label>
+                        <input type="number" id="backend-max-tokens" value="2048"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Default Temperature</label>
+                        <input type="number" id="backend-temperature" value="0.7" step="0.1" min="0" max="2"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="backend-enabled" checked
+                        class="w-4 h-4 bg-dark-bg border-dark-border rounded">
+                    <label for="backend-enabled" class="text-sm text-gray-400">Enable backend</label>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal('create-backend-modal')"
+                        class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors">
+                        Create Backend
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function createBackend(event) {
+    event.preventDefault();
+
+    const data = {
+        model_name: document.getElementById('backend-model-name').value,
+        backend_type: document.getElementById('backend-type').value,
+        endpoint_url: document.getElementById('backend-endpoint').value,
+        description: document.getElementById('backend-description').value || null,
+        priority: parseInt(document.getElementById('backend-priority').value),
+        timeout_seconds: parseInt(document.getElementById('backend-timeout').value),
+        max_tokens: parseInt(document.getElementById('backend-max-tokens').value),
+        temperature_default: parseFloat(document.getElementById('backend-temperature').value),
+        enabled: document.getElementById('backend-enabled').checked
+    };
+
+    try {
+        await apiRequest('/api/llm-backends', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        closeModal('create-backend-modal');
+        loadLLMBackends();
+        showSuccess('LLM backend created successfully');
+    } catch (error) {
+        showError(`Failed to create backend: ${error.message}`);
+    }
+}
+
+async function toggleBackend(backendId) {
+    try {
+        await apiRequest(`/api/llm-backends/${backendId}/toggle`, { method: 'POST' });
+        loadLLMBackends();
+        showSuccess('Backend status updated');
+    } catch (error) {
+        showError(`Failed to toggle backend: ${error.message}`);
+    }
+}
+
+async function deleteBackend(backendId, modelName) {
+    if (!confirm(`Are you sure you want to delete the backend for "${modelName}"?`)) {
+        return;
+    }
+
+    try {
+        await apiRequest(`/api/llm-backends/${backendId}`, { method: 'DELETE' });
+        loadLLMBackends();
+        showSuccess('Backend deleted successfully');
+    } catch (error) {
+        showError(`Failed to delete backend: ${error.message}`);
+    }
+}
+
+function showEditBackendModal(backendId) {
+    // For now, show a simple message - full edit modal can be added later
+    showError('Edit modal coming soon. Delete and recreate for now.');
 }
 
 // ============================================================================

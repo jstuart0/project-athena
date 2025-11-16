@@ -68,7 +68,7 @@ echo -e "${GREEN}Step 1: Building Docker images...${NC}"
 # Build backend
 echo "Building admin backend..."
 cd ../backend
-docker build -t ${BACKEND_IMAGE}:${VERSION} -t ${BACKEND_IMAGE}:latest .
+docker build --platform linux/amd64 -t ${BACKEND_IMAGE}:${VERSION} -t ${BACKEND_IMAGE}:latest .
 
 # Build frontend
 echo "Building admin frontend with sidebar layout..."
@@ -133,7 +133,7 @@ server {
 }
 EOF
 
-docker build -t ${FRONTEND_IMAGE}:${VERSION} -t ${FRONTEND_IMAGE}:latest .
+docker build --platform linux/amd64 -t ${FRONTEND_IMAGE}:${VERSION} -t ${FRONTEND_IMAGE}:latest .
 
 echo -e "${GREEN}✓ Docker images built${NC}"
 

@@ -58,37 +58,9 @@ spec:
             secretKeyRef:
               name: athena-admin-secrets
               key: JWT_SECRET
-        # OIDC configuration from secret
-        - name: OIDC_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: athena-admin-oidc
-              key: OIDC_CLIENT_ID
-        - name: OIDC_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: athena-admin-oidc
-              key: OIDC_CLIENT_SECRET
-        - name: OIDC_ISSUER
-          valueFrom:
-            secretKeyRef:
-              name: athena-admin-oidc
-              key: OIDC_ISSUER
-        - name: OIDC_REDIRECT_URI
-          valueFrom:
-            secretKeyRef:
-              name: athena-admin-oidc
-              key: OIDC_REDIRECT_URI
-        - name: OIDC_SCOPES
-          valueFrom:
-            secretKeyRef:
-              name: athena-admin-oidc
-              key: OIDC_SCOPES
+        # OIDC configuration now comes from database (settings.py API)
         - name: FRONTEND_URL
-          valueFrom:
-            secretKeyRef:
-              name: athena-admin-oidc
-              key: FRONTEND_URL
+          value: "https://athena-admin.xmojo.net"
         - name: DEMO_MODE
           value: "false"
         resources:
