@@ -118,6 +118,40 @@ class LLMMetricCreate(BaseModel):
 
 
 # API Routes
+
+# Public endpoint (no auth) for services to query LLM backends
+@router.get("/public", response_model=List[LLMBackendResponse])
+async def list_backends_public(
+    enabled_only: bool = False,
+    db: Session = Depends(get_db)
+):
+    """
+    List all LLM backend configurations (public endpoint, no auth required).
+
+    This endpoint is used by services (Gateway, Orchestrator, etc.) to check
+    LLM backend configuration without requiring authentication.
+
+    Query params:
+    - enabled_only: If true, only return enabled backends
+
+    Returns:
+        List of LLM backends with their configuration sorted by priority
+    """
+    logger.info("list_llm_backends_public", enabled_only=enabled_only, source="public")
+
+    query = db.query(LLMBackend)
+    if enabled_only:
+        query = query.filter(LLMBackend.enabled == True)
+
+    backends = query.order_by(LLMBackend.priority, LLMBackend.model_name).all()
+
+    return [
+        LLMBackendResponse(
+            **backend.to_dict()
+        ) for backend in backends
+    ]
+
+
 @router.get("", response_model=List[LLMBackendResponse])
 async def list_backends(
     enabled_only: bool = False,
@@ -125,7 +159,7 @@ async def list_backends(
     current_user: User = Depends(get_current_user)
 ):
     """
-    List all LLM backend configurations.
+    List all LLM backend configurations (authenticated endpoint).
 
     Query params:
     - enabled_only: If true, only return enabled backends

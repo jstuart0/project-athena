@@ -47,6 +47,12 @@ class AdminConfigClient:
         self._providers_cache: Optional[Dict[str, List[str]]] = None
         self._providers_cache_time = 0.0
 
+        # LLM backends and features cache
+        self._llm_backends_cache: Optional[List[Dict[str, Any]]] = None
+        self._llm_backends_cache_time = 0.0
+        self._features_cache: Optional[Dict[str, bool]] = None
+        self._features_cache_time = 0.0
+
     async def get_secret(self, service_name: str) -> Optional[str]:
         """
         Fetch a secret value from the admin API.
@@ -286,6 +292,118 @@ class AdminConfigClient:
 
         # Return empty dict to trigger hardcoded fallback
         return {}
+
+    async def get_llm_backends(self) -> List[Dict[str, Any]]:
+        """
+        Fetch enabled LLM backends from Admin API with caching.
+
+        Returns:
+            List of LLM backend configurations sorted by priority
+            Returns empty list if API unavailable (allows env var fallback)
+        """
+        # Check cache
+        if self._llm_backends_cache and (time.time() - self._llm_backends_cache_time < self._cache_ttl):
+            return self._llm_backends_cache
+
+        # Fetch from API
+        try:
+            url = f"{self.admin_url}/api/llm-backends/public"
+            response = await self.client.get(url)
+
+            if response.status_code == 200:
+                backends = response.json()
+
+                # Filter to only enabled backends and sort by priority
+                enabled_backends = [b for b in backends if b.get("enabled", False)]
+                enabled_backends.sort(key=lambda x: x.get("priority", 999))
+
+                # Cache successful result
+                self._llm_backends_cache = enabled_backends
+                self._llm_backends_cache_time = time.time()
+
+                logger.info(
+                    "llm_backends_loaded_from_db",
+                    count=len(enabled_backends),
+                    backends=[b.get("model_name") for b in enabled_backends]
+                )
+                return enabled_backends
+            else:
+                logger.warning(
+                    "llm_backends_fetch_failed",
+                    status_code=response.status_code
+                )
+
+        except Exception as e:
+            logger.warning(
+                "llm_backends_db_error",
+                error=str(e),
+                admin_url=self.admin_url
+            )
+
+        # Return empty list to trigger env var fallback
+        return []
+
+    async def get_feature_flags(self) -> Dict[str, bool]:
+        """
+        Fetch feature flags from Admin API with caching.
+
+        Returns:
+            Dict mapping feature_name -> enabled status
+            Returns empty dict if API unavailable (allows hardcoded defaults)
+        """
+        # Check cache
+        if self._features_cache and (time.time() - self._features_cache_time < self._cache_ttl):
+            return self._features_cache
+
+        # Fetch from API
+        try:
+            url = f"{self.admin_url}/api/features/public?enabled_only=false"
+            response = await self.client.get(url)
+
+            if response.status_code == 200:
+                features = response.json()
+
+                # Transform to dict of name -> enabled
+                flags = {f["name"]: f.get("enabled", False) for f in features}
+
+                # Cache successful result
+                self._features_cache = flags
+                self._features_cache_time = time.time()
+
+                logger.info(
+                    "feature_flags_loaded_from_db",
+                    count=len(flags),
+                    enabled_count=sum(1 for v in flags.values() if v)
+                )
+                return flags
+            else:
+                logger.warning(
+                    "feature_flags_fetch_failed",
+                    status_code=response.status_code
+                )
+
+        except Exception as e:
+            logger.warning(
+                "feature_flags_db_error",
+                error=str(e),
+                admin_url=self.admin_url
+            )
+
+        # Return empty dict to trigger hardcoded defaults
+        return {}
+
+    async def is_feature_enabled(self, feature_name: str) -> Optional[bool]:
+        """
+        Check if a specific feature is enabled.
+
+        Args:
+            feature_name: Name of the feature to check
+
+        Returns:
+            True if enabled, False if disabled, None if not found in DB (use default)
+        """
+        flags = await self.get_feature_flags()
+        return flags.get(feature_name)
 
     async def close(self):
         """Close the HTTP client."""

@@ -42,6 +42,9 @@ from orchestrator.search_providers.result_fusion import ResultFusion
 from orchestrator.session_manager import get_session_manager, SessionManager
 from orchestrator.config_loader import get_config
 
+# RAG validation imports
+from orchestrator.rag_validator import validator, ValidationResult
+
 # Configure logging
 logger = configure_logging("orchestrator")
 
@@ -141,7 +144,11 @@ async def lifespan(app: FastAPI):
 
     # Initialize clients
     ha_client = HomeAssistantClient()
+
+    # Initialize LLM router with database-driven backend configuration
     llm_router = get_llm_router()
+    logger.info(f"LLM Router initialized with admin API: {llm_router.admin_url}")
+
     cache_client = CacheClient()
 
     # Initialize session manager
@@ -362,7 +369,13 @@ def _pattern_based_classification(query: str) -> IntentCategory:
         return IntentCategory.AIRPORTS
 
     # Sports patterns
-    if any(p in query_lower for p in ["game", "score", "ravens", "orioles", "team"]):
+    sports_patterns = [
+        "game", "score", "ravens", "orioles", "team", "schedule",
+        "football", "soccer", "basketball", "baseball", "hockey",
+        "nfl", "nba", "mlb", "nhl", "mls", "ncaa",
+        "playoff", "championship", "season", "match", "vs", "versus"
+    ]
+    if any(p in query_lower for p in sports_patterns):
         return IntentCategory.SPORTS
 
     return IntentCategory.GENERAL_INFO
@@ -453,10 +466,12 @@ async def _fallback_to_web_search(state: OrchestratorState, rag_service: str, er
 
     try:
         # Execute parallel search with automatic intent classification
+        # force_search=True bypasses RAG intent check (since we're already in fallback mode)
         intent, search_results = await parallel_search_engine.search(
             query=state.query,
             location="Baltimore, MD",
-            limit_per_provider=5
+            limit_per_provider=5,
+            force_search=True  # CRITICAL: Force web search even for RAG intents
         )
 
         logger.info(f"Fallback search intent classified as: '{intent}'")
@@ -525,9 +540,36 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
                         )
                         response.raise_for_status()
 
-                        state.retrieved_data = response.json()
-                        state.data_source = "OpenWeatherMap"
-                        state.citations.append(f"Weather data from OpenWeatherMap for {location}")
+                        weather_data = response.json()
+
+                        # Validate Weather RAG response quality
+                        validation_result, reason, suggestions = validator.validate_weather_response(
+                            weather_data, state.query
+                        )
+
+                        if validation_result == ValidationResult.VALID:
+                            # Response is good, use it
+                            state.retrieved_data = weather_data
+                            state.data_source = "OpenWeatherMap"
+                            state.citations.append(f"Weather data from OpenWeatherMap for {location}")
+                            logger.debug(f"Weather RAG validation passed: {reason}")
+
+                        elif validation_result in [ValidationResult.EMPTY, ValidationResult.INVALID]:
+                            # Data is empty or invalid, trigger web search fallback
+                            logger.warning(
+                                f"Weather RAG validation failed: {validation_result.value} - {reason}"
+                            )
+                            if suggestions:
+                                logger.info(f"Fallback suggestion: {suggestions}")
+                            await _fallback_to_web_search(state, "Weather", reason)
+
+                        elif validation_result == ValidationResult.NEEDS_RETRY:
+                            # Data structure mismatch or missing information
+                            logger.info(
+                                f"Weather RAG needs retry: {reason}. Suggestions: {suggestions}"
+                            )
+                            # For now, fall back to web search for retry scenarios
+                            await _fallback_to_web_search(state, "Weather", reason)
 
                 except (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException) as e:
                     # RAG service failed - fall back to web search
@@ -547,9 +589,37 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
                         response = await client.get(f"/airports/{airport}")
                         response.raise_for_status()
 
-                        state.retrieved_data = response.json()
-                        state.data_source = "FlightAware"
-                        state.citations.append(f"Flight data from FlightAware for {airport}")
+                        airports_data = response.json()
+
+                        # Validate Airports RAG response quality
+                        validation_result, reason, suggestions = validator.validate_airports_response(
+                            airports_data, state.query
+                        )
+
+                        if validation_result == ValidationResult.VALID:
+                            # Response is good, use it
+                            state.retrieved_data = airports_data
+                            state.data_source = "FlightAware"
+                            state.citations.append(f"Flight data from FlightAware for {airport}")
+                            logger.debug(f"Airports RAG validation passed: {reason}")
+
+                        elif validation_result in [ValidationResult.EMPTY, ValidationResult.INVALID]:
+                            # Data is empty or invalid, trigger web search fallback
+                            logger.warning(
+                                f"Airports RAG validation failed: {validation_result.value} - {reason}"
+                            )
+                            if suggestions:
+                                logger.info(f"Fallback suggestion: {suggestions}")
+                            await _fallback_to_web_search(state, "Airports", reason)
+
+                        elif validation_result == ValidationResult.NEEDS_RETRY:
+                            # Data structure mismatch or missing information
+                            logger.info(
+                                f"Airports RAG needs retry: {reason}. Suggestions: {suggestions}"
+                            )
+                            # For now, fall back to web search for retry scenarios
+                            # Future: Could retry with different RAG parameters
+                            await _fallback_to_web_search(state, "Airports", reason)
 
                 except (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException) as e:
                     # RAG service failed - fall back to web search
@@ -581,9 +651,37 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
                             events_response = await client.get(f"/sports/events/{team_id}/next")
                             events_response.raise_for_status()
 
-                            state.retrieved_data = events_response.json()
-                            state.data_source = "TheSportsDB"
-                            state.citations.append(f"Sports data from TheSportsDB for {team}")
+                            events_data = events_response.json()
+
+                            # Validate Sports RAG response quality
+                            validation_result, reason, suggestions = validator.validate_sports_response(
+                                events_data, state.query
+                            )
+
+                            if validation_result == ValidationResult.VALID:
+                                # Response is good, use it
+                                state.retrieved_data = events_data
+                                state.data_source = "TheSportsDB"
+                                state.citations.append(f"Sports data from TheSportsDB for {team}")
+                                logger.debug(f"Sports RAG validation passed: {reason}")
+
+                            elif validation_result in [ValidationResult.EMPTY, ValidationResult.INVALID]:
+                                # Data is empty or invalid, trigger web search fallback
+                                logger.warning(
+                                    f"Sports RAG validation failed: {validation_result.value} - {reason}"
+                                )
+                                if suggestions:
+                                    logger.info(f"Fallback suggestion: {suggestions}")
+                                await _fallback_to_web_search(state, "Sports", reason)
+
+                            elif validation_result == ValidationResult.NEEDS_RETRY:
+                                # Data structure mismatch (e.g., got schedule when query wants scores)
+                                logger.info(
+                                    f"Sports RAG needs retry: {reason}. Suggestions: {suggestions}"
+                                )
+                                # For now, fall back to web search for retry scenarios
+                                # Future: Could retry with different RAG parameters
+                                await _fallback_to_web_search(state, "Sports", reason)
 
                 except (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException) as e:
                     # RAG service failed - fall back to web search

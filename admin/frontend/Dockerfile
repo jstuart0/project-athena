@@ -3,6 +3,7 @@ FROM nginx:alpine
 # Copy static files
 COPY index.html /usr/share/nginx/html/
 COPY app.js /usr/share/nginx/html/
+COPY crud-extensions.js /usr/share/nginx/html/
 COPY conversation.js /usr/share/nginx/html/
 COPY routing.js /usr/share/nginx/html/
 COPY metrics.js /usr/share/nginx/html/

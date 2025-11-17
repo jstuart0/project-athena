@@ -30,7 +30,7 @@ logger = configure_logging("sports-rag")
 # Environment variables
 THESPORTSDB_API_KEY = os.getenv("THESPORTSDB_API_KEY", "3")  # Free tier key
 REDIS_URL = os.getenv("REDIS_URL", "redis://192.168.10.181:6379/0")
-SERVICE_PORT = int(os.getenv("SPORTS_SERVICE_PORT", "8012"))
+SERVICE_PORT = int(os.getenv("SPORTS_SERVICE_PORT", "8011"))
 
 # TheSportsDB API base URL
 THESPORTSDB_BASE_URL = "https://www.thesportsdb.com/api/v1/json"

@@ -29,7 +29,7 @@ logger = configure_logging("airports-rag")
 # Environment variables
 FLIGHTAWARE_API_KEY = os.getenv("FLIGHTAWARE_API_KEY")
 REDIS_URL = os.getenv("REDIS_URL", "redis://192.168.10.181:6379/0")
-SERVICE_PORT = int(os.getenv("AIRPORTS_SERVICE_PORT", "8011"))
+SERVICE_PORT = int(os.getenv("AIRPORTS_SERVICE_PORT", "8012"))
 
 # FlightAware API base URL
 FLIGHTAWARE_BASE_URL = "https://aeroapi.flightaware.com/aeroapi"

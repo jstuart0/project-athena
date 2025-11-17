@@ -53,6 +53,7 @@ class ParallelSearchEngine:
         query: str,
         location: Optional[str] = "Baltimore, MD",
         limit_per_provider: int = 5,
+        force_search: bool = False,
         **kwargs
     ) -> Tuple[str, List[SearchResult]]:
         """
@@ -62,6 +63,7 @@ class ParallelSearchEngine:
             query: Search query
             location: Location for search (used by event providers)
             limit_per_provider: Max results per provider
+            force_search: Force web search even for RAG intents (for fallback mode)
             **kwargs: Provider-specific parameters
 
         Returns:
@@ -74,7 +76,8 @@ class ParallelSearchEngine:
         logger.info(f"Classified query intent: '{intent}' (confidence: {confidence:.2f}) for query: '{query}'")
 
         # Step 2: Check if this intent should use RAG instead of web search
-        if self.provider_router.should_use_rag(intent):
+        # UNLESS we're in force_search mode (fallback from failed RAG)
+        if not force_search and self.provider_router.should_use_rag(intent):
             logger.info(f"Intent '{intent}' handled by RAG service, skipping web search")
             return (intent, [])
 

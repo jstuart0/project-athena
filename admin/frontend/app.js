@@ -2322,9 +2322,16 @@ async function loadHallucinationChecks() {
                         <h3 class="text-lg font-semibold text-white">${check.display_name}</h3>
                         <p class="text-sm text-gray-400 mt-1">${check.description || 'No description'}</p>
                     </div>
-                    <span class="px-3 py-1 rounded-full text-xs font-medium ${check.enabled ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'}">
-                        ${check.enabled ? 'Enabled' : 'Disabled'}
-                    </span>
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${check.enabled ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'}">
+                            ${check.enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                        <button onclick="deleteHallucinationCheck(${check.id}, '${check.display_name.replace(/'/g, "\\'")}')" class="text-red-400 hover:text-red-300 p-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -2372,6 +2379,13 @@ async function loadMultiIntentConfig() {
         const container = document.getElementById('multi-intent-config-container');
 
         container.innerHTML = `
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-white">Configuration</h3>
+                <button onclick='showEditMultiIntentConfigModal(${JSON.stringify(config).replace(/'/g, "\\'")})'
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
+                    Edit Configuration
+                </button>
+            </div>
             <div class="grid grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-400 mb-2">Enabled</label>
@@ -2487,9 +2501,16 @@ async function loadValidationModels() {
                         <h3 class="text-lg font-semibold text-white">${model.name}</h3>
                         <p class="text-sm text-gray-400 mt-1">${model.model_id}</p>
                     </div>
-                    <span class="px-3 py-1 rounded-full text-xs font-medium ${model.enabled ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'}">
-                        ${model.enabled ? 'Active' : 'Inactive'}
-                    </span>
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${model.enabled ? 'bg-green-900/30 text-green-400' : 'bg-gray-900/30 text-gray-400'}">
+                            ${model.enabled ? 'Active' : 'Inactive'}
+                        </span>
+                        <button onclick="deleteValidationModel(${model.id}, '${model.name.replace(/'/g, "\\'")}')" class="text-red-400 hover:text-red-300 p-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="space-y-2 text-sm">
                     <div>

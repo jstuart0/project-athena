@@ -22,7 +22,7 @@ class ResponseValidator:
     def __init__(
         self,
         llm_service_url: str = "http://localhost:11434",
-        primary_model: str = "phi3:mini-q8",
+        primary_model: str = "phi3:mini",
         validation_model: str = "phi3:mini"
     ):
         self.llm_service_url = llm_service_url

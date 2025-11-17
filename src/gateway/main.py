@@ -25,6 +25,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from shared.logging_config import configure_logging
 from shared.ollama_client import OllamaClient
+from shared.admin_config import get_admin_client
 from gateway.device_session_manager import get_device_session_manager, DeviceSessionManager
 
 # Configure logging
@@ -46,10 +47,11 @@ request_duration = Histogram(
 orchestrator_client: Optional[httpx.AsyncClient] = None
 ollama_client: Optional[OllamaClient] = None
 device_session_mgr: Optional[DeviceSessionManager] = None
+admin_client = None  # Admin API client for configuration
 
 # Configuration
 ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_SERVICE_URL", "http://localhost:8001")
-OLLAMA_URL = os.getenv("LLM_SERVICE_URL", "http://localhost:11434")
+OLLAMA_URL = os.getenv("LLM_SERVICE_URL", "http://localhost:11434")  # Fallback if DB empty
 API_KEY = os.getenv("GATEWAY_API_KEY", "dummy-key")  # Optional for Phase 1
 ADMIN_API_URL = os.getenv("ADMIN_API_URL", "http://athena-admin-backend.athena-admin.svc.cluster.local:8080")
 
@@ -58,25 +60,71 @@ _feature_cache = {}
 _cache_expiry = 0
 _cache_ttl = 60  # 60 seconds
 
-# Model mapping (OpenAI -> Ollama)
+# LLM backends cache (from database)
+_llm_backends_cache = []
+_llm_backends_cache_time = 0
+
+# Model mapping (OpenAI -> Ollama) - Fallback if database is empty
 MODEL_MAPPING = {
     "gpt-3.5-turbo": "phi3:mini",
     "gpt-4": "llama3.1:8b",
     "gpt-4-32k": "llama3.1:8b",
 }
 
+async def get_llm_backends():
+    """
+    Fetch enabled LLM backends from Admin API with caching.
+
+    Returns list of backend configurations sorted by priority,
+    or empty list if database is unavailable (triggers env var fallback).
+    """
+    global _llm_backends_cache, _llm_backends_cache_time
+
+    now = time.time()
+    if now > _llm_backends_cache_time + _cache_ttl:
+        # Cache expired, refresh
+        try:
+            backends = await admin_client.get_llm_backends()
+            if backends:
+                _llm_backends_cache = backends
+                _llm_backends_cache_time = now
+                logger.info(f"LLM backends loaded from DB: {[b.get('model_name') for b in backends]}")
+            else:
+                logger.warning("No LLM backends found in database, using environment variable fallback")
+        except Exception as e:
+            logger.warning(f"Failed to load LLM backends from database: {e}")
+
+    return _llm_backends_cache
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifecycle."""
-    global orchestrator_client, ollama_client, device_session_mgr
+    global orchestrator_client, ollama_client, device_session_mgr, admin_client
 
     # Startup
     logger.info("Starting Gateway service")
+
+    # Initialize admin config client for database-driven configuration
+    admin_client = get_admin_client()
+    logger.info("Admin config client initialized")
+
     orchestrator_client = httpx.AsyncClient(
         base_url=ORCHESTRATOR_URL,
         timeout=60.0
     )
-    ollama_client = OllamaClient(url=OLLAMA_URL)
+
+    # Load LLM backends from database (with fallback to env var)
+    backends = await get_llm_backends()
+    if backends:
+        # Use first backend as primary Ollama URL
+        primary_backend = backends[0]
+        ollama_url = primary_backend.get("endpoint_url", OLLAMA_URL)
+        logger.info(f"Using LLM backend from database: {primary_backend.get('model_name')} @ {ollama_url}")
+    else:
+        ollama_url = OLLAMA_URL
+        logger.info(f"Using fallback Ollama URL from environment: {ollama_url}")
+
+    ollama_client = OllamaClient(url=ollama_url)
     device_session_mgr = await get_device_session_manager()
     logger.info("Device session manager initialized")
 
@@ -100,6 +148,8 @@ async def lifespan(app: FastAPI):
         await orchestrator_client.aclose()
     if ollama_client:
         await ollama_client.close()
+    if admin_client:
+        await admin_client.close()
 
 app = FastAPI(
     title="Athena Gateway",
@@ -321,7 +371,7 @@ Respond with ONLY the category name (athena or general)."""
             response = await client.post(
                 f"{OLLAMA_URL}/api/generate",
                 json={
-                    "model": "phi3:mini-q8",
+                    "model": "phi3:mini",
                     "prompt": prompt,
                     "stream": False,
                     "options": {
