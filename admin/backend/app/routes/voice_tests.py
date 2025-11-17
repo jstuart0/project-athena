@@ -17,7 +17,7 @@ import uuid
 
 from app.database import get_db
 from app.auth.oidc import get_current_user
-from app.models import User, VoiceTest
+from app.models import User, VoiceTest, VoiceTestFeedback, LLMPerformanceMetric
 
 logger = structlog.get_logger()
 
@@ -402,7 +402,12 @@ async def test_full_pipeline(
                 if resp.status == 200:
                     data = await resp.json()
                     timings["llm"] = time.time() - start
-                    results["llm_response"] = data.get("response", "")
+                    # Sanitize Unicode characters to prevent DB encoding issues
+                    response_text = data.get("response", "")
+                    response_text = response_text.replace('\u2018', "'").replace('\u2019', "'")  # Smart single quotes
+                    response_text = response_text.replace('\u201c', '"').replace('\u201d', '"')  # Smart double quotes
+                    response_text = response_text.replace('\u2013', '-').replace('\u2014', '-')  # En/Em dashes
+                    results["llm_response"] = response_text
                 else:
                     raise Exception(f"LLM failed: HTTP {resp.status}")
 
@@ -431,12 +436,40 @@ async def test_full_pipeline(
         )
         db.add(test)
         db.commit()
+        db.refresh(test)  # Get the ID
+
+        # Also save to performance metrics table so it appears on metrics page
+        try:
+            # Extract token count from LLM response (if available)
+            tokens_generated = data.get("eval_count", 0)
+            tokens_per_second = tokens_generated / total_time if total_time > 0 else 0
+
+            metric = LLMPerformanceMetric(
+                timestamp=datetime.utcnow(),
+                model="phi3:mini",
+                backend="ollama",
+                latency_seconds=total_time,
+                tokens_generated=tokens_generated,
+                tokens_per_second=tokens_per_second,
+                request_id=f"voice_test_{test.id}",
+                user_id=current_user.username,
+                intent=query.text[:100],  # Use query as intent (truncated)
+                source="admin_voice_test"
+            )
+            db.add(metric)
+            db.commit()
+
+            logger.info("performance_metric_saved", test_id=test.id, tokens_per_sec=tokens_per_second)
+        except Exception as e:
+            logger.warning("failed_to_save_performance_metric", test_id=test.id, error=str(e))
+            # Don't fail the test if metric save fails
 
         logger.info("pipeline_test_completed", user=current_user.username, success=True,
-                   total_time=total_time)
+                   total_time=total_time, test_id=test.id)
 
         return {
             "success": True,
+            "test_id": test.id,  # Return test ID for feedback
             **result
         }
 
@@ -480,3 +513,78 @@ async def get_test_history(
         "tests": [t.to_dict() for t in tests],
         "total": len(tests)
     }
+
+
+class FeedbackRequest(BaseModel):
+    """Request model for voice test feedback."""
+    test_id: int
+    feedback: str  # 'correct' or 'incorrect'
+    query: str
+    notes: str = None
+
+
+@router.post("/feedback")
+async def save_test_feedback(
+    feedback_data: FeedbackRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Save user feedback on voice test results for active learning.
+
+    Allows users to mark LLM responses as correct/incorrect to improve
+    system quality over time.
+    """
+    if not current_user.has_permission('write'):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+    # Validate feedback type
+    if feedback_data.feedback not in ['correct', 'incorrect']:
+        raise HTTPException(status_code=400, detail="Feedback must be 'correct' or 'incorrect'")
+
+    try:
+        # Verify test exists and get the response
+        test = db.query(VoiceTest).filter(VoiceTest.id == feedback_data.test_id).first()
+        if not test:
+            raise HTTPException(status_code=404, detail=f"Test {feedback_data.test_id} not found")
+
+        # Extract response from test result
+        llm_response = None
+        if test.result and isinstance(test.result, dict):
+            results = test.result.get('results', {})
+            llm_response = results.get('llm_response', '')
+
+        # Create feedback record
+        feedback = VoiceTestFeedback(
+            test_id=feedback_data.test_id,
+            feedback_type=feedback_data.feedback,
+            query=feedback_data.query,
+            response=llm_response,
+            user_id=current_user.id,
+            notes=feedback_data.notes
+        )
+
+        db.add(feedback)
+        db.commit()
+        db.refresh(feedback)
+
+        logger.info(
+            "test_feedback_saved",
+            test_id=feedback_data.test_id,
+            feedback_type=feedback_data.feedback,
+            user=current_user.username
+        )
+
+        return {
+            "success": True,
+            "feedback_id": feedback.id,
+            "message": f"Feedback recorded: {feedback_data.feedback}",
+            "learning_enabled": True
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("feedback_save_failed", error=str(e), test_id=feedback_data.test_id)
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to save feedback: {str(e)}")

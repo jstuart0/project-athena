@@ -2105,8 +2105,11 @@ async function testFullPipeline() {
 
         const data = await response.json();
 
+        // Store test ID for feedback
+        lastTestId = data.test_id;
+
         resultsDiv.innerHTML = `
-            <div class="bg-dark-bg rounded p-3 space-y-2">
+            <div class="bg-dark-bg rounded p-3 space-y-3">
                 <div class="flex items-center gap-2">
                     <span class="text-2xl">${data.success ? '✅' : '❌'}</span>
                     <span class="font-semibold ${data.success ? 'text-green-400' : 'text-red-400'}">
@@ -2124,6 +2127,27 @@ async function testFullPipeline() {
                         <span class="text-white ml-2">${data.target_met ? 'Yes (<5s)' : 'No (>5s)'}</span>
                     </div>
                 </div>
+
+                ${data.results && data.results.llm_response ? `
+                    <div class="mt-3 p-3 bg-gray-900 rounded border border-gray-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-gray-400 text-sm font-semibold">LLM Response:</div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-500 text-xs">Was this response correct?</span>
+                                <button onclick="markResponseFeedback(event, 'correct')"
+                                    class="feedback-btn px-3 py-1 rounded text-sm bg-green-600 hover:bg-green-700 text-white transition-colors">
+                                    ✓ Correct
+                                </button>
+                                <button onclick="markResponseFeedback(event, 'incorrect')"
+                                    class="feedback-btn px-3 py-1 rounded text-sm bg-red-600 hover:bg-red-700 text-white transition-colors">
+                                    ✗ Wrong
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-white text-sm whitespace-pre-wrap">${data.results.llm_response}</div>
+                        <div class="feedback-message mt-2 text-sm"></div>
+                    </div>
+                ` : ''}
 
                 ${data.note ? `
                     <div class="text-yellow-400 text-sm mt-2">
@@ -2164,6 +2188,58 @@ async function testFullPipeline() {
         console.error('Pipeline test error:', error);
         resultsDiv.innerHTML = `<div class="text-red-400 text-sm">Error: ${error.message}</div>`;
         showError('Pipeline test failed');
+    }
+}
+
+// Store the last test ID for feedback
+let lastTestId = null;
+
+async function markResponseFeedback(event, feedback) {
+    const btn = event.target;
+    const feedbackMessageDiv = btn.closest('.bg-gray-900').querySelector('.feedback-message');
+    const feedbackBtns = btn.closest('.flex.items-center.gap-2').querySelectorAll('.feedback-btn');
+
+    // Disable all feedback buttons
+    feedbackBtns.forEach(b => b.disabled = true);
+
+    try {
+        feedbackMessageDiv.innerHTML = '<span class="text-gray-400">Saving feedback...</span>';
+
+        // Store feedback via API
+        const response = await fetch(`${API_BASE}/api/voice-tests/feedback`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({
+                test_id: lastTestId,
+                feedback: feedback,
+                query: document.getElementById('pipeline-text').value.trim()
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save feedback');
+        }
+
+        const data = await response.json();
+
+        // Show success message
+        const icon = feedback === 'correct' ? '✓' : '✗';
+        const color = feedback === 'correct' ? 'text-green-400' : 'text-red-400';
+        feedbackMessageDiv.innerHTML = `<span class="${color}">${icon} Feedback recorded! The system will learn from this.</span>`;
+
+        // Re-enable buttons after a delay
+        setTimeout(() => {
+            feedbackBtns.forEach(b => b.disabled = false);
+            feedbackMessageDiv.innerHTML = '';
+        }, 3000);
+
+    } catch (error) {
+        console.error('Feedback error:', error);
+        feedbackMessageDiv.innerHTML = '<span class="text-red-400">Failed to save feedback</span>';
+        feedbackBtns.forEach(b => b.disabled = false);
     }
 }
 

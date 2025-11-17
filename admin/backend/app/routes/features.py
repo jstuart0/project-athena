@@ -32,8 +32,8 @@ class FeatureResponse(BaseModel):
     enabled: bool
     avg_latency_ms: Optional[float] = None
     hit_rate: Optional[float] = None
-    required: bool
-    priority: int
+    required: Optional[bool] = False  # Default to not required if NULL
+    priority: Optional[int] = 0  # Default to 0 if NULL
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -70,6 +70,41 @@ class WhatIfScenario(BaseModel):
 
 
 # API Routes
+
+# Public endpoint (no auth) for services to query feature flags
+@router.get("/public", response_model=List[FeatureResponse])
+async def list_features_public(
+    category: Optional[str] = None,
+    enabled_only: bool = False,
+    db: Session = Depends(get_db)
+):
+    """
+    List all system features (public endpoint, no auth required).
+
+    This endpoint is used by services (Gateway, Orchestrator, etc.) to check
+    feature flag configuration without requiring authentication.
+
+    Query params:
+    - category: Filter by category (optional)
+    - enabled_only: If true, only return enabled features
+
+    Returns:
+        List of features with their configuration
+    """
+    logger.info("list_features_public", category=category, enabled_only=enabled_only, source="public")
+
+    query = db.query(Feature)
+
+    if category:
+        query = query.filter(Feature.category == category)
+    if enabled_only:
+        query = query.filter(Feature.enabled == True)
+
+    features = query.order_by(Feature.category, Feature.priority).all()
+
+    return [FeatureResponse(**feature.to_dict()) for feature in features]
+
+
 @router.get("", response_model=List[FeatureResponse])
 async def list_features(
     category: Optional[str] = None,
@@ -78,7 +113,7 @@ async def list_features(
     current_user: User = Depends(get_current_user)
 ):
     """
-    List all system features.
+    List all system features (authenticated endpoint).
 
     Query params:
     - category: Filter by category (optional)

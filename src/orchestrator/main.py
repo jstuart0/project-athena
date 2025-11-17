@@ -440,9 +440,69 @@ async def route_info_node(state: OrchestratorState) -> OrchestratorState:
     state.node_timings["route_info"] = time.time() - start
     return state
 
+async def _fallback_to_web_search(state: OrchestratorState, rag_service: str, error_msg: str):
+    """
+    Helper function to fall back to web search when RAG service fails.
+
+    Args:
+        state: Current orchestrator state
+        rag_service: Name of the failed RAG service (for logging)
+        error_msg: Error message from the failed service
+    """
+    logger.warning(f"{rag_service} RAG service failed ({error_msg}), falling back to web search")
+
+    try:
+        # Execute parallel search with automatic intent classification
+        intent, search_results = await parallel_search_engine.search(
+            query=state.query,
+            location="Baltimore, MD",
+            limit_per_provider=5
+        )
+
+        logger.info(f"Fallback search intent classified as: '{intent}'")
+
+        if search_results:
+            # Fuse and rank results based on classified intent
+            fused_results = result_fusion.get_top_results(
+                results=search_results,
+                query=state.query,
+                intent=intent,
+                limit=5
+            )
+
+            logger.info(f"Fallback web search returned {len(fused_results)} fused results")
+
+            # Convert to dict format for LLM
+            search_data = {
+                "intent": intent,
+                "results": [r.to_dict() for r in fused_results],
+                "sources": list(set(r.source for r in fused_results)),
+                "total_results": len(search_results),
+                "fused_results": len(fused_results),
+                "fallback_note": f"Data retrieved from web search (primary {rag_service} service unavailable)"
+            }
+
+            state.retrieved_data = search_data
+            state.data_source = f"Web Search Fallback ({intent}): {', '.join(search_data['sources'])}"
+            state.citations.extend([f"Search result from {r.source}" for r in fused_results])
+            state.citations.append(f"Note: {rag_service} service was unavailable, used web search instead")
+            logger.info(f"Fallback web search successful: intent={intent}, sources={search_data['sources']}")
+        else:
+            # Even web search failed - use LLM knowledge
+            state.retrieved_data = {}
+            state.data_source = "LLM knowledge (RAG and web search unavailable)"
+            logger.warning(f"Fallback web search returned no results, using LLM knowledge")
+
+    except Exception as e:
+        logger.error(f"Fallback web search failed: {e}", exc_info=True)
+        state.retrieved_data = {}
+        state.data_source = "LLM knowledge (RAG and web search failed)"
+
+
 async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
     """
     Retrieve information from appropriate RAG service.
+    Falls back to web search if RAG service is unavailable.
     """
     start = time.time()
 
@@ -452,72 +512,82 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
             service_url = await get_rag_service_url("weather")
             if not service_url:
                 logger.error("Weather RAG service URL not configured")
-                state.error = "Weather service not available"
-                state.node_timings["retrieve"] = time.time() - start
-                return state
+                # Fall back to web search instead of failing
+                await _fallback_to_web_search(state, "Weather", "service not configured")
+            else:
+                try:
+                    # Call weather service with dynamic URL
+                    location = state.entities.get("location", "Baltimore, MD")
+                    async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
+                        response = await client.get(
+                            "/weather/current",
+                            params={"location": location}
+                        )
+                        response.raise_for_status()
 
-            # Call weather service with dynamic URL
-            location = state.entities.get("location", "Baltimore, MD")
-            async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
-                response = await client.get(
-                    "/weather/current",
-                    params={"location": location}
-                )
-                response.raise_for_status()
+                        state.retrieved_data = response.json()
+                        state.data_source = "OpenWeatherMap"
+                        state.citations.append(f"Weather data from OpenWeatherMap for {location}")
 
-                state.retrieved_data = response.json()
-                state.data_source = "OpenWeatherMap"
-                state.citations.append(f"Weather data from OpenWeatherMap for {location}")
+                except (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException) as e:
+                    # RAG service failed - fall back to web search
+                    await _fallback_to_web_search(state, "Weather", str(e))
 
         elif state.intent == IntentCategory.AIRPORTS:
             # Get dynamic RAG service URL
             service_url = await get_rag_service_url("airports")
             if not service_url:
                 logger.error("Airports RAG service URL not configured")
-                state.error = "Airports service not available"
-                state.node_timings["retrieve"] = time.time() - start
-                return state
+                await _fallback_to_web_search(state, "Airports", "service not configured")
+            else:
+                try:
+                    # Call airports service with dynamic URL
+                    airport = state.entities.get("airport", "BWI")
+                    async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
+                        response = await client.get(f"/airports/{airport}")
+                        response.raise_for_status()
 
-            # Call airports service with dynamic URL
-            airport = state.entities.get("airport", "BWI")
-            async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
-                response = await client.get(f"/airports/{airport}")
-                response.raise_for_status()
+                        state.retrieved_data = response.json()
+                        state.data_source = "FlightAware"
+                        state.citations.append(f"Flight data from FlightAware for {airport}")
 
-                state.retrieved_data = response.json()
-                state.data_source = "FlightAware"
-                state.citations.append(f"Flight data from FlightAware for {airport}")
+                except (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException) as e:
+                    # RAG service failed - fall back to web search
+                    await _fallback_to_web_search(state, "Airports", str(e))
 
         elif state.intent == IntentCategory.SPORTS:
             # Get dynamic RAG service URL
             service_url = await get_rag_service_url("sports")
             if not service_url:
                 logger.error("Sports RAG service URL not configured")
-                state.error = "Sports service not available"
-                state.node_timings["retrieve"] = time.time() - start
-                return state
+                await _fallback_to_web_search(state, "Sports", "service not configured")
+            else:
+                try:
+                    # Call sports service with dynamic URL
+                    team = state.entities.get("team", "Ravens")
+                    async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
+                        # Search for team
+                        search_response = await client.get(
+                            "/sports/teams/search",
+                            params={"query": team}
+                        )
+                        search_response.raise_for_status()
+                        search_data = search_response.json()
 
-            # Call sports service with dynamic URL
-            team = state.entities.get("team", "Ravens")
-            async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
-                # Search for team
-                search_response = await client.get(
-                    "/sports/teams/search",
-                    params={"query": team}
-                )
-                search_response.raise_for_status()
-                search_data = search_response.json()
+                        if search_data.get("teams"):
+                            team_id = search_data["teams"][0]["idTeam"]
 
-                if search_data.get("teams"):
-                    team_id = search_data["teams"][0]["idTeam"]
+                            # Get next event
+                            events_response = await client.get(f"/sports/events/{team_id}/next")
+                            events_response.raise_for_status()
 
-                    # Get next event
-                    events_response = await client.get(f"/sports/events/{team_id}/next")
-                    events_response.raise_for_status()
+                            state.retrieved_data = events_response.json()
+                            state.data_source = "TheSportsDB"
+                            state.citations.append(f"Sports data from TheSportsDB for {team}")
 
-                    state.retrieved_data = events_response.json()
-                    state.data_source = "TheSportsDB"
-                    state.citations.append(f"Sports data from TheSportsDB for {team}")
+                except (httpx.HTTPStatusError, httpx.RequestError, httpx.TimeoutException) as e:
+                    # RAG service failed - fall back to web search
+                    await _fallback_to_web_search(state, "Sports", str(e))
 
         else:
             # Use intent-based parallel web search for unknown/general queries
@@ -564,9 +634,6 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
 
         logger.info(f"Retrieved data from {state.data_source}")
 
-    except httpx.HTTPStatusError as e:
-        logger.error(f"RAG service error: {e}")
-        state.error = f"Failed to retrieve data: {str(e)}"
     except Exception as e:
         logger.error(f"Retrieval error: {e}", exc_info=True)
         state.error = f"Retrieval failed: {str(e)}"

@@ -51,6 +51,12 @@ device_session_mgr: Optional[DeviceSessionManager] = None
 ORCHESTRATOR_URL = os.getenv("ORCHESTRATOR_SERVICE_URL", "http://localhost:8001")
 OLLAMA_URL = os.getenv("LLM_SERVICE_URL", "http://localhost:11434")
 API_KEY = os.getenv("GATEWAY_API_KEY", "dummy-key")  # Optional for Phase 1
+ADMIN_API_URL = os.getenv("ADMIN_API_URL", "http://athena-admin-backend.athena-admin.svc.cluster.local:8080")
+
+# Feature flag cache
+_feature_cache = {}
+_cache_expiry = 0
+_cache_ttl = 60  # 60 seconds
 
 # Model mapping (OpenAI -> Ollama)
 MODEL_MAPPING = {
@@ -174,16 +180,192 @@ async def validate_api_key(request: Request):
 
     return True
 
-def is_athena_query(messages: List[ChatMessage]) -> bool:
+async def is_feature_enabled(feature_name: str) -> bool:
     """
-    Determine if this query should be routed to Athena orchestrator.
+    Check if feature is enabled via Admin API with caching.
 
-    Athena handles:
+    Args:
+        feature_name: Name of feature flag to check (e.g., 'llm_based_routing')
+
+    Returns:
+        True if feature is enabled, False otherwise
+
+    Note:
+        Uses 60-second TTL cache to avoid hitting Admin API on every request.
+        If Admin API is unavailable, returns False (safe default).
+    """
+    global _feature_cache, _cache_expiry
+
+    now = time.time()
+    if now > _cache_expiry:
+        # Refresh cache
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                # Use public endpoint (no auth required)
+                response = await client.get(f"{ADMIN_API_URL}/api/features/public")
+                if response.status_code == 200:
+                    features = response.json()
+                    _feature_cache = {f["name"]: f["enabled"] for f in features}
+                    _cache_expiry = now + _cache_ttl
+                    logger.debug(f"Feature cache refreshed: {len(_feature_cache)} features")
+                else:
+                    logger.warning(f"Failed to fetch features: HTTP {response.status_code}")
+        except Exception as e:
+            logger.warning(f"Failed to fetch features from Admin API: {e}")
+
+    return _feature_cache.get(feature_name, False)
+
+
+async def _log_metric_to_db(
+    timestamp: float,
+    model: str,
+    backend: str,
+    latency_seconds: float,
+    tokens: int,
+    tokens_per_second: float,
+    request_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    zone: Optional[str] = None,
+    intent: Optional[str] = None,
+    source: Optional[str] = None
+):
+    """
+    Log LLM performance metric to admin database (fire-and-forget).
+
+    Args:
+        timestamp: Unix timestamp of request start
+        model: Model name used
+        backend: Backend type (ollama, mlx, auto)
+        latency_seconds: Total request latency
+        tokens: Number of tokens generated
+        tokens_per_second: Token generation speed
+        request_id: Optional request ID
+        session_id: Optional session ID
+        user_id: Optional user ID
+        zone: Optional zone/location
+        intent: Optional intent classification
+        source: Optional source service (gateway, orchestrator, etc.)
+
+    Note:
+        Failures are logged but don't raise exceptions to avoid
+        impacting the main LLM request flow.
+    """
+    try:
+        metric_payload = {
+            "timestamp": timestamp,
+            "model": model,
+            "backend": backend,
+            "latency_seconds": latency_seconds,
+            "tokens": tokens,
+            "tokens_per_second": tokens_per_second,
+            "request_id": request_id,
+            "session_id": session_id,
+            "user_id": user_id,
+            "zone": zone,
+            "intent": intent,
+            "source": source
+        }
+
+        url = f"{ADMIN_API_URL}/api/llm-backends/metrics"
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=metric_payload, timeout=5.0)
+            if response.status_code == 201:
+                logger.info(
+                    "metric_logged_to_db",
+                    model=model,
+                    backend=backend,
+                    tokens_per_sec=round(tokens_per_second, 2)
+                )
+            else:
+                logger.warning(
+                    "failed_to_log_metric",
+                    status_code=response.status_code,
+                    error=response.text[:200]
+                )
+    except Exception as e:
+        logger.error(f"Metric logging error: {e}", exc_info=False)
+
+
+async def classify_intent_llm(query: str) -> bool:
+    """
+    Use LLM to classify if query should route to orchestrator.
+
+    Uses phi3:mini-q8 model for fast, accurate intent classification.
+    Classifies queries into two categories:
+    - athena: Home control, weather, sports, airports, local info (Baltimore context)
+    - general: General knowledge, math, coding, explanations
+
+    Args:
+        query: User query to classify
+
+    Returns:
+        True if orchestrator should handle (athena), False for Ollama (general)
+
+    Note:
+        Falls back to keyword matching if LLM call fails.
+        Target latency: 50-200ms
+    """
+    prompt = f"""Classify this query into ONE category:
+
+Query: "{query}"
+
+Categories:
+- athena: Home control, weather, sports, airports, local info (Baltimore context)
+- general: General knowledge, math, coding, explanations
+
+Respond with ONLY the category name (athena or general)."""
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(
+                f"{OLLAMA_URL}/api/generate",
+                json={
+                    "model": "phi3:mini-q8",
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.1,  # Low temperature for consistent classification
+                        "num_predict": 10     # Only need one word response
+                    }
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
+            classification = result.get("response", "").strip().lower()
+
+            is_athena = "athena" in classification
+            logger.info(f"LLM classified '{query}' as {'athena' if is_athena else 'general'}")
+            return is_athena
+
+    except Exception as e:
+        logger.error(f"LLM classification failed: {e}, falling back to keyword matching")
+        # Fallback to keyword matching
+        # Create a temporary ChatMessage for keyword matching
+        from pydantic import BaseModel
+        temp_messages = [ChatMessage(role="user", content=query)]
+        return is_athena_query_keywords(temp_messages)
+
+
+def is_athena_query_keywords(messages: List[ChatMessage]) -> bool:
+    """
+    Keyword-based classification (fast, 0ms overhead).
+
+    Used as fallback when LLM is disabled or fails.
+    Matches queries against predefined keyword patterns for:
     - Home automation control (lights, switches, climate)
     - Weather queries
     - Airport/flight information
-    - Sports information
+    - Sports information (all major leagues and teams)
     - Location-specific queries (Baltimore context)
+    - Recipes and cooking
+    - Entertainment and events
+
+    Args:
+        messages: Chat messages list
+
+    Returns:
+        True if orchestrator should handle, False for Ollama
     """
     # Get the last user message
     last_user_msg = None
@@ -205,8 +387,50 @@ def is_athena_query(messages: List[ChatMessage]) -> bool:
         # Airports/flights
         "airport", "flight", "delay", "departure", "arrival",
         "bwi", "dca", "iad", "phl", "jfk", "lga", "ewr",
-        # Sports
-        "game", "score", "ravens", "orioles", "team",
+        # Sports - General
+        "game", "score", "team", "schedule", "match", "vs", "versus",
+        "playoff", "championship", "tournament", "season", "league",
+        # Sports - Types
+        "football", "soccer", "basketball", "baseball", "hockey", "olympics",
+        # Sports - Leagues
+        "nfl", "nba", "mlb", "nhl", "mls", "ncaa", "fifa", "ufc", "pga",
+        # NFL Teams
+        "ravens", "steelers", "browns", "bengals", "cowboys", "eagles",
+        "giants", "commanders", "packers", "bears", "vikings", "lions",
+        "saints", "falcons", "panthers", "buccaneers", "49ers", "seahawks",
+        "rams", "cardinals", "patriots", "bills", "dolphins", "jets",
+        "chiefs", "broncos", "raiders", "chargers", "colts", "texans",
+        "jaguars", "titans",
+        # MLB Teams
+        "orioles", "yankees", "red sox", "blue jays", "rays", "white sox",
+        "guardians", "tigers", "royals", "twins", "astros", "angels",
+        "athletics", "mariners", "rangers", "braves", "marlins", "mets",
+        "phillies", "nationals", "cubs", "reds", "brewers", "pirates",
+        "cardinals", "diamondbacks", "rockies", "dodgers", "padres", "giants",
+        # NBA Teams
+        "celtics", "nets", "knicks", "76ers", "raptors", "bulls", "cavaliers",
+        "pistons", "pacers", "bucks", "hawks", "hornets", "heat", "magic",
+        "wizards", "nuggets", "timberwolves", "thunder", "trail blazers",
+        "jazz", "warriors", "clippers", "lakers", "suns", "kings",
+        "mavericks", "rockets", "grizzlies", "pelicans", "spurs",
+        # NHL Teams
+        "bruins", "sabres", "red wings", "panthers", "canadiens", "senators",
+        "lightning", "maple leafs", "hurricanes", "blue jackets", "devils",
+        "islanders", "rangers", "flyers", "penguins", "capitals", "blackhawks",
+        "avalanche", "stars", "wild", "predators", "blues", "jets",
+        "ducks", "flames", "oilers", "kings", "sharks", "kraken", "canucks",
+        "golden knights", "coyotes",
+        # MLS Teams (Soccer)
+        "atlanta united", "austin fc", "charlotte fc", "chicago fire", "fc cincinnati",
+        "colorado rapids", "columbus crew", "dc united", "fc dallas", "houston dynamo",
+        "la galaxy", "lafc", "inter miami", "minnesota united", "montreal", "nashville sc",
+        "new england revolution", "new york red bulls", "new york city fc", "orlando city",
+        "philadelphia union", "portland timbers", "real salt lake", "san jose earthquakes",
+        "seattle sounders", "sporting kansas city", "toronto fc", "vancouver whitecaps",
+        # Major International Soccer Teams
+        "manchester united", "manchester city", "liverpool", "chelsea", "arsenal", "tottenham",
+        "barcelona", "real madrid", "atletico madrid", "bayern munich", "borussia dortmund",
+        "juventus", "ac milan", "inter milan", "psg", "paris saint-germain",
         # Location context
         "baltimore", "home", "office", "bedroom", "kitchen",
         # Recipes and cooking (RAG + web search)
@@ -217,6 +441,47 @@ def is_athena_query(messages: List[ChatMessage]) -> bool:
     ]
 
     return any(pattern in last_user_msg for pattern in athena_patterns)
+
+
+async def is_athena_query(messages: List[ChatMessage]) -> bool:
+    """
+    Main routing decision function.
+
+    Uses LLM or keywords based on feature flag configuration.
+    Checks 'llm_based_routing' feature flag to determine routing method:
+    - If enabled: Use LLM-based intent classification (more accurate, +50-200ms)
+    - If disabled: Use keyword-based pattern matching (fast, 0ms overhead)
+
+    Args:
+        messages: Chat messages list
+
+    Returns:
+        True if orchestrator should handle, False for Ollama
+
+    Note:
+        Feature flag is cached for 60 seconds to avoid hitting Admin API on every request.
+        LLM classification falls back to keyword matching if it fails.
+    """
+    # Get the last user message for LLM classification
+    last_user_msg = None
+    for msg in reversed(messages):
+        if msg.role == "user":
+            last_user_msg = msg.content
+            break
+
+    if not last_user_msg:
+        return False
+
+    # Check feature flag (cached for 60 seconds)
+    use_llm = await is_feature_enabled("llm_based_routing")
+
+    if use_llm:
+        logger.info("Using LLM-based routing")
+        return await classify_intent_llm(last_user_msg)
+    else:
+        logger.info("Using keyword-based routing")
+        return is_athena_query_keywords(messages)
+
 
 async def route_to_orchestrator(
     request: ChatCompletionRequest,
@@ -303,9 +568,14 @@ async def route_to_orchestrator(
         return await route_to_ollama(request)
 
 async def route_to_ollama(
-    request: ChatCompletionRequest
+    request: ChatCompletionRequest,
+    device_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    user_id: Optional[str] = None
 ) -> ChatCompletionResponse:
-    """Route request directly to Ollama."""
+    """Route request directly to Ollama with metric logging."""
+    start_time = time.time()
+
     try:
         # Map model name
         ollama_model = MODEL_MAPPING.get(request.model, request.model)
@@ -319,6 +589,7 @@ async def route_to_ollama(
         # Call Ollama
         with request_duration.labels(endpoint="ollama").time():
             response_text = ""
+            eval_count = 0
             async for chunk in ollama_client.chat(
                 model=ollama_model,
                 messages=messages,
@@ -327,7 +598,30 @@ async def route_to_ollama(
             ):
                 if chunk.get("done"):
                     response_text = chunk.get("message", {}).get("content", "")
+                    eval_count = chunk.get("eval_count", 0)
                     break
+
+        # Calculate metrics
+        latency_seconds = time.time() - start_time
+        tokens = eval_count or len(response_text.split())  # Fallback to word count
+        tokens_per_second = tokens / latency_seconds if latency_seconds > 0 and tokens > 0 else 0
+
+        # Log metrics to database (fire-and-forget)
+        import asyncio
+        asyncio.create_task(_log_metric_to_db(
+            timestamp=start_time,
+            model=ollama_model,
+            backend="ollama",
+            latency_seconds=latency_seconds,
+            tokens=tokens,
+            tokens_per_second=tokens_per_second,
+            request_id=f"gateway-{uuid.uuid4().hex[:8]}",
+            session_id=session_id,
+            user_id=user_id,
+            zone=device_id,
+            intent=None,
+            source="gateway"
+        ))
 
         # Format as OpenAI response
         return ChatCompletionResponse(
@@ -416,8 +710,8 @@ async def chat_completions(
                 media_type="text/event-stream"
             )
 
-        # Route based on query type
-        if is_athena_query(request.messages):
+        # Route based on query type (LLM or keyword-based, controlled by feature flag)
+        if await is_athena_query(request.messages):
             logger.info("Routing to orchestrator")
             response = await route_to_orchestrator(request)
         else:

@@ -98,6 +98,7 @@ class LLMMetricCreate(BaseModel):
     user_id: Optional[str] = Field(None, description="Optional user ID")
     zone: Optional[str] = Field(None, description="Optional zone/location")
     intent: Optional[str] = Field(None, description="Optional intent classification")
+    source: Optional[str] = Field(None, description="Source of the request (admin_voice_test, gateway, orchestrator, rag_*)")
 
     class Config:
         json_schema_extra = {
@@ -110,7 +111,8 @@ class LLMMetricCreate(BaseModel):
                 "tokens_per_second": 60.0,
                 "request_id": "req_123abc",
                 "session_id": "sess_xyz789",
-                "intent": "weather_query"
+                "intent": "weather_query",
+                "source": "gateway"
             }
         }
 
@@ -160,6 +162,7 @@ class LLMMetricResponse(BaseModel):
     user_id: Optional[str] = None
     zone: Optional[str] = None
     intent: Optional[str] = None
+    source: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -254,7 +257,8 @@ async def create_metric(
             session_id=metric.session_id,
             user_id=metric.user_id,
             zone=metric.zone,
-            intent=metric.intent
+            intent=metric.intent,
+            source=metric.source
         )
 
         db.add(db_metric)

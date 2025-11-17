@@ -470,6 +470,7 @@ class VoiceTest(Base):
 
     # Relationships
     executor = relationship('User')
+    feedback = relationship('VoiceTestFeedback', back_populates='test', cascade='all, delete-orphan')
 
     __table_args__ = (
         Index('idx_voice_tests_test_type', 'test_type'),
@@ -489,6 +490,47 @@ class VoiceTest(Base):
             'error_message': self.error_message,
             'executed_by': self.executor.username if self.executor else None,
             'executed_at': self.executed_at.isoformat() if self.executed_at else None,
+        }
+
+
+class VoiceTestFeedback(Base):
+    """
+    User feedback on voice test results for active learning.
+
+    Allows users to mark test responses as correct/incorrect to improve system quality.
+    """
+    __tablename__ = 'voice_test_feedback'
+
+    id = Column(Integer, primary_key=True)
+    test_id = Column(Integer, ForeignKey('voice_tests.id', ondelete='CASCADE'), nullable=False)
+    feedback_type = Column(String(20), nullable=False)  # 'correct' or 'incorrect'
+    query = Column(Text, nullable=False)  # Original query for reference
+    response = Column(Text)  # LLM response that was marked
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    notes = Column(Text)  # Optional user notes
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Relationships
+    test = relationship('VoiceTest', back_populates='feedback')
+    user = relationship('User')
+
+    __table_args__ = (
+        Index('idx_feedback_test_id', 'test_id'),
+        Index('idx_feedback_type', 'feedback_type'),
+        Index('idx_feedback_created_at', 'created_at'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert voice test feedback to dictionary for API responses."""
+        return {
+            'id': self.id,
+            'test_id': self.test_id,
+            'feedback_type': self.feedback_type,
+            'query': self.query,
+            'response': self.response,
+            'user': self.user.username if self.user else None,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
 
@@ -1176,6 +1218,7 @@ class LLMPerformanceMetric(Base):
     user_id = Column(String(100), nullable=True)
     zone = Column(String(100), nullable=True)
     intent = Column(String(100), nullable=True, index=True)
+    source = Column(String(50), nullable=True, index=True)  # admin_voice_test, gateway, orchestrator, rag_*
 
     __table_args__ = (
         Index('idx_llm_metrics_timestamp', 'timestamp'),
@@ -1208,6 +1251,7 @@ class LLMPerformanceMetric(Base):
             'user_id': self.user_id,
             'zone': self.zone,
             'intent': self.intent,
+            'source': self.source,
         }
 
 
@@ -1338,7 +1382,7 @@ class ProviderRouting(Base):
 # Export all models for Alembic
 __all__ = [
     'Base', 'User', 'Policy', 'PolicyVersion', 'Secret', 'Device', 'AuditLog',
-    'ServerConfig', 'ServiceRegistry', 'RAGConnector', 'RAGStats', 'VoiceTest',
+    'ServerConfig', 'ServiceRegistry', 'RAGConnector', 'RAGStats', 'VoiceTest', 'VoiceTestFeedback',
     'IntentCategory', 'HallucinationCheck', 'CrossValidationModel', 'MultiIntentConfig',
     'IntentChainRule', 'ValidationTestScenario', 'ConfidenceScoreRule', 'ResponseEnhancementRule',
     'ConversationSettings', 'ClarificationSettings', 'ClarificationType',

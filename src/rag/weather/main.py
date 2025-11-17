@@ -90,9 +90,22 @@ async def geocode_location(location: str) -> Dict[str, Any]:
     """
     logger.info(f"Geocoding location: {location}")
 
+    # Normalize location format for OpenWeatherMap API
+    # Remove spaces around commas: "Baltimore, MD" -> "Baltimore,MD"
+    normalized_location = location.replace(", ", ",").replace(" ,", ",")
+
+    # Add ,US if location doesn't have a country code and appears to be US format
+    # (has state code like "MD", "CA", etc.)
+    parts = normalized_location.split(",")
+    if len(parts) == 2 and len(parts[1]) == 2 and not parts[1].isdigit():
+        # Looks like "City,ST" format - add US country code
+        normalized_location = f"{normalized_location},US"
+
+    logger.debug(f"Normalized location: {normalized_location}")
+
     url = "http://api.openweathermap.org/geo/1.0/direct"
     params = {
-        "q": location,
+        "q": normalized_location,
         "limit": 1,
         "appid": OPENWEATHER_API_KEY
     }

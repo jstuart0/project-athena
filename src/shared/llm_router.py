@@ -243,7 +243,7 @@ class LLMRouter:
 
                 # Persist metric to database asynchronously
                 import asyncio
-                asyncio.create_task(self._persist_metric(metric))
+                asyncio.create_task(self._persist_metric(metric, source="orchestrator"))
 
                 logger.info(
                     "llm_request_completed",
@@ -340,12 +340,13 @@ class LLMRouter:
         finally:
             await client.aclose()
 
-    async def _persist_metric(self, metric: Dict[str, Any]):
+    async def _persist_metric(self, metric: Dict[str, Any], source: Optional[str] = None):
         """
         Persist metric to database via Admin API.
 
         Args:
             metric: Metric data to persist
+            source: Optional source service (gateway, orchestrator, etc.)
 
         Note:
             Failures are logged but don't raise exceptions to avoid
@@ -355,6 +356,10 @@ class LLMRouter:
             return
 
         try:
+            # Add source to metric payload if provided
+            if source:
+                metric["source"] = source
+
             url = f"{self._admin_url_base}/api/llm-backends/metrics"
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, json=metric, timeout=5.0)

@@ -436,6 +436,53 @@ kubectl apply -f manifests/athena-tts/
 kubectl -n athena get all
 ```
 
+### Docker Build Platform Requirements
+
+**⚠️ CRITICAL: Thor cluster runs on x86_64 architecture**
+
+**Thor Cluster Platform:**
+- Architecture: `linux/amd64` (x86_64)
+- Nodes: Proxmox VMs on Intel/AMD processors
+- Cluster API: 192.168.10.222:6443
+
+**Build Platform Requirements:**
+
+When building Docker images for thor cluster deployment:
+
+```bash
+# Build on Mac (ARM) for x86 cluster - MUST specify platform
+docker buildx build --platform linux/amd64 -t image:tag .
+
+# Build and push to private registry
+docker buildx build --platform linux/amd64 -t 192.168.10.222:30500/image:tag . --push
+
+# Multi-platform build (if needed for both local testing and deployment)
+docker buildx build --platform linux/amd64,linux/arm64 -t image:tag .
+```
+
+**Common Errors:**
+
+❌ **Architecture Mismatch Error:**
+```
+exec /usr/local/bin/python: exec format error
+```
+**Cause:** Docker image built for ARM (Mac M-series) but deployed to x86_64 cluster
+**Fix:** Rebuild with `--platform linux/amd64` flag
+
+**Deployment Scripts:**
+
+All Project Athena deployment scripts in `admin/k8s/` should build with correct platform:
+- `build-and-deploy.sh` - Builds with `--platform linux/amd64`
+- Run from Mac Studio (192.168.10.167) which has x86_64 build tools
+
+**Best Practices:**
+
+✅ Always build images on Mac Studio (192.168.10.167) or specify `--platform linux/amd64`
+✅ Test deployments in thor cluster before marking as complete
+✅ Use private registry at 192.168.10.222:30500 for cluster-local images
+❌ Don't build on local Mac without platform flag
+❌ Don't deploy untested ARM images to thor cluster
+
 ### Monitor System
 
 ```bash

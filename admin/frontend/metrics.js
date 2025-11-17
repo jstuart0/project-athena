@@ -116,6 +116,7 @@ function renderMetrics() {
                     <th>Tokens/sec</th>
                     <th>Latency (s)</th>
                     <th>Tokens</th>
+                    <th>Source</th>
                     <th>Intent</th>
                     <th>Session ID</th>
                 </tr>
@@ -129,6 +130,7 @@ function renderMetrics() {
                         <td class="metric-value">${metric.tokens_per_second.toFixed(2)}</td>
                         <td class="metric-value">${metric.latency_seconds.toFixed(3)}</td>
                         <td class="metric-value">${metric.tokens_generated}</td>
+                        <td>${metric.source ? `<span class="tag tag-source">${metric.source}</span>` : '-'}</td>
                         <td>${metric.intent || '-'}</td>
                         <td class="session-id">${metric.session_id ? truncateId(metric.session_id) : '-'}</td>
                     </tr>
