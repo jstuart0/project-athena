@@ -13,7 +13,9 @@ import os
 import json
 import time
 import hashlib
-from typing import Dict, Any, Optional, List, Literal
+import re
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional, List, Literal, Tuple
 from contextlib import asynccontextmanager
 from enum import Enum
 
@@ -74,8 +76,8 @@ rag_clients: Dict[str, httpx.AsyncClient] = {}
 
 # Configuration
 WEATHER_SERVICE_URL = os.getenv("RAG_WEATHER_URL", "http://localhost:8010")
-AIRPORTS_SERVICE_URL = os.getenv("RAG_AIRPORTS_URL", "http://localhost:8011")
-SPORTS_SERVICE_URL = os.getenv("RAG_SPORTS_URL", "http://localhost:8012")
+SPORTS_SERVICE_URL = os.getenv("RAG_SPORTS_URL", "http://localhost:8011")
+AIRPORTS_SERVICE_URL = os.getenv("RAG_AIRPORTS_URL", "http://localhost:8012")
 OLLAMA_URL = os.getenv("LLM_SERVICE_URL", "http://localhost:11434")
 
 # Intent categories
@@ -143,7 +145,26 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Orchestrator service")
 
     # Initialize clients
-    ha_client = HomeAssistantClient()
+    # Home Assistant client - optional, gracefully handle if unavailable
+    try:
+        # TODO: Get HA token from admin API instead of environment
+        admin_client = get_admin_client()
+        ha_token = await admin_client.get_secret("home-assistant")
+        if ha_token:
+            ha_client = HomeAssistantClient(token=ha_token)
+            logger.info("Home Assistant client initialized from database")
+        else:
+            logger.warning("HA token not in database, trying environment")
+            ha_token_env = os.getenv("HA_TOKEN")
+            if ha_token_env:
+                ha_client = HomeAssistantClient(token=ha_token_env)
+                logger.info("Home Assistant client initialized from environment")
+            else:
+                ha_client = None
+                logger.warning("Home Assistant not configured (token unavailable)")
+    except Exception as e:
+        ha_client = None
+        logger.warning(f"Home Assistant client initialization failed: {e}")
 
     # Initialize LLM router with database-driven backend configuration
     llm_router = get_llm_router()
@@ -155,8 +176,8 @@ async def lifespan(app: FastAPI):
     session_manager = await get_session_manager()
     logger.info("Session manager initialized")
 
-    # Initialize parallel search engine
-    parallel_search_engine = ParallelSearchEngine.from_environment()
+    # Initialize parallel search engine (async to fetch API keys from database)
+    parallel_search_engine = await ParallelSearchEngine.from_environment()
     logger.info("Parallel search engine initialized")
 
     # Initialize result fusion
@@ -250,15 +271,294 @@ async def get_rag_service_url(intent: str) -> Optional[str]:
 # Node Implementations
 # ============================================================================
 
+def _parse_classification_response(response: str) -> Tuple[IntentCategory, float]:
+    """
+    Parse LLM classification response into category and confidence.
+
+    Expected format:
+        CATEGORY: <category_name>
+        CONFIDENCE: <0.0-1.0>
+        REASON: <brief explanation>
+
+    Returns:
+        Tuple of (IntentCategory, confidence_score)
+    """
+    try:
+        # Extract category
+        category_match = re.search(r'CATEGORY:\s*(\w+)', response, re.IGNORECASE)
+        category_str = category_match.group(1).upper() if category_match else None
+
+        # Extract confidence
+        confidence_match = re.search(r'CONFIDENCE:\s*([\d.]+)', response)
+        confidence = float(confidence_match.group(1)) if confidence_match else 0.5
+
+        # Map to IntentCategory enum
+        category_map = {
+            "CONTROL": IntentCategory.CONTROL,
+            "WEATHER": IntentCategory.WEATHER,
+            "AIRPORTS": IntentCategory.AIRPORTS,
+            "SPORTS": IntentCategory.SPORTS,
+            "GENERAL_INFO": IntentCategory.GENERAL_INFO,
+            "GENERAL": IntentCategory.GENERAL_INFO,  # Alias
+            "UNKNOWN": IntentCategory.UNKNOWN,
+        }
+
+        category = category_map.get(category_str, IntentCategory.GENERAL_INFO)
+
+        # Clamp confidence to valid range
+        confidence = max(0.0, min(1.0, confidence))
+
+        return (category, confidence)
+
+    except Exception as e:
+        logger.warning(f"Failed to parse LLM response: {e}")
+        return (IntentCategory.GENERAL_INFO, 0.3)  # Low confidence fallback
+
+
+async def classify_intent_llm(query: str, conversation_history: List[Dict[str, str]] = None) -> Tuple[IntentCategory, float]:
+    """
+    Use LLM (phi3:mini) to classify query intent with confidence scoring.
+
+    This is a simplified Gateway-style LLM classification that directly
+    calls Ollama API for fast, structured intent classification.
+
+    Args:
+        query: User query to classify
+        conversation_history: Previous conversation messages for context
+
+    Returns:
+        Tuple of (IntentCategory, confidence_score)
+
+    Confidence levels:
+        - 1.0: High confidence (explicit intent)
+        - 0.7-0.9: Medium confidence (contextual clues)
+        - 0.3-0.6: Low confidence (ambiguous)
+        - Falls back to pattern matching if < 0.3
+    """
+    # Build context from conversation history
+    context_str = ""
+    if conversation_history and len(conversation_history) > 0:
+        context_str = "\n\nPrevious conversation:\n"
+        # Include last 3 messages for context
+        for msg in conversation_history[-3:]:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            if role == "user":
+                context_str += f"User: {content}\n"
+            elif role == "assistant":
+                context_str += f"Assistant: {content}\n"
+        logger.info(f"Using conversation context with {len(conversation_history[-3:])} previous messages")
+
+    prompt = f"""Classify this query into ONE category:
+{context_str}
+Current Query: "{query}"
+
+Categories:
+- CONTROL: Home automation commands (lights, switches, thermostats, devices)
+- WEATHER: Weather conditions, forecasts, temperature
+- SPORTS: Sports scores, schedules, teams, games (Ravens, Orioles, Giants, etc.)
+- AIRPORTS: Flight info, airport status, delays (BWI, DCA, IAD, etc.)
+- GENERAL_INFO: General knowledge, facts, explanations, anything else
+- UNKNOWN: Unclear or ambiguous intent
+
+IMPORTANT: Use the conversation history to resolve pronouns and references.
+For example, if previous message was "Who do the Giants play?" and current is "who do they play next week?",
+then "they" refers to "Giants" and the intent is SPORTS.
+
+Respond in this format:
+CATEGORY: <category_name>
+CONFIDENCE: <0.0-1.0>
+REASON: <brief explanation>"""
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(
+                f"{OLLAMA_URL}/api/generate",
+                json={
+                    "model": "phi3:mini",
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.1,  # Low temperature for consistency
+                        "num_predict": 50   # Need ~50 tokens for structured response
+                    }
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
+            llm_response = result.get("response", "").strip()
+
+            # Parse structured response
+            category, confidence = _parse_classification_response(llm_response)
+
+            logger.info(f"LLM classified '{query}' as {category} (confidence: {confidence:.2f})")
+            return (category, confidence)
+
+    except Exception as e:
+        logger.error(f"LLM classification failed: {e}, falling back to pattern matching")
+        # Fallback to existing keyword-based classification
+        category = _pattern_based_classification(query)
+        return (category, 0.5)  # Medium confidence for fallback
+
+
+def _extract_entities_simple(query: str, intent: IntentCategory) -> Dict[str, Any]:
+    """
+    Simple pattern-based entity extraction for simplified mode.
+    Extracts location, team, airport, etc. based on intent.
+    """
+    entities = {}
+    query_lower = query.lower()
+
+    if intent == IntentCategory.WEATHER:
+        # Extract location from "in <city>" pattern
+        location_match = re.search(r'in\s+([a-z]+(?:\s+[a-z]+)?(?:\s+[a-z]+)?)', query_lower)
+        if location_match:
+            location = location_match.group(1).strip()
+            # Title case the location
+            entities["location"] = ' '.join(word.capitalize() for word in location.split())
+
+    elif intent == IntentCategory.SPORTS:
+        # Extract team names (simple heuristics)
+        if "ravens" in query_lower:
+            entities["team"] = "Baltimore Ravens"
+        elif "orioles" in query_lower:
+            entities["team"] = "Baltimore Orioles"
+
+    elif intent == IntentCategory.AIRPORTS:
+        # Extract airport codes
+        airport_match = re.search(r'\b([A-Z]{3})\b', query)
+        if airport_match:
+            entities["airport"] = airport_match.group(1)
+
+    return entities
+
+
+def _extract_entities_with_context(
+    query: str,
+    intent: IntentCategory,
+    conversation_history: List[Dict[str, str]] = None
+) -> Dict[str, Any]:
+    """
+    Entity extraction with coreference resolution from conversation history.
+
+    Resolves pronouns and references by looking back through conversation history.
+    Falls back to pattern-based extraction if no context available.
+
+    Args:
+        query: Current user query
+        intent: Classified intent
+        conversation_history: Previous conversation messages
+
+    Returns:
+        Dictionary of extracted entities
+    """
+    entities = {}
+    query_lower = query.lower()
+
+    # Coreference resolution - check if query has pronouns/references
+    has_pronouns = any(pronoun in query_lower for pronoun in ["they", "them", "their", "it", "that", "those"])
+
+    if conversation_history and has_pronouns:
+        logger.info("Detected pronouns in query, attempting coreference resolution")
+
+        # Look back through last 5 messages for entity references
+        for msg in reversed(conversation_history[-5:]):
+            content = msg.get("content", "").lower()
+            role = msg.get("role", "")
+
+            # Look for team names in previous context (SPORTS intent)
+            if intent == IntentCategory.SPORTS and "team" not in entities:
+                team_keywords = [
+                    ("giants", "New York Giants"),
+                    ("ravens", "Baltimore Ravens"),
+                    ("orioles", "Baltimore Orioles"),
+                    ("yankees", "New York Yankees"),
+                    ("jets", "New York Jets"),
+                    ("cowboys", "Dallas Cowboys"),
+                    ("patriots", "New England Patriots"),
+                    ("bills", "Buffalo Bills"),
+                    ("chiefs", "Kansas City Chiefs"),
+                    ("packers", "Green Bay Packers"),
+                    ("eagles", "Philadelphia Eagles"),
+                    ("steelers", "Pittsburgh Steelers"),
+                    ("49ers", "San Francisco 49ers"),
+                ]
+
+                for keyword, full_name in team_keywords:
+                    if keyword in content:
+                        entities["team"] = full_name
+                        entities["resolved_from_context"] = True
+                        logger.info(f"Resolved 'they' → '{full_name}' from conversation history")
+                        break
+
+                if "team" in entities:
+                    break  # Stop searching once we find a team
+
+            # Look for locations in previous context (WEATHER intent)
+            elif intent == IntentCategory.WEATHER and "location" not in entities:
+                # Extract location from "in <city>" pattern in previous messages
+                location_match = re.search(r'in\s+([a-z]+(?:\s+[a-z]+)?(?:\s+[a-z]+)?)', content)
+                if location_match:
+                    location = location_match.group(1).strip()
+                    entities["location"] = ' '.join(word.capitalize() for word in location.split())
+                    entities["resolved_from_context"] = True
+                    logger.info(f"Resolved location from conversation history: {entities['location']}")
+                    break
+
+    # Standard entity extraction (same as _extract_entities_simple)
+    if intent == IntentCategory.WEATHER and "location" not in entities:
+        # Extract location from "in <city>" pattern
+        location_match = re.search(r'in\s+([a-z]+(?:\s+[a-z]+)?(?:\s+[a-z]+)?)', query_lower)
+        if location_match:
+            location = location_match.group(1).strip()
+            entities["location"] = ' '.join(word.capitalize() for word in location.split())
+
+    elif intent == IntentCategory.SPORTS and "team" not in entities:
+        # Only extract if not already resolved from context
+        if "giants" in query_lower:
+            entities["team"] = "New York Giants"
+        elif "ravens" in query_lower:
+            entities["team"] = "Baltimore Ravens"
+        elif "orioles" in query_lower:
+            entities["team"] = "Baltimore Orioles"
+        elif "yankees" in query_lower:
+            entities["team"] = "New York Yankees"
+        elif "jets" in query_lower:
+            entities["team"] = "New York Jets"
+
+    elif intent == IntentCategory.AIRPORTS:
+        # Extract airport codes
+        airport_match = re.search(r'\b([A-Z]{3})\b', query)
+        if airport_match:
+            entities["airport"] = airport_match.group(1)
+
+    return entities
+
+
 async def classify_node(state: OrchestratorState) -> OrchestratorState:
     """
     Classify user intent using LLM with Redis caching.
     Determines: control vs info, specific category, entities.
+
+    Supports two classification modes via feature flag:
+    - Simplified LLM mode: Fast, direct Ollama API calls (Gateway-style)
+    - Standard LLM mode: JSON-based classification via llm_router
     """
     start = time.time()
 
     # OPTIMIZATION: Check cache first
-    cache_key = f"intent:{hashlib.md5(state.query.lower().encode()).hexdigest()}"
+    cache_key = f"intent_v4:{hashlib.md5(state.query.lower().encode()).hexdigest()}"
+
+    def _heuristic_sports_team(query: str) -> Optional[str]:
+        team_tokens = [
+            "ravens", "giants", "jets", "cowboys", "patriots", "bills", "chiefs", "lions",
+            "packers", "eagles", "49ers", "dolphins", "steelers", "chargers", "browns",
+            "texans", "bears", "saints", "buccaneers", "vikings", "falcons", "colts",
+            "broncos", "commanders", "jaguars", "panthers", "raiders", "rams", "titans",
+            "cardinals", "seahawks", "bengals"
+        ]
+        q_lower = query.lower()
+        return next((t.title() for t in team_tokens if t in q_lower), None)
 
     try:
         cached = await cache_client.get(cache_key)
@@ -267,14 +567,49 @@ async def classify_node(state: OrchestratorState) -> OrchestratorState:
             state.confidence = cached.get("confidence", 0.9)
             state.entities = cached.get("entities", {})
             state.node_timings["classify"] = time.time() - start
-            logger.info(f"Intent cache HIT for '{state.query}': {state.intent}")
-            return state
+            # If sports intent cached without a team, attempt heuristic; if still empty, continue to reclassify
+            if state.intent == IntentCategory.SPORTS and not state.entities.get("team"):
+                found = _heuristic_sports_team(state.query)
+                if found:
+                    state.entities["team"] = found
+                    logger.info(f"Heuristic sports team extraction (cache path): {found}")
+                else:
+                    logger.info(f"Intent cache HIT for '{state.query}' but missing team; continuing to reclassify")
+            else:
+                logger.info(f"Intent cache HIT for '{state.query}': {state.intent}")
+                return state
     except Exception as e:
         logger.warning(f"Intent cache lookup failed: {e}")
 
+    # Check feature flag for simplified LLM classification
+    admin_client = get_admin_client()
+    use_simplified_llm = await admin_client.is_feature_enabled("enable_llm_intent_classification")
+
+    # Default to False if feature not found in database
+    if use_simplified_llm is None:
+        use_simplified_llm = False
+
     try:
-        # Build classification prompt
-        classification_prompt = f"""Classify the following user query into a category and extract entities.
+        if use_simplified_llm:
+            # Use simplified Gateway-style LLM classification with conversation context
+            logger.info("Using simplified LLM classification (Gateway-style)")
+            state.intent, state.confidence = await classify_intent_llm(
+                state.query,
+                conversation_history=state.conversation_history
+            )
+            # Extract entities with coreference resolution
+            state.entities = _extract_entities_with_context(
+                state.query,
+                state.intent,
+                conversation_history=state.conversation_history
+            )
+
+        else:
+            # Use existing JSON-based LLM classification via llm_router
+            logger.info("Using standard JSON-based LLM classification")
+
+            # Build classification prompt
+            classification_prompt = f"""Classify the following user query into a category and extract entities.
 
 Categories:
 - control: Home automation commands (lights, switches, thermostats, scenes)
@@ -298,35 +633,48 @@ Respond in JSON format:
     }}
 }}"""
 
-        # Use small model for classification
-        # Combine system and user messages into a single prompt
-        full_prompt = f"You are an intent classifier. Respond only with valid JSON.\n\n{classification_prompt}"
+            # Use small model for classification
+            # Combine system and user messages into a single prompt
+            full_prompt = f"You are an intent classifier. Respond only with valid JSON.\n\n{classification_prompt}"
 
-        result = await llm_router.generate(
-            model=ModelTier.SMALL.value,
-            prompt=full_prompt,
-            temperature=0.3,  # Lower temperature for consistent classification
-            request_id=state.request_id,
-            session_id=state.session_id,
-            user_id=state.mode,
-            zone=state.room
-        )
+            result = await llm_router.generate(
+                model=ModelTier.SMALL.value,
+                prompt=full_prompt,
+                temperature=0.3,  # Lower temperature for consistent classification
+                request_id=state.request_id,
+                session_id=state.session_id,
+                user_id=state.mode,
+                zone=state.room
+            )
 
-        response_text = result.get("response", "")
+            response_text = result.get("response", "")
 
-        # Parse classification result
-        try:
-            result = json.loads(response_text)
-            state.intent = IntentCategory(result.get("intent", "unknown"))
-            state.confidence = float(result.get("confidence", 0.5))
-            state.entities = result.get("entities", {})
-        except (json.JSONDecodeError, ValueError) as e:
-            logger.warning(f"Failed to parse classification: {e}")
-            # Fallback to pattern matching
-            state.intent = _pattern_based_classification(state.query)
-            state.confidence = 0.7
+            # Parse classification result
+            try:
+                result = json.loads(response_text)
+                state.intent = IntentCategory(result.get("intent", "unknown"))
+                state.confidence = float(result.get("confidence", 0.5))
+                state.entities = result.get("entities", {})
+            except (json.JSONDecodeError, ValueError) as e:
+                logger.warning(f"Failed to parse classification: {e}")
+                # Fallback to pattern matching
+                state.intent = _pattern_based_classification(state.query)
+                state.confidence = 0.7
+                # Extract entities using pattern-based extraction in fallback path
+                state.entities = _extract_entities_simple(state.query, state.intent)
 
-        logger.info(f"Classified query as {state.intent} with confidence {state.confidence}")
+        # Heuristic sports team extraction when entities are empty (useful in simplified mode)
+        if state.intent == IntentCategory.SPORTS and not state.entities.get("team"):
+            found = _heuristic_sports_team(state.query)
+            if found:
+                state.entities["team"] = found
+                logger.info(f"Heuristic sports team extraction: {state.entities['team']}")
+
+        if state.intent == IntentCategory.SPORTS:
+            logger.info(f"Sports classification entities: {state.entities}")
+
+        # DEBUG: Log entities for all intents to trace extraction
+        logger.info(f"Classified query as {state.intent} with confidence {state.confidence}, entities: {state.entities}")
 
         # OPTIMIZATION: Cache the result (5 minute TTL)
         try:
@@ -453,6 +801,60 @@ async def route_info_node(state: OrchestratorState) -> OrchestratorState:
     state.node_timings["route_info"] = time.time() - start
     return state
 
+def _is_time_sensitive_query(query: str) -> bool:
+    """
+    Priority 3: Detect if query requires current/real-time information.
+
+    Time-sensitive queries should trigger web search even if RAG succeeds.
+
+    Args:
+        query: User query
+
+    Returns:
+        True if query requires current data, False otherwise
+    """
+    query_lower = query.lower()
+
+    # Time indicators (today, now, current, etc.)
+    time_indicators = [
+        "today", "tonight", "tomorrow", "yesterday",
+        "this week", "this month", "this year",
+        "now", "currently", "recent", "recently",
+        "latest", "newest", "current", "present",
+        "right now", "at the moment"
+    ]
+
+    # Current event indicators
+    current_event_indicators = [
+        "score", "scores", "result", "results",
+        "won", "lost", "winning", "losing",
+        "news", "headline", "headlines",
+        "what happened", "what's happening",
+        "update", "updates", "status",
+        "delay", "delays", "delayed",
+        "cancellation", "cancelled",
+        "price", "stock", "market"
+    ]
+
+    # Check for time indicators
+    has_time_indicator = any(indicator in query_lower for indicator in time_indicators)
+
+    # Check for current event indicators
+    has_current_event = any(indicator in query_lower for indicator in current_event_indicators)
+
+    # If query has both time and event indicators, it's definitely time-sensitive
+    if has_time_indicator and has_current_event:
+        logger.info(f"Query is time-sensitive (time + event indicators): {query}")
+        return True
+
+    # Just current event indicators also make it time-sensitive
+    if has_current_event:
+        logger.info(f"Query is time-sensitive (event indicators): {query}")
+        return True
+
+    return False
+
+
 async def _fallback_to_web_search(state: OrchestratorState, rag_service: str, error_msg: str):
     """
     Helper function to fall back to web search when RAG service fails.
@@ -533,11 +935,26 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
                 try:
                     # Call weather service with dynamic URL
                     location = state.entities.get("location", "Baltimore, MD")
+
+                    # Check if forecast is needed (future timeframes)
+                    needs_forecast = state.entities.get("forecast", False)
+
                     async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
-                        response = await client.get(
-                            "/weather/current",
-                            params={"location": location}
-                        )
+                        if needs_forecast:
+                            # Call forecast endpoint for future weather
+                            logger.info(f"Fetching forecast for {location} (timeframe: {state.entities.get('timeframe', 'future')})")
+                            response = await client.get(
+                                "/weather/forecast",
+                                params={"location": location, "days": 5}
+                            )
+                        else:
+                            # Call current weather endpoint
+                            logger.info(f"Fetching current weather for {location}")
+                            response = await client.get(
+                                "/weather/current",
+                                params={"location": location}
+                            )
+
                         response.raise_for_status()
 
                         weather_data = response.json()
@@ -634,8 +1051,51 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
             else:
                 try:
                     # Call sports service with dynamic URL
-                    team = state.entities.get("team", "Ravens")
+                    team = state.entities.get("team")
+                    if not team:
+                        # Lightweight heuristic extraction from query
+                        team_tokens = [
+                            "ravens", "giants", "jets", "cowboys", "patriots", "bills", "chiefs", "lions",
+                            "packers", "eagles", "49ers", "dolphins", "steelers", "chargers", "browns",
+                            "texans", "bears", "saints", "buccaneers", "vikings", "falcons", "colts",
+                            "broncos", "commanders", "jaguars", "panthers", "raiders", "rams", "titans",
+                            "cardinals", "seahawks", "bengals"
+                        ]
+                        q_lower = state.query.lower()
+                        team = next((t.title() for t in team_tokens if t in q_lower), state.query)
+                    logger.info(f"Sports query team resolved to: {team}")
+                    query_lower = state.query.lower()
+                    news_mode = any(word in query_lower for word in ["news", "headline", "update", "latest"])
+                    olympics_mode = "olympic" in query_lower
                     async with httpx.AsyncClient(base_url=service_url, timeout=30.0) as client:
+                        if olympics_mode:
+                            olympics_q = state.query
+                            olympics_resp = await client.get(
+                                "/sports/olympics/events",
+                                params={"query": olympics_q}
+                            )
+                            olympics_resp.raise_for_status()
+                            olympics_data = olympics_resp.json()
+                            state.retrieved_data = olympics_data
+                            state.data_source = "olympics-news"
+                            state.citations.append(f"Olympics coverage for {olympics_q}")
+                            logger.debug("Olympics coverage fetched", extra={"count": olympics_data.get("count", 0)})
+                            return state
+
+                        if news_mode:
+                            news_q = team if team else state.query
+                            news_resp = await client.get(
+                                "/sports/news",
+                                params={"query": news_q, "limit": 5}
+                            )
+                            news_resp.raise_for_status()
+                            news_data = news_resp.json()
+                            state.retrieved_data = news_data
+                            state.data_source = "sports-news"
+                            state.citations.append(f"News headlines for {news_q}")
+                            logger.debug("Sports news fetched", extra={"count": news_data.get("count", 0)})
+                            return state
+
                         # Search for team
                         search_response = await client.get(
                             "/sports/teams/search",
@@ -645,7 +1105,14 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
                         search_data = search_response.json()
 
                         if search_data.get("teams"):
-                            team_id = search_data["teams"][0]["idTeam"]
+                            # Prefer NFL Giants vs MLB Giants when query mentions football
+                            teams_list = search_data["teams"]
+                            if team.lower() == "giants":
+                                teams_list = sorted(
+                                    teams_list,
+                                    key=lambda t: 0 if "football" in (t.get("strLeague") or "") else 1
+                                )
+                            team_id = teams_list[0]["idTeam"]
 
                             # Get next event
                             events_response = await client.get(f"/sports/events/{team_id}/next")
@@ -653,16 +1120,53 @@ async def retrieve_node(state: OrchestratorState) -> OrchestratorState:
 
                             events_data = events_response.json()
 
+                            # If user asks for "this week/today/tomorrow", prune events to near-term
+                            query_lower = state.query.lower()
+                            if any(kw in query_lower for kw in ["this week", "today", "tonight", "tomorrow"]):
+                                events = events_data.get("events", []) or []
+                                now = datetime.utcnow().date()
+                                week_end = now + timedelta(days=7)
+                                filtered = []
+                                for ev in events:
+                                    date_str = ev.get("dateEvent") or ev.get("date")
+                                    try:
+                                        d = datetime.fromisoformat(date_str.replace("Z", "+00:00")).date()
+                                    except Exception:
+                                        try:
+                                            d = datetime.strptime(date_str, "%Y-%m-%d").date()
+                                        except Exception:
+                                            continue
+                                    if now <= d <= week_end:
+                                        filtered.append(ev)
+                                events_data["events"] = filtered
+                                if not filtered:
+                                    # No events in the requested window; return empty result gracefully
+                                    provider = None
+                                    events_list = events_data.get("events") or []
+                                    if events_list:
+                                        provider = events_list[0].get("source")
+                                    state.retrieved_data = {"team_id": team_id, "events": []}
+                                    state.data_source = provider or "sports-rag"
+                                    state.citations.append(f"Sports data from {state.data_source} for {team}")
+                                    return state
+
                             # Validate Sports RAG response quality
+                            # Pass team name to detect TheSportsDB API data corruption
                             validation_result, reason, suggestions = validator.validate_sports_response(
-                                events_data, state.query
+                                events_data, state.query, requested_team=team
                             )
 
                             if validation_result == ValidationResult.VALID:
                                 # Response is good, use it
                                 state.retrieved_data = events_data
-                                state.data_source = "TheSportsDB"
-                                state.citations.append(f"Sports data from TheSportsDB for {team}")
+                                # Use provider from payload if available
+                                provider = None
+                                if events_data.get("events"):
+                                    provider = events_data["events"][0].get("source")
+                                elif events_data.get("teams"):
+                                    provider = events_data["teams"][0].get("source")
+                                state.data_source = provider or "sports-rag"
+                                state.citations.append(f"Sports data from {state.data_source} for {team}")
                                 logger.debug(f"Sports RAG validation passed: {reason}")
 
                             elif validation_result in [ValidationResult.EMPTY, ValidationResult.INVALID]:
@@ -747,7 +1251,13 @@ async def synthesize_node(state: OrchestratorState) -> OrchestratorState:
 
     try:
         # Build synthesis prompt with retrieved data
-        if state.retrieved_data:
+        # Check if we have meaningful data (not just empty dict)
+        has_data = state.retrieved_data and (
+            isinstance(state.retrieved_data, dict) and len(state.retrieved_data) > 0 and
+            any(v for v in state.retrieved_data.values() if v)  # Has non-empty values
+        )
+
+        if has_data:
             context = json.dumps(state.retrieved_data, indent=2)
             synthesis_prompt = f"""Answer the following question using ONLY the provided context.
 
@@ -765,17 +1275,20 @@ CRITICAL INSTRUCTIONS:
 
 Response:"""
         else:
-            # No data retrieved - must be explicit about lack of information
+            # No data retrieved - use general knowledge with caveats
+            # This happens when web search failed/returned nothing
             synthesis_prompt = f"""Question: {state.query}
 
-CRITICAL: You do NOT have access to current or specific information to answer this question.
+You don't have access to real-time or current information, but you can answer using your general knowledge.
 
-You must respond with:
-1. Acknowledge you don't have current/specific information
-2. Suggest where the user can find this information
-3. NEVER make up specific facts, dates, names, numbers, or events
-
-Respond honestly about your limitations.
+IMPORTANT GUIDELINES:
+1. Answer the question using your general knowledge if possible
+2. If it requires current/real-time data (news, scores, weather, stocks, etc.), acknowledge the limitation and suggest checking authoritative sources
+3. For factual/historical questions, provide accurate information from your training
+4. For general knowledge, explanations, or how-to questions, provide helpful answers
+5. NEVER make up specific current events, recent data, or time-sensitive facts
+6. Be helpful - if you can answer even partially, do so
+7. If you truly cannot answer, suggest alternative approaches
 
 Response:"""
 
@@ -848,6 +1361,54 @@ async def validate_node(state: OrchestratorState) -> OrchestratorState:
         logger.warning(f"Validation failed: {state.validation_reason}")
         state.node_timings["validate"] = time.time() - start
         return state
+
+    # Layer 1.5: Answer Quality Validation (Priority 2 Fix) - RE-ENABLED with targeted patterns
+    # Now uses VERY SPECIFIC patterns to catch only explicit admissions of ignorance:
+    # - "i don't have the ability to access"
+    # - "please check ESPN/CBS Sports"
+    # - "consult official league"
+    # This avoids the false positives from broad patterns like "i apologize", "i don't have"
+    validation_result, reason, suggestions = validator.validate_answer_quality(
+        answer=state.answer,
+        query=state.query,
+        intent=state.intent.value if state.intent else "unknown"
+    )
+
+    if validation_result != ValidationResult.VALID:
+        logger.warning(f"Answer quality validation failed: {reason}")
+        logger.info(f"Suggestions: {suggestions}")
+
+        # If we haven't already retried with web search, trigger fallback
+        if "web_search_retry_attempted" not in state.entities:
+            logger.info("Triggering web search retry for unhelpful answer")
+            state.entities["web_search_retry_attempted"] = True
+            state.entities["answer_validation_failure"] = reason
+
+            # Trigger web search fallback (will re-retrieve and re-synthesize)
+            try:
+                await _fallback_to_web_search(state, "Answer Quality", reason)
+
+                # Re-synthesize with new data
+                logger.info("Re-synthesizing answer with web search data")
+                state = await synthesize_node(state)
+
+                # Don't validate again - accept this answer to avoid infinite loop
+                state.validation_passed = True
+                state.validation_reason = "Passed after web search retry"
+                logger.info(f"Answer after web search retry: {state.answer[:100]}...")
+                state.node_timings["validate"] = time.time() - start
+                return state
+
+            except Exception as e:
+                logger.error(f"Web search retry failed: {e}", exc_info=True)
+                # Continue with original answer even though it's unhelpful
+                state.validation_passed = True
+                state.validation_reason = "Failed answer quality but retry failed"
+        else:
+            # Already retried, don't loop forever
+            logger.warning("Answer still unhelpful after web search retry - accepting it to avoid loops")
+            state.validation_passed = True
+            state.validation_reason = "Accepted after failed retry"
 
     # Layer 2: Pattern detection for hallucinations
     # Look for specific patterns that indicate fabricated information

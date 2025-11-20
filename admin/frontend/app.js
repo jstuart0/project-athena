@@ -332,6 +332,9 @@ function showTab(tabName) {
         case 'validation-models':
             loadValidationModels();
             break;
+        case 'external-api-keys':
+            loadExternalApiKeys();
+            break;
         case 'llm-backends':
             loadLLMBackends();
             break;
@@ -775,6 +778,154 @@ async function deleteSecret(id, name) {
         showSuccess('Secret deleted');
     } catch (error) {
         showError(`Failed to delete secret: ${error.message}`);
+    }
+}
+
+// ============================================================================
+// External API Keys Tab
+// ============================================================================
+
+async function loadExternalApiKeys() {
+    const container = document.getElementById('external-api-keys-container');
+
+    if (!authToken) {
+        container.innerHTML = `<div class="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4 text-yellow-200">
+            Please login to view API keys.
+        </div>`;
+        return;
+    }
+
+    container.innerHTML = `<div class="text-gray-400">Loading API keys...</div>`;
+
+    try {
+        const keys = await apiRequest('/api/external-api-keys');
+
+        if (!keys.length) {
+            container.innerHTML = `<div class="bg-dark-card border border-dark-border rounded-lg p-6 text-center text-gray-400">
+                No external API keys configured yet.
+            </div>`;
+            return;
+        }
+
+        container.innerHTML = keys.map(key => `
+            <div class="bg-dark-card border border-dark-border rounded-lg p-4 flex items-center justify-between">
+                <div>
+                    <div class="text-white font-semibold">${key.service_name} <span class="text-xs text-gray-500">(${key.api_name})</span></div>
+                    <div class="text-sm text-gray-400 mt-1">${key.endpoint_url}</div>
+                    <div class="text-xs text-gray-500 mt-1">Key: ${key.api_key_masked}</div>
+                    <div class="text-xs text-gray-500 mt-1">Status: ${key.enabled ? '<span class="text-green-400">Enabled</span>' : '<span class="text-red-400">Disabled</span>'}</div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="showCreateExternalApiKeyModal('${key.service_name}')"
+                        class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors">Edit</button>
+                    <button onclick="deleteExternalApiKey('${key.service_name}')"
+                        class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        container.innerHTML = `<div class="bg-red-900/30 border border-red-700/50 rounded-lg p-4 text-red-200">
+            Failed to load API keys: ${error.message}
+        </div>`;
+    }
+}
+
+async function showCreateExternalApiKeyModal(serviceName = '') {
+    const existing = serviceName ? await apiRequest(`/api/external-api-keys/${serviceName}`) : null;
+    const payload = existing || {};
+
+    const modal = `
+        <div id="external-api-key-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick="if(event.target.id==='external-api-key-modal') closeModal('external-api-key-modal')">
+            <div class="bg-dark-card border border-dark-border rounded-lg p-6 max-w-2xl w-full mx-4">
+                <h2 class="text-xl font-semibold text-white mb-4">${existing ? 'Update' : 'Create'} External API Key</h2>
+                <form onsubmit="saveExternalApiKey(event, '${existing ? existing.service_name : ''}')" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Service Name</label>
+                            <input type="text" name="service_name" value="${payload.service_name || ''}" ${existing ? 'readonly' : ''}
+                                placeholder="api-football" required
+                                class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">API Name</label>
+                            <input type="text" name="api_name" value="${payload.api_name || ''}" placeholder="API-Football.com" required
+                                class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Endpoint URL</label>
+                        <input type="text" name="endpoint_url" value="${payload.endpoint_url || ''}" placeholder="https://v3.football.api-sports.io" required
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">API Key</label>
+                        <input type="text" name="api_key" value="" placeholder="${existing ? 'Leave blank to keep existing key' : 'Required'}"
+                            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Rate Limit (per minute)</label>
+                            <input type="number" name="rate_limit_per_minute" value="${payload.rate_limit_per_minute || ''}" min="0"
+                                class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white">
+                        </div>
+                        <div class="flex items-center gap-2 pt-6">
+                            <input type="checkbox" name="enabled" ${payload.enabled !== false ? 'checked' : ''} class="w-4 h-4">
+                            <label class="text-sm text-gray-300">Enabled</label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                        <textarea name="description" rows="2" class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-white">${payload.description || ''}</textarea>
+                    </div>
+                    <div class="flex gap-2 pt-4">
+                        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">Save</button>
+                        <button type="button" onclick="closeModal('external-api-key-modal')" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('modals-container').innerHTML = modal;
+}
+
+async function saveExternalApiKey(event, existingServiceName = '') {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    const payload = {
+        service_name: formData.get('service_name'),
+        api_name: formData.get('api_name'),
+        api_key: formData.get('api_key') || '',
+        endpoint_url: formData.get('endpoint_url'),
+        enabled: formData.get('enabled') === 'on',
+        description: formData.get('description'),
+        rate_limit_per_minute: formData.get('rate_limit_per_minute') || null
+    };
+
+    try {
+        await apiRequest(`/api/external-api-keys${existingServiceName ? `/${existingServiceName}` : ''}`, {
+            method: existingServiceName ? 'PUT' : 'POST',
+            body: JSON.stringify(payload)
+        });
+        closeModal('external-api-key-modal');
+        loadExternalApiKeys();
+        showSuccess(`API key ${existingServiceName ? 'updated' : 'created'} successfully`);
+    } catch (error) {
+        showError(`Failed to save API key: ${error.message}`);
+    }
+}
+
+async function deleteExternalApiKey(serviceName) {
+    if (!confirm(`Delete API key "${serviceName}"?`)) return;
+
+    try {
+        await apiRequest(`/api/external-api-keys/${serviceName}`, { method: 'DELETE' });
+        loadExternalApiKeys();
+        showSuccess('API key deleted');
+    } catch (error) {
+        showError(`Failed to delete API key: ${error.message}`);
     }
 }
 

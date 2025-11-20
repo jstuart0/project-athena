@@ -1,0 +1,7166 @@
+{
+  "timestamp": "2025-11-19T00:15:28.227147",
+  "summary": {
+    "total": 1000,
+    "successful": 50,
+    "helpful": 41,
+    "failed": 950,
+    "success_rate": 5.0,
+    "helpful_rate": 4.1000000000000005,
+    "avg_response_time": 18.51574194431305,
+    "intents": {},
+    "sources": {}
+  },
+  "results": [
+    {
+      "index": 1,
+      "question": "What's the weather today?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01518416404724
+    },
+    {
+      "index": 2,
+      "question": "What's the weather in Baltimore?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00984287261963
+    },
+    {
+      "index": 3,
+      "question": "Will it rain tomorrow?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00969696044922
+    },
+    {
+      "index": 4,
+      "question": "What's the temperature outside?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00965118408203
+    },
+    {
+      "index": 5,
+      "question": "Is it going to snow this week?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00967001914978
+    },
+    {
+      "index": 6,
+      "question": "What's the forecast for this weekend?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00953197479248
+    },
+    {
+      "index": 7,
+      "question": "What's the weather like in New York?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00990104675293
+    },
+    {
+      "index": 8,
+      "question": "Is it sunny today?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009873867034912
+    },
+    {
+      "index": 9,
+      "question": "What's the humidity right now?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00985097885132
+    },
+    {
+      "index": 10,
+      "question": "What's the wind speed?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009822130203247
+    },
+    {
+      "index": 11,
+      "question": "Is there a storm coming?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012571096420288
+    },
+    {
+      "index": 12,
+      "question": "What's the weather forecast for tonight?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01220417022705
+    },
+    {
+      "index": 13,
+      "question": "How cold is it outside?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012032985687256
+    },
+    {
+      "index": 14,
+      "question": "What's the heat index?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011849880218506
+    },
+    {
+      "index": 15,
+      "question": "Is it going to be windy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01156783103943
+    },
+    {
+      "index": 16,
+      "question": "What's the chance of rain?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011385679244995
+    },
+    {
+      "index": 17,
+      "question": "What's the UV index today?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01121687889099
+    },
+    {
+      "index": 18,
+      "question": "Is it foggy outside?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010967254638672
+    },
+    {
+      "index": 19,
+      "question": "What's the dew point?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010456800460815
+    },
+    {
+      "index": 20,
+      "question": "What's the air quality?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009400129318237
+    },
+    {
+      "index": 21,
+      "question": "When will the rain stop?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009192943572998
+    },
+    {
+      "index": 22,
+      "question": "What's the weather in Los Angeles?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009175062179565
+    },
+    {
+      "index": 23,
+      "question": "Is it hotter than yesterday?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0091450214386
+    },
+    {
+      "index": 24,
+      "question": "What's the feels-like temperature?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009260654449463
+    },
+    {
+      "index": 25,
+      "question": "Is there a weather advisory?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009119033813477
+    },
+    {
+      "index": 26,
+      "question": "What's the barometric pressure?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009266138076782
+    },
+    {
+      "index": 27,
+      "question": "Will there be thunderstorms?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00913095474243
+    },
+    {
+      "index": 28,
+      "question": "What's the weather in Miami?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009212732315063
+    },
+    {
+      "index": 29,
+      "question": "Is it cloudy today?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00908613204956
+    },
+    {
+      "index": 30,
+      "question": "What's the wind direction?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009119987487793
+    },
+    {
+      "index": 31,
+      "question": "What's the weather in Chicago?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012229204177856
+    },
+    {
+      "index": 32,
+      "question": "Is it raining right now?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011810064315796
+    },
+    {
+      "index": 33,
+      "question": "What's the low temperature tonight?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011647939682007
+    },
+    {
+      "index": 34,
+      "question": "What's the high temperature tomorrow?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01152801513672
+    },
+    {
+      "index": 35,
+      "question": "Is there a frost warning?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01131010055542
+    },
+    {
+      "index": 36,
+      "question": "What's the weather in Seattle?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011571884155273
+    },
+    {
+      "index": 37,
+      "question": "Is it snowing anywhere?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011832237243652
+    },
+    {
+      "index": 38,
+      "question": "What's the precipitation amount?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011474132537842
+    },
+    {
+      "index": 39,
+      "question": "What's the weather in Boston?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01147484779358
+    },
+    {
+      "index": 40,
+      "question": "Is it warmer today?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011322259902954
+    },
+    {
+      "index": 41,
+      "question": "What's the weather in Denver?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013784170150757
+    },
+    {
+      "index": 42,
+      "question": "Is there fog this morning?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013347864151
+    },
+    {
+      "index": 43,
+      "question": "What's the weather in San Francisco?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01318097114563
+    },
+    {
+      "index": 44,
+      "question": "Is it going to be clear tonight?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013012170791626
+    },
+    {
+      "index": 45,
+      "question": "What's the weather in Dallas?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012869834899902
+    },
+    {
+      "index": 46,
+      "question": "Is the weather nice today?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008301258087158
+    },
+    {
+      "index": 47,
+      "question": "What's the weather in Atlanta?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008184909820557
+    },
+    {
+      "index": 48,
+      "question": "Is it humid outside?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008126258850098
+    },
+    {
+      "index": 49,
+      "question": "What's the weather in Phoenix?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00808596611023
+    },
+    {
+      "index": 50,
+      "question": "When will the snow start?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008052825927734
+    },
+    {
+      "index": 51,
+      "question": "When do the Ravens play next?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007946252822876
+    },
+    {
+      "index": 52,
+      "question": "What's the Ravens score?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007774829864502
+    },
+    {
+      "index": 53,
+      "question": "Did the Orioles win yesterday?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00772714614868
+    },
+    {
+      "index": 54,
+      "question": "Ravens schedule this week",
+      "success": false,
+      "error": "",
+      "response_time": 30.00769591331482
+    },
+    {
+      "index": 55,
+      "question": "Who won the Ravens game?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00766611099243
+    },
+    {
+      "index": 56,
+      "question": "What time is the Ravens game?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007800102233887
+    },
+    {
+      "index": 57,
+      "question": "How are the Orioles doing?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007776737213135
+    },
+    {
+      "index": 58,
+      "question": "Ravens vs Bengals score",
+      "success": false,
+      "error": "",
+      "response_time": 30.007752895355225
+    },
+    {
+      "index": 59,
+      "question": "Did the Ravens win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007906913757324
+    },
+    {
+      "index": 60,
+      "question": "Orioles game today",
+      "success": false,
+      "error": "",
+      "response_time": 30.007882833480835
+    },
+    {
+      "index": 61,
+      "question": "Ravens playoff chances",
+      "success": false,
+      "error": "",
+      "response_time": 30.0083270072937
+    },
+    {
+      "index": 62,
+      "question": "Who's playing tonight in NFL?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008051872253418
+    },
+    {
+      "index": 63,
+      "question": "NBA scores today",
+      "success": false,
+      "error": "",
+      "response_time": 30.007781267166138
+    },
+    {
+      "index": 64,
+      "question": "Did the Lakers win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007699966430664
+    },
+    {
+      "index": 65,
+      "question": "What's the score of the Warriors game?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0075740814209
+    },
+    {
+      "index": 66,
+      "question": "Who won the Super Bowl?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007744073867798
+    },
+    {
+      "index": 67,
+      "question": "MLB standings",
+      "success": false,
+      "error": "",
+      "response_time": 30.00760507583618
+    },
+    {
+      "index": 68,
+      "question": "NFL scores this week",
+      "success": false,
+      "error": "",
+      "response_time": 30.007474899291992
+    },
+    {
+      "index": 69,
+      "question": "Who's leading the NBA?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007222175598145
+    },
+    {
+      "index": 70,
+      "question": "Did the Yankees win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007167100906372
+    },
+    {
+      "index": 71,
+      "question": "What's the Red Sox score?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011812686920166
+    },
+    {
+      "index": 72,
+      "question": "Who's winning the World Series?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011420965194702
+    },
+    {
+      "index": 73,
+      "question": "NHL scores today",
+      "success": false,
+      "error": "",
+      "response_time": 30.012389183044434
+    },
+    {
+      "index": 74,
+      "question": "Did the Capitals win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012405157089233
+    },
+    {
+      "index": 75,
+      "question": "What's the Penguins score?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01257586479187
+    },
+    {
+      "index": 76,
+      "question": "Who won the Stanley Cup?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01243805885315
+    },
+    {
+      "index": 77,
+      "question": "NBA playoff schedule",
+      "success": false,
+      "error": "",
+      "response_time": 30.01750612258911
+    },
+    {
+      "index": 78,
+      "question": "Who's the MVP this season?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01215696334839
+    },
+    {
+      "index": 79,
+      "question": "What's the Cowboys score?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01639699935913
+    },
+    {
+      "index": 80,
+      "question": "Did the Patriots win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016364097595215
+    },
+    {
+      "index": 81,
+      "question": "Who's playing Monday Night Football?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012990951538086
+    },
+    {
+      "index": 82,
+      "question": "What's the Chiefs score?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008460998535156
+    },
+    {
+      "index": 83,
+      "question": "Did the 49ers win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008203983306885
+    },
+    {
+      "index": 84,
+      "question": "Who won the basketball game?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00792407989502
+    },
+    {
+      "index": 85,
+      "question": "What's the score of the hockey game?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00778865814209
+    },
+    {
+      "index": 86,
+      "question": "Did the Dodgers win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007671117782593
+    },
+    {
+      "index": 87,
+      "question": "What's the Cubs score?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007817029953003
+    },
+    {
+      "index": 88,
+      "question": "Who's playing in the playoffs?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0079128742218
+    },
+    {
+      "index": 89,
+      "question": "What's the Eagles score?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007806062698364
+    },
+    {
+      "index": 90,
+      "question": "Did the Packers win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007691860198975
+    },
+    {
+      "index": 91,
+      "question": "Who won the football game last night?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008709192276
+    },
+    {
+      "index": 92,
+      "question": "What's the Seahawks score?",
+      "success": true,
+      "helpful": true,
+      "answer": "I'm sorry, but I don't have real-time access to current events such as sports scores or weather updates for live games like those involving the Seahawks. To find out their most recent score or standing in a league, please check reliable news sources online or listen to local broadcasts that cover Seattle area sports teams.",
+      "answer_length": 324,
+      "response_time": 25.362930059432983,
+      "conversation_id": "83adadf3-c95b-4159-828a-c5b85f64df14"
+    },
+    {
+      "index": 93,
+      "question": "Did the Steelers win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00809121131897
+    },
+    {
+      "index": 94,
+      "question": "Who's the best team in football?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007965087890625
+    },
+    {
+      "index": 95,
+      "question": "What's the Bills score?",
+      "success": true,
+      "helpful": true,
+      "answer": "I'm sorry, but I don't have access to real-time sports scores. The Buffalo Bills are a professional American football team based in Orchard Park, New York. As of my last update before the knowledge cutoff in early 2023, they were competing in their home games at Highmark Stadium and had various seasons with different outcomes throughout history. I recommend checking a reliable sports news website or app for current game scores if you're interested in recent results!",
+      "answer_length": 470,
+      "response_time": 26.79087471961975,
+      "conversation_id": "38a0be4d-61e4-4e74-8c6c-3c8221be532c"
+    },
+    {
+      "index": 96,
+      "question": "Did the Rams win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007991075515747
+    },
+    {
+      "index": 97,
+      "question": "Who's playing college football today?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00777792930603
+    },
+    {
+      "index": 98,
+      "question": "What's the Alabama score?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008464336395264
+    },
+    {
+      "index": 99,
+      "question": "Did Ohio State win?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007888078689575
+    },
+    {
+      "index": 100,
+      "question": "Who won March Madness?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007946968078613
+    },
+    {
+      "index": 101,
+      "question": "Are there delays at BWI?",
+      "success": false,
+      "error": "",
+      "response_time": 30.006784200668335
+    },
+    {
+      "index": 102,
+      "question": "BWI flight status",
+      "success": false,
+      "error": "",
+      "response_time": 30.00636601448059
+    },
+    {
+      "index": 103,
+      "question": "Any delays at Baltimore airport?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011178016662598
+    },
+    {
+      "index": 104,
+      "question": "Is BWI airport open?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01118516921997
+    },
+    {
+      "index": 105,
+      "question": "Flight delays at BWI?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010579824447632
+    },
+    {
+      "index": 106,
+      "question": "Are there cancellations at BWI?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010102033615112
+    },
+    {
+      "index": 107,
+      "question": "What's the wait time at BWI security?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010064840316772
+    },
+    {
+      "index": 108,
+      "question": "Is DCA airport delayed?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009933948516846
+    },
+    {
+      "index": 109,
+      "question": "Any issues at Reagan airport?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010665893554688
+    },
+    {
+      "index": 110,
+      "question": "IAD flight status",
+      "success": false,
+      "error": "",
+      "response_time": 30.010416984558105
+    },
+    {
+      "index": 111,
+      "question": "Are there delays at Dulles?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00603413581848
+    },
+    {
+      "index": 112,
+      "question": "Is JFK airport delayed?",
+      "success": false,
+      "error": "",
+      "response_time": 30.005866050720215
+    },
+    {
+      "index": 113,
+      "question": "Flight status for LaGuardia",
+      "success": false,
+      "error": "",
+      "response_time": 30.005794048309326
+    },
+    {
+      "index": 114,
+      "question": "Are there delays at O'Hare?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00574803352356
+    },
+    {
+      "index": 115,
+      "question": "Is ATL airport open?",
+      "success": false,
+      "error": "",
+      "response_time": 30.005650997161865
+    },
+    {
+      "index": 116,
+      "question": "Any delays at Atlanta airport?",
+      "success": false,
+      "error": "",
+      "response_time": 30.005610942840576
+    },
+    {
+      "index": 117,
+      "question": "Flight status for Miami airport",
+      "success": false,
+      "error": "",
+      "response_time": 30.005873203277588
+    },
+    {
+      "index": 118,
+      "question": "Are there delays at LAX?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00502300262451
+    },
+    {
+      "index": 119,
+      "question": "Is SFO airport delayed?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00517225265503
+    },
+    {
+      "index": 120,
+      "question": "Flight delays at Denver?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00510597229004
+    },
+    {
+      "index": 121,
+      "question": "Is SeaTac airport open?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009099006652832
+    },
+    {
+      "index": 122,
+      "question": "Any delays at Phoenix airport?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008967876434326
+    },
+    {
+      "index": 123,
+      "question": "Is Dallas airport delayed?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008925914764404
+    },
+    {
+      "index": 124,
+      "question": "Flight status for Houston",
+      "success": false,
+      "error": "",
+      "response_time": 30.008888721466064
+    },
+    {
+      "index": 125,
+      "question": "Are there delays at Newark?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00890803337097
+    },
+    {
+      "index": 126,
+      "question": "Is Boston airport open?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008785009384155
+    },
+    {
+      "index": 127,
+      "question": "Any cancellations at Philadelphia?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008803129196167
+    },
+    {
+      "index": 128,
+      "question": "Flight delays at Charlotte?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008777141571045
+    },
+    {
+      "index": 129,
+      "question": "Is Orlando airport delayed?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00875210762024
+    },
+    {
+      "index": 130,
+      "question": "Any issues at Tampa airport?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008725881576538
+    },
+    {
+      "index": 131,
+      "question": "What is quantum computing?",
+      "success": true,
+      "helpful": true,
+      "answer": "Quantum computing is a type of computer that exploits superposed and entangled states, and the intrinsically non-deterministic outcomes of quantum measurements, as features of its computation (Source: Wikipedia). It's widely believed that a quantum computer could perform some calculations exponentially faster than any classical computer.\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 504,
+      "response_time": 27.76956820487976,
+      "conversation_id": "9350a439-e232-4a11-bf28-8c77f17b4636"
+    },
+    {
+      "index": 132,
+      "question": "Explain artificial intelligence",
+      "success": false,
+      "error": "",
+      "response_time": 30.005330085754395
+    },
+    {
+      "index": 133,
+      "question": "How does a computer work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.005205869674683
+    },
+    {
+      "index": 134,
+      "question": "What is machine learning?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00496196746826
+    },
+    {
+      "index": 135,
+      "question": "Explain neural networks",
+      "success": false,
+      "error": "",
+      "response_time": 30.005083084106445
+    },
+    {
+      "index": 136,
+      "question": "What is blockchain?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00525999069214
+    },
+    {
+      "index": 137,
+      "question": "How does the internet work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00571870803833
+    },
+    {
+      "index": 138,
+      "question": "What is DNA?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00574016571045
+    },
+    {
+      "index": 139,
+      "question": "Explain photosynthesis",
+      "success": false,
+      "error": "",
+      "response_time": 30.005762100219727
+    },
+    {
+      "index": 140,
+      "question": "What is gravity?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00578212738037
+    },
+    {
+      "index": 141,
+      "question": "How does electricity work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.005563020706177
+    },
+    {
+      "index": 142,
+      "question": "What is a black hole?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01269769668579
+    },
+    {
+      "index": 143,
+      "question": "Explain the Big Bang theory",
+      "success": false,
+      "error": "",
+      "response_time": 30.01252579689026
+    },
+    {
+      "index": 144,
+      "question": "What is evolution?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012284755706787
+    },
+    {
+      "index": 145,
+      "question": "How do vaccines work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01211190223694
+    },
+    {
+      "index": 146,
+      "question": "What is CRISPR?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011940002441406
+    },
+    {
+      "index": 147,
+      "question": "Explain quantum mechanics",
+      "success": false,
+      "error": "",
+      "response_time": 30.011943817138672
+    },
+    {
+      "index": 148,
+      "question": "What is dark matter?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011926889419556
+    },
+    {
+      "index": 149,
+      "question": "How does GPS work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011897087097168
+    },
+    {
+      "index": 150,
+      "question": "What is nanotechnology?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011931896209717
+    },
+    {
+      "index": 151,
+      "question": "Explain cloud computing",
+      "success": false,
+      "error": "",
+      "response_time": 30.013216018676758
+    },
+    {
+      "index": 152,
+      "question": "What is cybersecurity?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012808799743652
+    },
+    {
+      "index": 153,
+      "question": "How does encryption work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012658834457397
+    },
+    {
+      "index": 154,
+      "question": "What is 5G?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012516021728516
+    },
+    {
+      "index": 155,
+      "question": "Explain renewable energy",
+      "success": false,
+      "error": "",
+      "response_time": 30.012375116348267
+    },
+    {
+      "index": 156,
+      "question": "What is solar power?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012370347976685
+    },
+    {
+      "index": 157,
+      "question": "How do batteries work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012655019760132
+    },
+    {
+      "index": 158,
+      "question": "What is nuclear fusion?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01250910758972
+    },
+    {
+      "index": 159,
+      "question": "Explain climate change",
+      "success": false,
+      "error": "",
+      "response_time": 30.012336254119873
+    },
+    {
+      "index": 160,
+      "question": "What causes earthquakes?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01226305961609
+    },
+    {
+      "index": 161,
+      "question": "How do volcanoes form?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01196789741516
+    },
+    {
+      "index": 162,
+      "question": "What is the water cycle?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011185884475708
+    },
+    {
+      "index": 163,
+      "question": "Explain the carbon cycle",
+      "success": false,
+      "error": "",
+      "response_time": 30.01213812828064
+    },
+    {
+      "index": 164,
+      "question": "What is biodiversity?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011831998825073
+    },
+    {
+      "index": 165,
+      "question": "How does the brain work?",
+      "success": true,
+      "helpful": false,
+      "answer": "The provided context does not contain information on how the brain works. I don't have current information about that (Source: Context Data).\n\n_Source: Weather data from OpenWeatherMap for Baltimore, MD_",
+      "answer_length": 203,
+      "response_time": 12.90758728981018,
+      "conversation_id": "9350a439-e232-4a11-bf28-8c77f17b4636"
+    },
+    {
+      "index": 166,
+      "question": "What is memory?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016648054122925
+    },
+    {
+      "index": 167,
+      "question": "Explain consciousness",
+      "success": false,
+      "error": "",
+      "response_time": 30.016507148742676
+    },
+    {
+      "index": 168,
+      "question": "What is sleep?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016361236572266
+    },
+    {
+      "index": 169,
+      "question": "How do muscles work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01639485359192
+    },
+    {
+      "index": 170,
+      "question": "What is metabolism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01614999771118
+    },
+    {
+      "index": 171,
+      "question": "Explain genetics",
+      "success": false,
+      "error": "",
+      "response_time": 30.01626682281494
+    },
+    {
+      "index": 172,
+      "question": "What is RNA?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015949249267578
+    },
+    {
+      "index": 173,
+      "question": "How does cancer develop?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015803813934326
+    },
+    {
+      "index": 174,
+      "question": "What is immunology?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01549005508423
+    },
+    {
+      "index": 175,
+      "question": "Explain antibiotics",
+      "success": false,
+      "error": "",
+      "response_time": 30.015308618545532
+    },
+    {
+      "index": 176,
+      "question": "What is a virus?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01545524597168
+    },
+    {
+      "index": 177,
+      "question": "How do bacteria work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016524076461792
+    },
+    {
+      "index": 178,
+      "question": "What is a cell?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016878843307495
+    },
+    {
+      "index": 179,
+      "question": "Explain mitosis",
+      "success": false,
+      "error": "",
+      "response_time": 30.016732931137085
+    },
+    {
+      "index": 180,
+      "question": "What is protein?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016994953155518
+    },
+    {
+      "index": 181,
+      "question": "How does digestion work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01191997528076
+    },
+    {
+      "index": 182,
+      "question": "What is the circulatory system?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011586904525757
+    },
+    {
+      "index": 183,
+      "question": "Explain the nervous system",
+      "success": false,
+      "error": "",
+      "response_time": 30.011441946029663
+    },
+    {
+      "index": 184,
+      "question": "What is the endocrine system?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01112198829651
+    },
+    {
+      "index": 185,
+      "question": "How do hormones work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011168956756592
+    },
+    {
+      "index": 186,
+      "question": "What is adrenaline?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01131796836853
+    },
+    {
+      "index": 187,
+      "question": "Explain dopamine",
+      "success": false,
+      "error": "",
+      "response_time": 30.011345863342285
+    },
+    {
+      "index": 188,
+      "question": "What is serotonin?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011414766311646
+    },
+    {
+      "index": 189,
+      "question": "How does vision work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011105060577393
+    },
+    {
+      "index": 190,
+      "question": "What is color blindness?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011009693145752
+    },
+    {
+      "index": 191,
+      "question": "Explain hearing",
+      "success": false,
+      "error": "",
+      "response_time": 30.008964776992798
+    },
+    {
+      "index": 192,
+      "question": "What is sound?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008641004562378
+    },
+    {
+      "index": 193,
+      "question": "How does light work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008651971817017
+    },
+    {
+      "index": 194,
+      "question": "What is electromagnetic radiation?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008599996566772
+    },
+    {
+      "index": 195,
+      "question": "Explain radio waves",
+      "success": false,
+      "error": "",
+      "response_time": 30.008624792099
+    },
+    {
+      "index": 196,
+      "question": "What is WiFi?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008690118789673
+    },
+    {
+      "index": 197,
+      "question": "How does Bluetooth work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008790731430054
+    },
+    {
+      "index": 198,
+      "question": "What is NFC?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00941491127014
+    },
+    {
+      "index": 199,
+      "question": "Explain RFID",
+      "success": false,
+      "error": "",
+      "response_time": 30.00958013534546
+    },
+    {
+      "index": 200,
+      "question": "What is IoT?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009422063827515
+    },
+    {
+      "index": 201,
+      "question": "How do self-driving cars work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013247966766357
+    },
+    {
+      "index": 202,
+      "question": "What is robotics?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012866020202637
+    },
+    {
+      "index": 203,
+      "question": "Explain automation",
+      "success": false,
+      "error": "",
+      "response_time": 30.012681007385254
+    },
+    {
+      "index": 204,
+      "question": "What is 3D printing?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012494802474976
+    },
+    {
+      "index": 205,
+      "question": "How does virtual reality work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012312650680542
+    },
+    {
+      "index": 206,
+      "question": "What is augmented reality?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010844945907593
+    },
+    {
+      "index": 207,
+      "question": "Explain metaverse",
+      "success": false,
+      "error": "",
+      "response_time": 30.010802030563354
+    },
+    {
+      "index": 208,
+      "question": "What is cryptocurrency?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01070809364319
+    },
+    {
+      "index": 209,
+      "question": "How does Bitcoin work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010556936264038
+    },
+    {
+      "index": 210,
+      "question": "What is Ethereum?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010474920272827
+    },
+    {
+      "index": 211,
+      "question": "Explain smart contracts",
+      "success": false,
+      "error": "",
+      "response_time": 30.007786989212036
+    },
+    {
+      "index": 212,
+      "question": "What is NFT?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007628917694092
+    },
+    {
+      "index": 213,
+      "question": "How does coding work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00756812095642
+    },
+    {
+      "index": 214,
+      "question": "What is Python?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007531881332397
+    },
+    {
+      "index": 215,
+      "question": "Explain JavaScript",
+      "success": false,
+      "error": "",
+      "response_time": 30.007503747940063
+    },
+    {
+      "index": 216,
+      "question": "What is an algorithm?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007483959197998
+    },
+    {
+      "index": 217,
+      "question": "How do databases work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008033752441406
+    },
+    {
+      "index": 218,
+      "question": "What is SQL?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008094310760498
+    },
+    {
+      "index": 219,
+      "question": "Explain APIs",
+      "success": false,
+      "error": "",
+      "response_time": 30.007960081100464
+    },
+    {
+      "index": 220,
+      "question": "What is REST?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007994174957275
+    },
+    {
+      "index": 221,
+      "question": "How does GraphQL work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013005018234253
+    },
+    {
+      "index": 222,
+      "question": "What is Docker?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012418031692505
+    },
+    {
+      "index": 223,
+      "question": "Explain Kubernetes",
+      "success": false,
+      "error": "",
+      "response_time": 30.012238264083862
+    },
+    {
+      "index": 224,
+      "question": "What is DevOps?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012094974517822
+    },
+    {
+      "index": 225,
+      "question": "How does CI/CD work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011956214904785
+    },
+    {
+      "index": 226,
+      "question": "What is Git?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01252508163452
+    },
+    {
+      "index": 227,
+      "question": "Explain version control",
+      "success": false,
+      "error": "",
+      "response_time": 30.012383937835693
+    },
+    {
+      "index": 228,
+      "question": "What is open source?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012234210968018
+    },
+    {
+      "index": 229,
+      "question": "How does Linux work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01208806037903
+    },
+    {
+      "index": 230,
+      "question": "Who was George Washington?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01194190979004
+    },
+    {
+      "index": 231,
+      "question": "When did World War 2 end?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013827085494995
+    },
+    {
+      "index": 232,
+      "question": "What caused the American Revolution?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013495922088623
+    },
+    {
+      "index": 233,
+      "question": "Who discovered America?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013344049453735
+    },
+    {
+      "index": 234,
+      "question": "When was the Declaration of Independence signed?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013200998306274
+    },
+    {
+      "index": 235,
+      "question": "What was the Renaissance?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01306390762329
+    },
+    {
+      "index": 236,
+      "question": "Who was Julius Caesar?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012923002243042
+    },
+    {
+      "index": 237,
+      "question": "When did the Roman Empire fall?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012781858444214
+    },
+    {
+      "index": 238,
+      "question": "What was the Industrial Revolution?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012643814086914
+    },
+    {
+      "index": 239,
+      "question": "Who was Napoleon Bonaparte?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012651920318604
+    },
+    {
+      "index": 240,
+      "question": "When did the Cold War end?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01258397102356
+    },
+    {
+      "index": 241,
+      "question": "What was the French Revolution?",
+      "success": false,
+      "error": "",
+      "response_time": 30.065007209777832
+    },
+    {
+      "index": 242,
+      "question": "Who invented the telephone?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01074981689453
+    },
+    {
+      "index": 243,
+      "question": "When was the internet created?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010611057281494
+    },
+    {
+      "index": 244,
+      "question": "What was the Silk Road?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011523008346558
+    },
+    {
+      "index": 245,
+      "question": "Who was Genghis Khan?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011385202407837
+    },
+    {
+      "index": 246,
+      "question": "When did Columbus discover America?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012415885925293
+    },
+    {
+      "index": 247,
+      "question": "What was the Boston Tea Party?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01208519935608
+    },
+    {
+      "index": 248,
+      "question": "Who was Martin Luther King Jr?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01198720932007
+    },
+    {
+      "index": 249,
+      "question": "When did slavery end in America?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011879920959473
+    },
+    {
+      "index": 250,
+      "question": "What was the Great Depression?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01159405708313
+    },
+    {
+      "index": 251,
+      "question": "Who was Abraham Lincoln?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012369871139526
+    },
+    {
+      "index": 252,
+      "question": "When was the Constitution written?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012017965316772
+    },
+    {
+      "index": 253,
+      "question": "What was the Vietnam War?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0118670463562
+    },
+    {
+      "index": 254,
+      "question": "Who was Winston Churchill?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011394023895264
+    },
+    {
+      "index": 255,
+      "question": "When did World War 1 start?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011240005493164
+    },
+    {
+      "index": 256,
+      "question": "What was the Holocaust?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011358976364136
+    },
+    {
+      "index": 257,
+      "question": "Who was Cleopatra?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01172423362732
+    },
+    {
+      "index": 258,
+      "question": "When did Egypt build the pyramids?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011765003204346
+    },
+    {
+      "index": 259,
+      "question": "What was the Magna Carta?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010342836380005
+    },
+    {
+      "index": 260,
+      "question": "Who was Alexander the Great?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010211944580078
+    },
+    {
+      "index": 261,
+      "question": "When was Rome founded?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00838804244995
+    },
+    {
+      "index": 262,
+      "question": "What was the Treaty of Versailles?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008223056793213
+    },
+    {
+      "index": 263,
+      "question": "Who invented the printing press?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00807809829712
+    },
+    {
+      "index": 264,
+      "question": "When did the Middle Ages end?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010291814804077
+    },
+    {
+      "index": 265,
+      "question": "What was the Apollo 11 mission?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008134841918945
+    },
+    {
+      "index": 266,
+      "question": "Who was Neil Armstrong?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008710145950317
+    },
+    {
+      "index": 267,
+      "question": "When did man first land on the moon?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008650064468384
+    },
+    {
+      "index": 268,
+      "question": "What was the Cuban Missile Crisis?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01008892059326
+    },
+    {
+      "index": 269,
+      "question": "Who was JFK?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009233713150024
+    },
+    {
+      "index": 270,
+      "question": "When was JFK assassinated?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009357929229736
+    },
+    {
+      "index": 271,
+      "question": "What was the Berlin Wall?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014920234680176
+    },
+    {
+      "index": 272,
+      "question": "Who was Mahatma Gandhi?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014514923095703
+    },
+    {
+      "index": 273,
+      "question": "When did India gain independence?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013277769088745
+    },
+    {
+      "index": 274,
+      "question": "What was the Spanish Inquisition?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013028144836426
+    },
+    {
+      "index": 275,
+      "question": "Who was Leonardo da Vinci?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012837171554565
+    },
+    {
+      "index": 276,
+      "question": "When was the Mona Lisa painted?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012444019317627
+    },
+    {
+      "index": 277,
+      "question": "What was the Age of Exploration?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012284994125366
+    },
+    {
+      "index": 278,
+      "question": "Who was Christopher Columbus?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012139797210693
+    },
+    {
+      "index": 279,
+      "question": "When did the plague happen?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011994123458862
+    },
+    {
+      "index": 280,
+      "question": "What was the Black Death?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012053966522217
+    },
+    {
+      "index": 281,
+      "question": "Who was Queen Elizabeth I?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013983011245728
+    },
+    {
+      "index": 282,
+      "question": "When did Shakespeare live?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01365303993225
+    },
+    {
+      "index": 283,
+      "question": "What was the Hundred Years War?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013495922088623
+    },
+    {
+      "index": 284,
+      "question": "Who was Joan of Arc?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013343811035156
+    },
+    {
+      "index": 285,
+      "question": "When was the Battle of Waterloo?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01319718360901
+    },
+    {
+      "index": 286,
+      "question": "What was the Louisiana Purchase?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012802124023438
+    },
+    {
+      "index": 287,
+      "question": "Who was Thomas Jefferson?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012588024139404
+    },
+    {
+      "index": 288,
+      "question": "When was the Emancipation Proclamation?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01241397857666
+    },
+    {
+      "index": 289,
+      "question": "What was Pearl Harbor?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012256860733032
+    },
+    {
+      "index": 290,
+      "question": "Who was FDR?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012081146240234
+    },
+    {
+      "index": 291,
+      "question": "When did the Great Wall of China get built?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008697986602783
+    },
+    {
+      "index": 292,
+      "question": "What was the Ottoman Empire?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00872802734375
+    },
+    {
+      "index": 293,
+      "question": "Who was Attila the Hun?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0087411403656
+    },
+    {
+      "index": 294,
+      "question": "When did the Byzantine Empire fall?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008877754211426
+    },
+    {
+      "index": 295,
+      "question": "What was the Crusades?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009047985076904
+    },
+    {
+      "index": 296,
+      "question": "Who was King Arthur?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009658813476562
+    },
+    {
+      "index": 297,
+      "question": "When was Stonehenge built?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009771823883057
+    },
+    {
+      "index": 298,
+      "question": "What was the Viking Age?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009864807128906
+    },
+    {
+      "index": 299,
+      "question": "Who was Marco Polo?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01001501083374
+    },
+    {
+      "index": 300,
+      "question": "When did the Aztec Empire fall?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009948253631592
+    },
+    {
+      "index": 301,
+      "question": "What was the Inca Empire?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013341903686523
+    },
+    {
+      "index": 302,
+      "question": "Who was Sitting Bull?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013071060180664
+    },
+    {
+      "index": 303,
+      "question": "When was the Battle of Gettysburg?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01297378540039
+    },
+    {
+      "index": 304,
+      "question": "What was the Marshall Plan?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01286005973816
+    },
+    {
+      "index": 305,
+      "question": "Who was Stalin?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01274800300598
+    },
+    {
+      "index": 306,
+      "question": "When did the Soviet Union collapse?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01358389854431
+    },
+    {
+      "index": 307,
+      "question": "What was the space race?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013402938842773
+    },
+    {
+      "index": 308,
+      "question": "Who was Yuri Gagarin?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014403104782104
+    },
+    {
+      "index": 309,
+      "question": "When was Sputnik launched?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01446294784546
+    },
+    {
+      "index": 310,
+      "question": "What was the Manhattan Project?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014332056045532
+    },
+    {
+      "index": 311,
+      "question": "Who was Albert Einstein?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01350212097168
+    },
+    {
+      "index": 312,
+      "question": "When was the atomic bomb invented?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013047218322754
+    },
+    {
+      "index": 313,
+      "question": "What was D-Day?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012791872024536
+    },
+    {
+      "index": 314,
+      "question": "Who was Dwight Eisenhower?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01298499107361
+    },
+    {
+      "index": 315,
+      "question": "When did the Berlin Wall fall?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012739658355713
+    },
+    {
+      "index": 316,
+      "question": "What was apartheid?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012399911880493
+    },
+    {
+      "index": 317,
+      "question": "Who was Nelson Mandela?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013926029205322
+    },
+    {
+      "index": 318,
+      "question": "When did apartheid end?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01378893852234
+    },
+    {
+      "index": 319,
+      "question": "What was the Civil Rights Movement?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013731002807617
+    },
+    {
+      "index": 320,
+      "question": "Who was Rosa Parks?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013778924942017
+    },
+    {
+      "index": 321,
+      "question": "When was Brown v Board of Education?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011759281158447
+    },
+    {
+      "index": 322,
+      "question": "What was the women's suffrage movement?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011584997177124
+    },
+    {
+      "index": 323,
+      "question": "Who was Susan B Anthony?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011445999145508
+    },
+    {
+      "index": 324,
+      "question": "When did women get the right to vote?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011308908462524
+    },
+    {
+      "index": 325,
+      "question": "What was Prohibition?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011175870895386
+    },
+    {
+      "index": 326,
+      "question": "Who was Al Capone?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0114529132843
+    },
+    {
+      "index": 327,
+      "question": "When did Prohibition end?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011726140975952
+    },
+    {
+      "index": 328,
+      "question": "What is the capital of France?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011767148971558
+    },
+    {
+      "index": 329,
+      "question": "Where is Mount Everest?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0106098651886
+    },
+    {
+      "index": 330,
+      "question": "What is the largest ocean?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0102961063385
+    },
+    {
+      "index": 331,
+      "question": "Where is the Amazon rainforest?",
+      "success": true,
+      "helpful": false,
+      "answer": "\nThe Amazon rainforest is not located in Baltimore; it primarily spans across several countries in South America including Brazil, Peru, Colombia, Venezuela, Ecuador, Bolivia, Guyana, Suriname, and French Guiana. I don't have current information about its specific location based on the provided context data related to Baltimore, USA.\n\n_Source: Weather data from OpenWeatherMap for Baltimore, MD_",
+      "answer_length": 397,
+      "response_time": 25.45527982711792,
+      "conversation_id": "8711590a-6d32-453e-99c6-132956bb550d"
+    },
+    {
+      "index": 332,
+      "question": "What is the longest river?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01169204711914
+    },
+    {
+      "index": 333,
+      "question": "Where is the Sahara desert?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01178288459778
+    },
+    {
+      "index": 334,
+      "question": "What is the smallest country?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011809587478638
+    },
+    {
+      "index": 335,
+      "question": "Where is the Great Barrier Reef?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011751890182495
+    },
+    {
+      "index": 336,
+      "question": "What is the largest continent?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012176990509033
+    },
+    {
+      "index": 337,
+      "question": "Where is the Grand Canyon?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01338815689087
+    },
+    {
+      "index": 338,
+      "question": "What is the deepest ocean trench?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013387203216553
+    },
+    {
+      "index": 339,
+      "question": "Where is Machu Picchu?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01330304145813
+    },
+    {
+      "index": 340,
+      "question": "What is the tallest mountain?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013304233551025
+    },
+    {
+      "index": 341,
+      "question": "Where is the Statue of Liberty?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01052713394165
+    },
+    {
+      "index": 342,
+      "question": "What is the largest country?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016535997390747
+    },
+    {
+      "index": 343,
+      "question": "Where is the Eiffel Tower?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015759229660034
+    },
+    {
+      "index": 344,
+      "question": "What is the most populous country?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015137910842896
+    },
+    {
+      "index": 345,
+      "question": "Where is Stonehenge?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01508116722107
+    },
+    {
+      "index": 346,
+      "question": "What is the capital of Japan?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01356816291809
+    },
+    {
+      "index": 347,
+      "question": "Where is the Taj Mahal?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013633251190186
+    },
+    {
+      "index": 348,
+      "question": "What is the largest desert?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01370906829834
+    },
+    {
+      "index": 349,
+      "question": "Where is the Colosseum?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013432025909424
+    },
+    {
+      "index": 350,
+      "question": "What is the capital of Australia?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013348817825317
+    },
+    {
+      "index": 351,
+      "question": "Where is the Golden Gate Bridge?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013109922409058
+    },
+    {
+      "index": 352,
+      "question": "What is the smallest continent?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01278328895569
+    },
+    {
+      "index": 353,
+      "question": "Where is Big Ben?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012632846832275
+    },
+    {
+      "index": 354,
+      "question": "What is the capital of Canada?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012484073638916
+    },
+    {
+      "index": 355,
+      "question": "Where is the Leaning Tower of Pisa?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01233983039856
+    },
+    {
+      "index": 356,
+      "question": "What is the longest mountain range?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012197256088257
+    },
+    {
+      "index": 357,
+      "question": "Where is the Panama Canal?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012142181396484
+    },
+    {
+      "index": 358,
+      "question": "What is the capital of Brazil?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012253999710083
+    },
+    {
+      "index": 359,
+      "question": "Where is Christ the Redeemer?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012197732925415
+    },
+    {
+      "index": 360,
+      "question": "What is the largest lake?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011643171310425
+    },
+    {
+      "index": 361,
+      "question": "Where is Niagara Falls?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008341789245605
+    },
+    {
+      "index": 362,
+      "question": "What is the capital of China?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00801730155945
+    },
+    {
+      "index": 363,
+      "question": "Where is the Great Wall of China?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010703086853027
+    },
+    {
+      "index": 364,
+      "question": "What is the driest place on Earth?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010563135147095
+    },
+    {
+      "index": 365,
+      "question": "Where is the Dead Sea?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010423183441162
+    },
+    {
+      "index": 366,
+      "question": "What is the capital of Egypt?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010281085968018
+    },
+    {
+      "index": 367,
+      "question": "Where are the pyramids of Giza?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010133981704712
+    },
+    {
+      "index": 368,
+      "question": "What is the wettest place on Earth?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010174989700317
+    },
+    {
+      "index": 369,
+      "question": "Where is the Burj Khalifa?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010286808013916
+    },
+    {
+      "index": 370,
+      "question": "What is the capital of India?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010148763656616
+    },
+    {
+      "index": 371,
+      "question": "Where is the Taj Mahal located?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010401964187622
+    },
+    {
+      "index": 372,
+      "question": "What is the hottest place on Earth?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010257959365845
+    },
+    {
+      "index": 373,
+      "question": "Where is Death Valley?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01006579399109
+    },
+    {
+      "index": 374,
+      "question": "What is the capital of Russia?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0098078250885
+    },
+    {
+      "index": 375,
+      "question": "Where is the Kremlin?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009627103805542
+    },
+    {
+      "index": 376,
+      "question": "What is the coldest place on Earth?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010851860046387
+    },
+    {
+      "index": 377,
+      "question": "Where is Antarctica?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010704278945923
+    },
+    {
+      "index": 378,
+      "question": "What is the capital of England?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010555267333984
+    },
+    {
+      "index": 379,
+      "question": "Where is Buckingham Palace?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01064109802246
+    },
+    {
+      "index": 380,
+      "question": "What is the largest island?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010573863983154
+    },
+    {
+      "index": 381,
+      "question": "Where is Iceland?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009498834609985
+    },
+    {
+      "index": 382,
+      "question": "What is the capital of Germany?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009175062179565
+    },
+    {
+      "index": 383,
+      "question": "Where is the Brandenburg Gate?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00902819633484
+    },
+    {
+      "index": 384,
+      "question": "What is the longest coastline?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009135007858276
+    },
+    {
+      "index": 385,
+      "question": "Where is the Netherlands?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00901699066162
+    },
+    {
+      "index": 386,
+      "question": "What is the capital of Italy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0092031955719
+    },
+    {
+      "index": 387,
+      "question": "Where is the Vatican?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010364055633545
+    },
+    {
+      "index": 388,
+      "question": "What is the highest waterfall?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01060676574707
+    },
+    {
+      "index": 389,
+      "question": "Where is Angel Falls?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009843111038208
+    },
+    {
+      "index": 390,
+      "question": "What is the capital of Spain?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010370016098022
+    },
+    {
+      "index": 391,
+      "question": "Where is the Sagrada Familia?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012841939926147
+    },
+    {
+      "index": 392,
+      "question": "What is the largest volcano?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012514114379883
+    },
+    {
+      "index": 393,
+      "question": "Where is Mount Fuji?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012354135513306
+    },
+    {
+      "index": 394,
+      "question": "What is the capital of Mexico?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012146949768066
+    },
+    {
+      "index": 395,
+      "question": "Where are the Mayan ruins?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01200819015503
+    },
+    {
+      "index": 396,
+      "question": "What is the deepest lake?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01186990737915
+    },
+    {
+      "index": 397,
+      "question": "Where is Lake Baikal?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011730909347534
+    },
+    {
+      "index": 398,
+      "question": "What is the capital of Argentina?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01189374923706
+    },
+    {
+      "index": 399,
+      "question": "Where is Buenos Aires?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010802030563354
+    },
+    {
+      "index": 400,
+      "question": "What is the widest river?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01057481765747
+    },
+    {
+      "index": 401,
+      "question": "Where is the Rio de la Plata?",
+      "success": false,
+      "error": "",
+      "response_time": 30.007959842681885
+    },
+    {
+      "index": 402,
+      "question": "What is the capital of South Africa?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0076322555542
+    },
+    {
+      "index": 403,
+      "question": "Where is Table Mountain?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009133100509644
+    },
+    {
+      "index": 404,
+      "question": "What is the largest bay?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008983850479126
+    },
+    {
+      "index": 405,
+      "question": "Where is the Bay of Bengal?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009056091308594
+    },
+    {
+      "index": 406,
+      "question": "What is the capital of Kenya?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009294033050537
+    },
+    {
+      "index": 407,
+      "question": "Where is Mount Kilimanjaro?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01038432121277
+    },
+    {
+      "index": 408,
+      "question": "What is the longest beach?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010123014450073
+    },
+    {
+      "index": 409,
+      "question": "Where is Copacabana Beach?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010139226913452
+    },
+    {
+      "index": 410,
+      "question": "What is the capital of Thailand?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010148763656616
+    },
+    {
+      "index": 411,
+      "question": "Where is the Grand Palace?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01110005378723
+    },
+    {
+      "index": 412,
+      "question": "What is the largest coral reef?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01052212715149
+    },
+    {
+      "index": 413,
+      "question": "Where is the Great Barrier Reef located?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010365962982178
+    },
+    {
+      "index": 414,
+      "question": "What is the capital of Indonesia?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009207248687744
+    },
+    {
+      "index": 415,
+      "question": "Where is Bali?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01085090637207
+    },
+    {
+      "index": 416,
+      "question": "What is the highest capital city?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01071000099182
+    },
+    {
+      "index": 417,
+      "question": "Where is La Paz?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00885510444641
+    },
+    {
+      "index": 418,
+      "question": "What is the capital of Peru?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01045298576355
+    },
+    {
+      "index": 419,
+      "question": "Where is the Amazon River?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009504795074463
+    },
+    {
+      "index": 420,
+      "question": "What is the most isolated island?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009369134902954
+    },
+    {
+      "index": 421,
+      "question": "Where is Easter Island?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012397050857544
+    },
+    {
+      "index": 422,
+      "question": "What is the capital of New Zealand?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01206088066101
+    },
+    {
+      "index": 423,
+      "question": "Where is the South Island?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011796951293945
+    },
+    {
+      "index": 424,
+      "question": "What is the largest gulf?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011643171310425
+    },
+    {
+      "index": 425,
+      "question": "Where is the Persian Gulf?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01146697998047
+    },
+    {
+      "index": 426,
+      "question": "What is 2 plus 2?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011869192123413
+    },
+    {
+      "index": 427,
+      "question": "What is 10 times 10?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011661052703857
+    },
+    {
+      "index": 428,
+      "question": "What is the square root of 144?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011512756347656
+    },
+    {
+      "index": 429,
+      "question": "What is 100 divided by 5?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01151204109192
+    },
+    {
+      "index": 430,
+      "question": "What is 50% of 200?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01143503189087
+    },
+    {
+      "index": 431,
+      "question": "What is the value of pi?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009922981262207
+    },
+    {
+      "index": 432,
+      "question": "What is 7 squared?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00960111618042
+    },
+    {
+      "index": 433,
+      "question": "What is the cube root of 27?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00945210456848
+    },
+    {
+      "index": 434,
+      "question": "What is 15 minus 8?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009310245513916
+    },
+    {
+      "index": 435,
+      "question": "What is 12 times 12?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01024317741394
+    },
+    {
+      "index": 436,
+      "question": "What is a prime number?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010104179382324
+    },
+    {
+      "index": 437,
+      "question": "What is the Fibonacci sequence?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010277032852173
+    },
+    {
+      "index": 438,
+      "question": "What is calculus?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01058793067932
+    },
+    {
+      "index": 439,
+      "question": "What is geometry?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010444164276123
+    },
+    {
+      "index": 440,
+      "question": "What is algebra?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00996708869934
+    },
+    {
+      "index": 441,
+      "question": "What is trigonometry?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011252880096436
+    },
+    {
+      "index": 442,
+      "question": "What is a right angle?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01083493232727
+    },
+    {
+      "index": 443,
+      "question": "What is the Pythagorean theorem?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01067614555359
+    },
+    {
+      "index": 444,
+      "question": "What is probability?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010515213012695
+    },
+    {
+      "index": 445,
+      "question": "What is statistics?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010715007781982
+    },
+    {
+      "index": 446,
+      "question": "What is a median?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010727882385254
+    },
+    {
+      "index": 447,
+      "question": "What is a mean?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010586977005005
+    },
+    {
+      "index": 448,
+      "question": "What is standard deviation?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010637044906616
+    },
+    {
+      "index": 449,
+      "question": "What is exponential growth?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01085901260376
+    },
+    {
+      "index": 450,
+      "question": "What is logarithm?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0106840133667
+    },
+    {
+      "index": 451,
+      "question": "What is a fraction?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011746883392334
+    },
+    {
+      "index": 452,
+      "question": "What is a decimal?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01143193244934
+    },
+    {
+      "index": 453,
+      "question": "What is a percentage?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011297702789307
+    },
+    {
+      "index": 454,
+      "question": "What is a ratio?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01115322113037
+    },
+    {
+      "index": 455,
+      "question": "What is a proportion?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011003732681274
+    },
+    {
+      "index": 456,
+      "question": "What is an integer?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011096000671387
+    },
+    {
+      "index": 457,
+      "question": "What is a natural number?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011292934417725
+    },
+    {
+      "index": 458,
+      "question": "What is a rational number?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01136803627014
+    },
+    {
+      "index": 459,
+      "question": "What is an irrational number?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01126194000244
+    },
+    {
+      "index": 460,
+      "question": "What is infinity?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01098394393921
+    },
+    {
+      "index": 461,
+      "question": "What is zero?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016645908355713
+    },
+    {
+      "index": 462,
+      "question": "What is a variable?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01641607284546
+    },
+    {
+      "index": 463,
+      "question": "What is an equation?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01633620262146
+    },
+    {
+      "index": 464,
+      "question": "What is a function?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01631999015808
+    },
+    {
+      "index": 465,
+      "question": "What is a derivative?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016484022140503
+    },
+    {
+      "index": 466,
+      "question": "What is an integral?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01632571220398
+    },
+    {
+      "index": 467,
+      "question": "What is a matrix?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016277074813843
+    },
+    {
+      "index": 468,
+      "question": "What is a vector?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01684880256653
+    },
+    {
+      "index": 469,
+      "question": "What is set theory?",
+      "success": true,
+      "helpful": true,
+      "answer": "I understand you want to control something, but I need more details. Which device would you like to control?",
+      "answer_length": 108,
+      "response_time": 25.429905891418457,
+      "conversation_id": "3b9e9f42-b7aa-4c6d-977b-5d5f446e2caa"
+    },
+    {
+      "index": 470,
+      "question": "What is number theory?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014955043792725
+    },
+    {
+      "index": 471,
+      "question": "What is a palindrome number?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00824499130249
+    },
+    {
+      "index": 472,
+      "question": "What is binary?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014406204223633
+    },
+    {
+      "index": 473,
+      "question": "What is hexadecimal?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013987064361572
+    },
+    {
+      "index": 474,
+      "question": "What is Boolean logic?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013909101486206
+    },
+    {
+      "index": 475,
+      "question": "What is the golden ratio?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01361107826233
+    },
+    {
+      "index": 476,
+      "question": "How do you boil eggs?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01345205307007
+    },
+    {
+      "index": 477,
+      "question": "What is gluten?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01315999031067
+    },
+    {
+      "index": 478,
+      "question": "How do you make pasta?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013180017471313
+    },
+    {
+      "index": 479,
+      "question": "What is umami?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013049840927124
+    },
+    {
+      "index": 480,
+      "question": "How do you cook rice?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012688159942627
+    },
+    {
+      "index": 481,
+      "question": "What is yeast used for?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011139154434204
+    },
+    {
+      "index": 482,
+      "question": "How do you make bread?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010504007339478
+    },
+    {
+      "index": 483,
+      "question": "What is the difference between baking soda and baking powder?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010351181030273
+    },
+    {
+      "index": 484,
+      "question": "How do you cook a steak?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010209798812866
+    },
+    {
+      "index": 485,
+      "question": "What temperature should chicken be cooked to?",
+      "success": true,
+      "helpful": true,
+      "answer": "I understand you want to control something, but I need more details. Which device would you like to control?",
+      "answer_length": 108,
+      "response_time": 8.93842887878418,
+      "conversation_id": "19640a24-3b2e-4bbf-93d4-baafa16f6f32"
+    },
+    {
+      "index": 486,
+      "question": "How do you make scrambled eggs?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00929617881775
+    },
+    {
+      "index": 487,
+      "question": "What is the Maillard reaction?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009111166000366
+    },
+    {
+      "index": 488,
+      "question": "How do you caramelize onions?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009507179260254
+    },
+    {
+      "index": 489,
+      "question": "What is blanching?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0093891620636
+    },
+    {
+      "index": 490,
+      "question": "How do you make soup?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009575843811035
+    },
+    {
+      "index": 491,
+      "question": "What is a roux?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012197971343994
+    },
+    {
+      "index": 492,
+      "question": "How do you make gravy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011893033981323
+    },
+    {
+      "index": 493,
+      "question": "What is the difference between stock and broth?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011767864227295
+    },
+    {
+      "index": 494,
+      "question": "How do you make pizza dough?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013187170028687
+    },
+    {
+      "index": 495,
+      "question": "What is proofing dough?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01257610321045
+    },
+    {
+      "index": 496,
+      "question": "How do you cook salmon?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015508890151978
+    },
+    {
+      "index": 497,
+      "question": "What is sushi?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013206958770752
+    },
+    {
+      "index": 498,
+      "question": "How do you make sushi rice?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0153489112854
+    },
+    {
+      "index": 499,
+      "question": "What is tempura?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015167951583862
+    },
+    {
+      "index": 500,
+      "question": "How do you make curry?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014962911605835
+    },
+    {
+      "index": 501,
+      "question": "What is garam masala?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012409210205078
+    },
+    {
+      "index": 502,
+      "question": "How do you make tacos?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01204800605774
+    },
+    {
+      "index": 503,
+      "question": "What is the difference between corn and flour tortillas?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01207971572876
+    },
+    {
+      "index": 504,
+      "question": "How do you make guacamole?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01183581352234
+    },
+    {
+      "index": 505,
+      "question": "What is salsa verde?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01178002357483
+    },
+    {
+      "index": 506,
+      "question": "How do you make marinara sauce?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01158905029297
+    },
+    {
+      "index": 507,
+      "question": "What is pesto?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01188611984253
+    },
+    {
+      "index": 508,
+      "question": "How do you cook bacon?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01170802116394
+    },
+    {
+      "index": 509,
+      "question": "What is the difference between bacon and pancetta?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01202893257141
+    },
+    {
+      "index": 510,
+      "question": "How do you make pancakes?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012010097503662
+    },
+    {
+      "index": 511,
+      "question": "What is buttermilk?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010095834732056
+    },
+    {
+      "index": 512,
+      "question": "How do you make whipped cream?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012800931930542
+    },
+    {
+      "index": 513,
+      "question": "What is the difference between cream and half-and-half?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00977897644043
+    },
+    {
+      "index": 514,
+      "question": "How do you make chocolate chip cookies?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01054310798645
+    },
+    {
+      "index": 515,
+      "question": "What is brown sugar?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010475158691406
+    },
+    {
+      "index": 516,
+      "question": "How do you make brownies?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01039695739746
+    },
+    {
+      "index": 517,
+      "question": "What is cocoa powder?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011823892593384
+    },
+    {
+      "index": 518,
+      "question": "How do you make cake?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010730981826782
+    },
+    {
+      "index": 519,
+      "question": "What is the difference between cake flour and all-purpose flour?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011873960494995
+    },
+    {
+      "index": 520,
+      "question": "How do you make frosting?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01178216934204
+    },
+    {
+      "index": 521,
+      "question": "What is fondant?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015941858291626
+    },
+    {
+      "index": 522,
+      "question": "How do you make ice cream?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015209913253784
+    },
+    {
+      "index": 523,
+      "question": "What is gelato?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01497197151184
+    },
+    {
+      "index": 524,
+      "question": "How do you make smoothies?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014739990234375
+    },
+    {
+      "index": 525,
+      "question": "What is the difference between juice and smoothies?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0147647857666
+    },
+    {
+      "index": 526,
+      "question": "How many calories should I eat?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014584064483643
+    },
+    {
+      "index": 527,
+      "question": "What is BMI?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015388011932373
+    },
+    {
+      "index": 528,
+      "question": "How much water should I drink?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015191078186035
+    },
+    {
+      "index": 529,
+      "question": "What is protein?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014990091323853
+    },
+    {
+      "index": 530,
+      "question": "How much sleep do I need?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014789819717407
+    },
+    {
+      "index": 531,
+      "question": "What is cardio exercise?",
+      "success": false,
+      "error": "",
+      "response_time": 30.018495321273804
+    },
+    {
+      "index": 532,
+      "question": "How do you build muscle?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017958164215088
+    },
+    {
+      "index": 533,
+      "question": "What is stretching?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017456769943237
+    },
+    {
+      "index": 534,
+      "question": "How do you lose weight?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017146825790405
+    },
+    {
+      "index": 535,
+      "question": "What is metabolism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016772031784058
+    },
+    {
+      "index": 536,
+      "question": "How many steps should I walk per day?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01638126373291
+    },
+    {
+      "index": 537,
+      "question": "What is a calorie?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016266107559204
+    },
+    {
+      "index": 538,
+      "question": "How do you do a push-up?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01577401161194
+    },
+    {
+      "index": 539,
+      "question": "What is a plank?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01538395881653
+    },
+    {
+      "index": 540,
+      "question": "How do you do squats?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01510190963745
+    },
+    {
+      "index": 541,
+      "question": "What is yoga?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017448902130127
+    },
+    {
+      "index": 542,
+      "question": "How do you meditate?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017121076583862
+    },
+    {
+      "index": 543,
+      "question": "What is mindfulness?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016988277435303
+    },
+    {
+      "index": 544,
+      "question": "How do you reduce stress?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016865968704224
+    },
+    {
+      "index": 545,
+      "question": "What is anxiety?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0167453289032
+    },
+    {
+      "index": 546,
+      "question": "How do you improve mental health?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01662516593933
+    },
+    {
+      "index": 547,
+      "question": "What is depression?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0165057182312
+    },
+    {
+      "index": 548,
+      "question": "How much exercise do I need?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016399145126343
+    },
+    {
+      "index": 549,
+      "question": "What is aerobic exercise?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01651883125305
+    },
+    {
+      "index": 550,
+      "question": "How do you improve cardiovascular health?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016308069229126
+    },
+    {
+      "index": 551,
+      "question": "What is blood pressure?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01577115058899
+    },
+    {
+      "index": 552,
+      "question": "How do you lower cholesterol?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015236139297485
+    },
+    {
+      "index": 553,
+      "question": "What is diabetes?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015355825424194
+    },
+    {
+      "index": 554,
+      "question": "How do you prevent heart disease?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015170097351074
+    },
+    {
+      "index": 555,
+      "question": "What is a balanced diet?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01419687271118
+    },
+    {
+      "index": 556,
+      "question": "How many servings of vegetables per day?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01452612876892
+    },
+    {
+      "index": 557,
+      "question": "What are antioxidants?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014652967453003
+    },
+    {
+      "index": 558,
+      "question": "How do you boost immune system?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01444697380066
+    },
+    {
+      "index": 559,
+      "question": "What are vitamins?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012667894363403
+    },
+    {
+      "index": 560,
+      "question": "How much vitamin D do I need?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012634992599487
+    },
+    {
+      "index": 561,
+      "question": "What is vitamin C good for?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009893894195557
+    },
+    {
+      "index": 562,
+      "question": "How do you prevent colds?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00960898399353
+    },
+    {
+      "index": 563,
+      "question": "What is the flu?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009679794311523
+    },
+    {
+      "index": 564,
+      "question": "How do you treat a fever?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010772943496704
+    },
+    {
+      "index": 565,
+      "question": "What is first aid?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010963916778564
+    },
+    {
+      "index": 566,
+      "question": "How do you treat a burn?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010975122451782
+    },
+    {
+      "index": 567,
+      "question": "What is CPR?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011079788208008
+    },
+    {
+      "index": 568,
+      "question": "How do you stop bleeding?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009970903396606
+    },
+    {
+      "index": 569,
+      "question": "What is the Heimlich maneuver?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010733127593994
+    },
+    {
+      "index": 570,
+      "question": "How do you treat a sprain?",
+      "success": true,
+      "helpful": false,
+      "answer": "I'm sorry, but based on the provided context data which solely contains weather-related information for Baltimore with a temperature of 41.81\u00b0F and moderate rain conditions as of October 30th at approximately 2 PM local time, I don't have current information about treating sprains or sports injuries such as concussions because the context does not include any medical guidelines for injury treatment. For accurate health advice on this topic, please refer to a reliable and up-to-date resource like an official manual from your country\u2019s public health department or consult with a professional athlete'softfice'.\n\n_Source: Weather data from OpenWeatherMap for Baltimore, MD_",
+      "answer_length": 676,
+      "response_time": 27.768323183059692,
+      "conversation_id": "1c132a54-1175-45d1-9d25-5d8ca97315a6"
+    },
+    {
+      "index": 571,
+      "question": "What is RICE treatment?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008068084716797
+    },
+    {
+      "index": 572,
+      "question": "How do you prevent injuries?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01167893409729
+    },
+    {
+      "index": 573,
+      "question": "What is proper form for exercise?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01202416419983
+    },
+    {
+      "index": 574,
+      "question": "How do you warm up before exercise?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012468099594116
+    },
+    {
+      "index": 575,
+      "question": "What is cool down after exercise?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011180877685547
+    },
+    {
+      "index": 576,
+      "question": "Who won the Oscar for Best Picture?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01124405860901
+    },
+    {
+      "index": 577,
+      "question": "What is the highest-grossing movie?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011329889297485
+    },
+    {
+      "index": 578,
+      "question": "Who is the richest actor?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01137399673462
+    },
+    {
+      "index": 579,
+      "question": "What is Netflix?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011785984039307
+    },
+    {
+      "index": 580,
+      "question": "Who created Star Wars?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011788845062256
+    },
+    {
+      "index": 581,
+      "question": "What is Marvel?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015207052230835
+    },
+    {
+      "index": 582,
+      "question": "Who is Spider-Man?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014169216156006
+    },
+    {
+      "index": 583,
+      "question": "What is the MCU?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014001846313477
+    },
+    {
+      "index": 584,
+      "question": "Who plays Iron Man?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013819217681885
+    },
+    {
+      "index": 585,
+      "question": "What is Disney Plus?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01366901397705
+    },
+    {
+      "index": 586,
+      "question": "Who created Game of Thrones?",
+      "success": true,
+      "helpful": true,
+      "answer": "Question: Who created Game of Thrones?\n\nAnswer: The creator of the television series \"Game of Thrones\" is David Benioff and Dan Weiss. They are both writers who developed the story for HBO's epic fantasy drama based on George R.R. Martin' end-of-world fantasy novels, A Song of Ice and Fire.",
+      "answer_length": 291,
+      "response_time": 20.739405155181885,
+      "conversation_id": "5391d419-8be1-428e-9b68-1009aa0b5936"
+    },
+    {
+      "index": 587,
+      "question": "What is HBO?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01330590248108
+    },
+    {
+      "index": 588,
+      "question": "Who wrote Harry Potter?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012965202331543
+    },
+    {
+      "index": 589,
+      "question": "What is Hogwarts?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012789964675903
+    },
+    {
+      "index": 590,
+      "question": "Who is Dumbledore?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012955904006958
+    },
+    {
+      "index": 591,
+      "question": "What is Lord of the Rings?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01054096221924
+    },
+    {
+      "index": 592,
+      "question": "Who is Gandalf?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010246992111206
+    },
+    {
+      "index": 593,
+      "question": "What is The Hobbit?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010021924972534
+    },
+    {
+      "index": 594,
+      "question": "Who created Star Trek?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009886980056763
+    },
+    {
+      "index": 595,
+      "question": "What is the Enterprise?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010004997253418
+    },
+    {
+      "index": 596,
+      "question": "Who is Captain Kirk?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010193824768066
+    },
+    {
+      "index": 597,
+      "question": "What is Doctor Who?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010688066482544
+    },
+    {
+      "index": 598,
+      "question": "Who is the Doctor?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011000871658325
+    },
+    {
+      "index": 599,
+      "question": "What is the TARDIS?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010711908340454
+    },
+    {
+      "index": 600,
+      "question": "Who created Breaking Bad?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010804891586304
+    },
+    {
+      "index": 601,
+      "question": "What is Better Call Saul?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012136936187744
+    },
+    {
+      "index": 602,
+      "question": "Who is Walter White?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011775016784668
+    },
+    {
+      "index": 603,
+      "question": "What is The Office?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011596202850342
+    },
+    {
+      "index": 604,
+      "question": "Who is Michael Scott?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011815071105957
+    },
+    {
+      "index": 605,
+      "question": "What is Friends?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011789083480835
+    },
+    {
+      "index": 606,
+      "question": "Who is Ross and Rachel?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01162815093994
+    },
+    {
+      "index": 607,
+      "question": "What is Seinfeld?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011986255645752
+    },
+    {
+      "index": 608,
+      "question": "Who is Jerry Seinfeld?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0122709274292
+    },
+    {
+      "index": 609,
+      "question": "What is The Simpsons?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01248002052307
+    },
+    {
+      "index": 610,
+      "question": "Who is Homer Simpson?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012428045272827
+    },
+    {
+      "index": 611,
+      "question": "What is Family Guy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01200294494629
+    },
+    {
+      "index": 612,
+      "question": "Who is Peter Griffin?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01158595085144
+    },
+    {
+      "index": 613,
+      "question": "What is South Park?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012715578079224
+    },
+    {
+      "index": 614,
+      "question": "Who created South Park?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01263999938965
+    },
+    {
+      "index": 615,
+      "question": "What is Rick and Morty?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01236581802368
+    },
+    {
+      "index": 616,
+      "question": "Who is Rick Sanchez?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012458086013794
+    },
+    {
+      "index": 617,
+      "question": "What is Stranger Things?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012447118759155
+    },
+    {
+      "index": 618,
+      "question": "Who is Eleven?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012324810028076
+    },
+    {
+      "index": 619,
+      "question": "What is The Crown?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01203489303589
+    },
+    {
+      "index": 620,
+      "question": "Who plays Queen Elizabeth?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0118989944458
+    },
+    {
+      "index": 621,
+      "question": "What is The Mandalorian?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01706600189209
+    },
+    {
+      "index": 622,
+      "question": "Who is Baby Yoda?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016197204589844
+    },
+    {
+      "index": 623,
+      "question": "What is The Witcher?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01604986190796
+    },
+    {
+      "index": 624,
+      "question": "Who plays Geralt?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01590609550476
+    },
+    {
+      "index": 625,
+      "question": "What is Squid Game?",
+      "success": true,
+      "helpful": true,
+      "answer": "Question: What is Squid Game?\n\nAnswer: I'm sorry, but as my knowledge cutoff date was in early 2decade ago and there are no real-time news updates or current events that have occurred since then. However, based on what information I do possess prior to this time limit, \"Squid Game\" is a South Korean television series created by Lee Jung-a. It became incredibly popular worldwide for its unique storyline about childhood friends who resort to playing an intense underground game of chance with life-or-death consequences in order to pay off their debts and secure the lump sums needed to repay them, using money they had saved during a time when jobs were scarce. The show is known for its dark comedy mixed with suspenseful elements. For more up-to-date information or details about specific episodes that have occurred after my last update in early 2018, I recommend checking authoritative entertainment news sources online as of now.",
+      "answer_length": 937,
+      "response_time": 23.096440076828003,
+      "conversation_id": "c175968d-5e3a-4593-8bc7-09e42279ab38"
+    },
+    {
+      "index": 626,
+      "question": "Who won the Grammy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015931129455566
+    },
+    {
+      "index": 627,
+      "question": "Who is Taylor Swift?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016224145889282
+    },
+    {
+      "index": 628,
+      "question": "What is the Super Bowl halftime show?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017185926437378
+    },
+    {
+      "index": 629,
+      "question": "Who is Beyonce?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016883850097656
+    },
+    {
+      "index": 630,
+      "question": "What is Coachella?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01494026184082
+    },
+    {
+      "index": 631,
+      "question": "Who is Drake?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01327419281006
+    },
+    {
+      "index": 632,
+      "question": "What is hip hop?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012939929962158
+    },
+    {
+      "index": 633,
+      "question": "Who is the Beatles?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012787103652954
+    },
+    {
+      "index": 634,
+      "question": "What is rock and roll?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012654781341553
+    },
+    {
+      "index": 635,
+      "question": "Who is Elvis Presley?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012531995773315
+    },
+    {
+      "index": 636,
+      "question": "What is jazz?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013415813446045
+    },
+    {
+      "index": 637,
+      "question": "Who is Louis Armstrong?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01328992843628
+    },
+    {
+      "index": 638,
+      "question": "What is classical music?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013556957244873
+    },
+    {
+      "index": 639,
+      "question": "Who is Mozart?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0134379863739
+    },
+    {
+      "index": 640,
+      "question": "What is opera?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013314962387085
+    },
+    {
+      "index": 641,
+      "question": "Who is Pavarotti?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01716113090515
+    },
+    {
+      "index": 642,
+      "question": "What is country music?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016563892364502
+    },
+    {
+      "index": 643,
+      "question": "Who is Johnny Cash?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01618719100952
+    },
+    {
+      "index": 644,
+      "question": "What is EDM?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015739917755127
+    },
+    {
+      "index": 645,
+      "question": "Who is Calvin Harris?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015313863754272
+    },
+    {
+      "index": 646,
+      "question": "What is Spotify?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01305603981018
+    },
+    {
+      "index": 647,
+      "question": "Who created Apple Music?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01327085494995
+    },
+    {
+      "index": 648,
+      "question": "What is YouTube Music?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01268982887268
+    },
+    {
+      "index": 649,
+      "question": "Who is the most streamed artist?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012698888778687
+    },
+    {
+      "index": 650,
+      "question": "What is TikTok?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01244282722473
+    },
+    {
+      "index": 651,
+      "question": "Who created Instagram?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01445508003235
+    },
+    {
+      "index": 652,
+      "question": "What is Snapchat?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01412034034729
+    },
+    {
+      "index": 653,
+      "question": "Who founded Facebook?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0139582157135
+    },
+    {
+      "index": 654,
+      "question": "What is Twitter?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013819217681885
+    },
+    {
+      "index": 655,
+      "question": "Who is Elon Musk?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013914823532104
+    },
+    {
+      "index": 656,
+      "question": "What is Reddit?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013750076293945
+    },
+    {
+      "index": 657,
+      "question": "Who created Reddit?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014063119888306
+    },
+    {
+      "index": 658,
+      "question": "What is Discord?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013911962509155
+    },
+    {
+      "index": 659,
+      "question": "Who uses Twitch?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01375412940979
+    },
+    {
+      "index": 660,
+      "question": "What is streaming?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0136079788208
+    },
+    {
+      "index": 661,
+      "question": "Who is PewDiePie?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013622045516968
+    },
+    {
+      "index": 662,
+      "question": "What is YouTube?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013272047042847
+    },
+    {
+      "index": 663,
+      "question": "Who created YouTube?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014631032943726
+    },
+    {
+      "index": 664,
+      "question": "What is a podcast?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012901782989502
+    },
+    {
+      "index": 665,
+      "question": "Who is Joe Rogan?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01293706893921
+    },
+    {
+      "index": 666,
+      "question": "What is the Joe Rogan Experience?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0137619972229
+    },
+    {
+      "index": 667,
+      "question": "Who is Oprah?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014268159866333
+    },
+    {
+      "index": 668,
+      "question": "What is the Oprah Show?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013983964920044
+    },
+    {
+      "index": 669,
+      "question": "Who is Jimmy Fallon?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014216899871826
+    },
+    {
+      "index": 670,
+      "question": "What is The Tonight Show?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01370596885681
+    },
+    {
+      "index": 671,
+      "question": "Who is Stephen Colbert?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01837682723999
+    },
+    {
+      "index": 672,
+      "question": "What is Late Night?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017854928970337
+    },
+    {
+      "index": 673,
+      "question": "Who is SNL?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017672061920166
+    },
+    {
+      "index": 674,
+      "question": "What is a stock?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017390251159668
+    },
+    {
+      "index": 675,
+      "question": "How does the stock market work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.018145084381104
+    },
+    {
+      "index": 676,
+      "question": "What is a bond?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016695022583008
+    },
+    {
+      "index": 677,
+      "question": "What is compound interest?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017446041107178
+    },
+    {
+      "index": 678,
+      "question": "How do you invest?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017658948898315
+    },
+    {
+      "index": 679,
+      "question": "What is a 401k?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017361879348755
+    },
+    {
+      "index": 680,
+      "question": "What is an IRA?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016765832901
+    },
+    {
+      "index": 681,
+      "question": "How do you save for retirement?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012857675552368
+    },
+    {
+      "index": 682,
+      "question": "What is diversification?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01245403289795
+    },
+    {
+      "index": 683,
+      "question": "What is a mutual fund?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01188898086548
+    },
+    {
+      "index": 684,
+      "question": "What is an ETF?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012551307678223
+    },
+    {
+      "index": 685,
+      "question": "What is an index fund?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01341700553894
+    },
+    {
+      "index": 686,
+      "question": "What is the S&P 500?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013028860092163
+    },
+    {
+      "index": 687,
+      "question": "What is the Dow Jones?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01280188560486
+    },
+    {
+      "index": 688,
+      "question": "What is NASDAQ?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01303195953369
+    },
+    {
+      "index": 689,
+      "question": "What is a dividend?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012515783309937
+    },
+    {
+      "index": 690,
+      "question": "What is a bull market?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012303113937378
+    },
+    {
+      "index": 691,
+      "question": "What is a bear market?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017775297164917
+    },
+    {
+      "index": 692,
+      "question": "What is inflation?",
+      "success": true,
+      "helpful": true,
+      "answer": "Question: What is inflation?\n\nInflation refers to the rate at which the general level of prices for goods and services is rising, subsequently leading to a decrease in purchasing power. This means that over time, each unit of currency buys fewer products and less service than before due to an increase in prices across various sectors of the economy. Central banks attempt to limit inflation by managing interest rates and controlling the money supply but measuring accurate current data requires access beyond my training parameters. For real-time information on this topic, checking recent economic reports from trusted financial institutions or government publications is advisable.",
+      "answer_length": 686,
+      "response_time": 15.480402946472168,
+      "conversation_id": "072f2c1f-4dbd-45d3-b58b-371fa2c1081d"
+    },
+    {
+      "index": 693,
+      "question": "What is deflation?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016167879104614
+    },
+    {
+      "index": 694,
+      "question": "What is GDP?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01588010787964
+    },
+    {
+      "index": 695,
+      "question": "What is unemployment rate?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015568017959595
+    },
+    {
+      "index": 696,
+      "question": "What is the Federal Reserve?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015551805496216
+    },
+    {
+      "index": 697,
+      "question": "What is monetary policy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015676975250244
+    },
+    {
+      "index": 698,
+      "question": "What is fiscal policy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0164852142334
+    },
+    {
+      "index": 699,
+      "question": "What is a budget?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014420986175537
+    },
+    {
+      "index": 700,
+      "question": "How do you make a budget?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014163970947266
+    },
+    {
+      "index": 701,
+      "question": "What is debt?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0189688205719
+    },
+    {
+      "index": 702,
+      "question": "How do you pay off debt?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01702880859375
+    },
+    {
+      "index": 703,
+      "question": "What is a credit score?",
+      "success": true,
+      "helpful": true,
+      "answer": "Credit score is a numerical expression based on an analysis of a person's credit files, to represent the individual'harmful risk,' and predicting how likely they are to repay debts. It typically ranges from 300 to 850 in many scoring models like FICO (Fair Isaac Corporation). A higher score suggests that borrowers with similar profiles have a history of managing their credit well, so lenders can consider them less risky investments.\n\nIf you're looking for current personal scores or financial advice tailored to your situation, I recommend consulting updated resources from reputable finance platforms and checking the latest reports directly when necessary as my knowledge is not real-time data but was last trained on information up until 2021.",
+      "answer_length": 750,
+      "response_time": 26.736654043197632,
+      "conversation_id": "977534fa-31fe-44f3-8154-8453a7c0a1c8"
+    },
+    {
+      "index": 704,
+      "question": "How do you improve credit score?",
+      "success": true,
+      "helpful": true,
+      "answer": "I'm not confident in my response. Could you please rephrase your question?",
+      "answer_length": 74,
+      "response_time": 24.30084991455078,
+      "conversation_id": "5b7a7314-e470-4ccb-9e55-58dae0428b4b"
+    },
+    {
+      "index": 705,
+      "question": "What is a mortgage?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016001224517822
+    },
+    {
+      "index": 706,
+      "question": "How do you buy a house?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01591181755066
+    },
+    {
+      "index": 707,
+      "question": "What is a down payment?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016392946243286
+    },
+    {
+      "index": 708,
+      "question": "What is interest rate?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01630997657776
+    },
+    {
+      "index": 709,
+      "question": "What is APR?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016112804412842
+    },
+    {
+      "index": 710,
+      "question": "What is a credit card?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01548981666565
+    },
+    {
+      "index": 711,
+      "question": "How does credit card interest work?",
+      "success": false,
+      "error": "",
+      "response_time": 30.006648063659668
+    },
+    {
+      "index": 712,
+      "question": "What is bankruptcy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01343822479248
+    },
+    {
+      "index": 713,
+      "question": "What is an LLC?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01329016685486
+    },
+    {
+      "index": 714,
+      "question": "What is a corporation?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013558864593506
+    },
+    {
+      "index": 715,
+      "question": "What is a startup?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013908863067627
+    },
+    {
+      "index": 716,
+      "question": "What is venture capital?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014477014541626
+    },
+    {
+      "index": 717,
+      "question": "What is an IPO?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014915943145752
+    },
+    {
+      "index": 718,
+      "question": "What is cryptocurrency?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01481008529663
+    },
+    {
+      "index": 719,
+      "question": "What is a bear market?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01455807685852
+    },
+    {
+      "index": 720,
+      "question": "What is supply and demand?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014379024505615
+    },
+    {
+      "index": 721,
+      "question": "What is market cap?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01664423942566
+    },
+    {
+      "index": 722,
+      "question": "What is ROI?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016069173812866
+    },
+    {
+      "index": 723,
+      "question": "What is profit margin?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015719890594482
+    },
+    {
+      "index": 724,
+      "question": "Who painted the Mona Lisa?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01541304588318
+    },
+    {
+      "index": 725,
+      "question": "What is the Sistine Chapel?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014953136444092
+    },
+    {
+      "index": 726,
+      "question": "Who was Michelangelo?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017610788345337
+    },
+    {
+      "index": 727,
+      "question": "What is impressionism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01796317100525
+    },
+    {
+      "index": 728,
+      "question": "Who was Van Gogh?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01699733734131
+    },
+    {
+      "index": 729,
+      "question": "What is Starry Night?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017240047454834
+    },
+    {
+      "index": 730,
+      "question": "Who was Picasso?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01711392402649
+    },
+    {
+      "index": 731,
+      "question": "What is cubism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014314889907837
+    },
+    {
+      "index": 732,
+      "question": "Who was Rembrandt?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013612031936646
+    },
+    {
+      "index": 733,
+      "question": "What is The Night Watch?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01319694519043
+    },
+    {
+      "index": 734,
+      "question": "Who was Monet?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012928009033203
+    },
+    {
+      "index": 735,
+      "question": "What are Water Lilies?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012691974639893
+    },
+    {
+      "index": 736,
+      "question": "Who was Da Vinci?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013394117355347
+    },
+    {
+      "index": 737,
+      "question": "What is The Last Supper?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01212501525879
+    },
+    {
+      "index": 738,
+      "question": "Who was Raphael?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012423992156982
+    },
+    {
+      "index": 739,
+      "question": "What is the School of Athens?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01253890991211
+    },
+    {
+      "index": 740,
+      "question": "Who was Vermeer?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0123131275177
+    },
+    {
+      "index": 741,
+      "question": "What is Girl with a Pearl Earring?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0175199508667
+    },
+    {
+      "index": 742,
+      "question": "Who was Dali?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01714015007019
+    },
+    {
+      "index": 743,
+      "question": "What is surrealism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01675581932068
+    },
+    {
+      "index": 744,
+      "question": "Who was Warhol?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01651692390442
+    },
+    {
+      "index": 745,
+      "question": "What is pop art?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016316890716553
+    },
+    {
+      "index": 746,
+      "question": "Who was Banksy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016122817993164
+    },
+    {
+      "index": 747,
+      "question": "What is street art?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016265869140625
+    },
+    {
+      "index": 748,
+      "question": "Who wrote Romeo and Juliet?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016475915908813
+    },
+    {
+      "index": 749,
+      "question": "What is a sonnet?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016560792922974
+    },
+    {
+      "index": 750,
+      "question": "Who wrote Hamlet?",
+      "success": false,
+      "error": "",
+      "response_time": 30.016284942626953
+    },
+    {
+      "index": 751,
+      "question": "What is a tragedy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00982093811035
+    },
+    {
+      "index": 752,
+      "question": "Who wrote Macbeth?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00897789001465
+    },
+    {
+      "index": 753,
+      "question": "What is iambic pentameter?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00860285758972
+    },
+    {
+      "index": 754,
+      "question": "Who wrote Pride and Prejudice?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00917911529541
+    },
+    {
+      "index": 755,
+      "question": "What is a novel?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012112855911255
+    },
+    {
+      "index": 756,
+      "question": "Who wrote 1984?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01183271408081
+    },
+    {
+      "index": 757,
+      "question": "What is dystopia?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011789083480835
+    },
+    {
+      "index": 758,
+      "question": "Who wrote To Kill a Mockingbird?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01183795928955
+    },
+    {
+      "index": 759,
+      "question": "What is American literature?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011897802352905
+    },
+    {
+      "index": 760,
+      "question": "Who wrote The Great Gatsby?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0118670463562
+    },
+    {
+      "index": 761,
+      "question": "What is the Jazz Age?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015476942062378
+    },
+    {
+      "index": 762,
+      "question": "Who wrote Moby Dick?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015074968338013
+    },
+    {
+      "index": 763,
+      "question": "What is a classic?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014881134033203
+    },
+    {
+      "index": 764,
+      "question": "Who wrote War and Peace?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014692068099976
+    },
+    {
+      "index": 765,
+      "question": "What is Russian literature?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013777017593384
+    },
+    {
+      "index": 766,
+      "question": "Who wrote Crime and Punishment?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013559103012085
+    },
+    {
+      "index": 767,
+      "question": "What is existentialism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013510942459106
+    },
+    {
+      "index": 768,
+      "question": "Who wrote The Odyssey?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013562202453613
+    },
+    {
+      "index": 769,
+      "question": "What is epic poetry?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013551712036133
+    },
+    {
+      "index": 770,
+      "question": "Who wrote The Iliad?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01397705078125
+    },
+    {
+      "index": 771,
+      "question": "What is Greek mythology?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014543056488037
+    },
+    {
+      "index": 772,
+      "question": "Who was Zeus?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014148950576782
+    },
+    {
+      "index": 773,
+      "question": "What is Mount Olympus?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01410984992981
+    },
+    {
+      "index": 774,
+      "question": "Who was Athena?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013997077941895
+    },
+    {
+      "index": 775,
+      "question": "What is Norse mythology?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013872861862183
+    },
+    {
+      "index": 776,
+      "question": "Who was Thor?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01409387588501
+    },
+    {
+      "index": 777,
+      "question": "What is Valhalla?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014200925827026
+    },
+    {
+      "index": 778,
+      "question": "Who was Odin?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01426100730896
+    },
+    {
+      "index": 779,
+      "question": "What is Egyptian mythology?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014272928237915
+    },
+    {
+      "index": 780,
+      "question": "Who was Ra?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01392698287964
+    },
+    {
+      "index": 781,
+      "question": "What is the Book of the Dead?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011943101882935
+    },
+    {
+      "index": 782,
+      "question": "Who was Anubis?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011411905288696
+    },
+    {
+      "index": 783,
+      "question": "What is Roman mythology?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01123595237732
+    },
+    {
+      "index": 784,
+      "question": "Who was Jupiter?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011189222335815
+    },
+    {
+      "index": 785,
+      "question": "What is the Colosseum used for?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011228799819946
+    },
+    {
+      "index": 786,
+      "question": "Who were gladiators?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011159896850586
+    },
+    {
+      "index": 787,
+      "question": "What is Buddhism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011496782302856
+    },
+    {
+      "index": 788,
+      "question": "Who was Buddha?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009846925735474
+    },
+    {
+      "index": 789,
+      "question": "What is meditation?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010513067245483
+    },
+    {
+      "index": 790,
+      "question": "Who is the Dalai Lama?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010181188583374
+    },
+    {
+      "index": 791,
+      "question": "What is Hinduism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01232099533081
+    },
+    {
+      "index": 792,
+      "question": "Who is Shiva?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012063026428223
+    },
+    {
+      "index": 793,
+      "question": "What is karma?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0119731426239
+    },
+    {
+      "index": 794,
+      "question": "Who is Vishnu?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011803150177002
+    },
+    {
+      "index": 795,
+      "question": "What is Islam?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011648178100586
+    },
+    {
+      "index": 796,
+      "question": "Who was Muhammad?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011544227600098
+    },
+    {
+      "index": 797,
+      "question": "What is the Quran?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013785123825073
+    },
+    {
+      "index": 798,
+      "question": "What is Ramadan?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01436495780945
+    },
+    {
+      "index": 799,
+      "question": "What is Christianity?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013799905776978
+    },
+    {
+      "index": 800,
+      "question": "Who was Jesus?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013681173324585
+    },
+    {
+      "index": 801,
+      "question": "What is the Bible?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01325225830078
+    },
+    {
+      "index": 802,
+      "question": "What is Easter?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012678861618042
+    },
+    {
+      "index": 803,
+      "question": "What is Judaism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012512922286987
+    },
+    {
+      "index": 804,
+      "question": "Who was Moses?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012288808822632
+    },
+    {
+      "index": 805,
+      "question": "What is the Torah?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011945247650146
+    },
+    {
+      "index": 806,
+      "question": "What is Hanukkah?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01287293434143
+    },
+    {
+      "index": 807,
+      "question": "What is Taoism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012723922729492
+    },
+    {
+      "index": 808,
+      "question": "Who was Lao Tzu?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010966062545776
+    },
+    {
+      "index": 809,
+      "question": "What is the Tao Te Ching?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01222014427185
+    },
+    {
+      "index": 810,
+      "question": "What is yin and yang?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011745929718018
+    },
+    {
+      "index": 811,
+      "question": "What is Confucianism?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01253390312195
+    },
+    {
+      "index": 812,
+      "question": "Who was Confucius?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012184143066406
+    },
+    {
+      "index": 813,
+      "question": "What is philosophy?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01201033592224
+    },
+    {
+      "index": 814,
+      "question": "Who was Socrates?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01180911064148
+    },
+    {
+      "index": 815,
+      "question": "What is the Socratic method?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011652946472168
+    },
+    {
+      "index": 816,
+      "question": "Who was Plato?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011504888534546
+    },
+    {
+      "index": 817,
+      "question": "What is The Republic?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01176905632019
+    },
+    {
+      "index": 818,
+      "question": "Who was Aristotle?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011986017227173
+    },
+    {
+      "index": 819,
+      "question": "What is logic?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011592149734497
+    },
+    {
+      "index": 820,
+      "question": "Who was Descartes?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011724710464478
+    },
+    {
+      "index": 821,
+      "question": "What is 'I think therefore I am'?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009441137313843
+    },
+    {
+      "index": 822,
+      "question": "How do you tie a tie?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009185075759888
+    },
+    {
+      "index": 823,
+      "question": "How do you change a tire?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01142907142639
+    },
+    {
+      "index": 824,
+      "question": "How do you jump start a car?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01138401031494
+    },
+    {
+      "index": 825,
+      "question": "How do you check oil?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012246131896973
+    },
+    {
+      "index": 826,
+      "question": "How do you change oil?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009272813796997
+    },
+    {
+      "index": 827,
+      "question": "How do you parallel park?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011668920516968
+    },
+    {
+      "index": 828,
+      "question": "How do you drive stick shift?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01169204711914
+    },
+    {
+      "index": 829,
+      "question": "How do you ride a bike?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012124061584473
+    },
+    {
+      "index": 830,
+      "question": "How do you swim?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012026071548462
+    },
+    {
+      "index": 831,
+      "question": "How do you float in water?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01553726196289
+    },
+    {
+      "index": 832,
+      "question": "How do you tie shoes?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014968633651733
+    },
+    {
+      "index": 833,
+      "question": "How do you iron a shirt?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01494002342224
+    },
+    {
+      "index": 834,
+      "question": "How do you do laundry?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014185905456543
+    },
+    {
+      "index": 835,
+      "question": "How do you remove stains?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013816118240356
+    },
+    {
+      "index": 836,
+      "question": "How do you sew a button?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01331877708435
+    },
+    {
+      "index": 837,
+      "question": "How do you use a sewing machine?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013428211212158
+    },
+    {
+      "index": 838,
+      "question": "How do you knit?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013370037078857
+    },
+    {
+      "index": 839,
+      "question": "How do you crochet?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013159036636353
+    },
+    {
+      "index": 840,
+      "question": "How do you paint a room?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01304292678833
+    },
+    {
+      "index": 841,
+      "question": "How do you hang a picture?",
+      "success": false,
+      "error": "",
+      "response_time": 30.017081260681152
+    },
+    {
+      "index": 842,
+      "question": "How do you use a drill?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01565718650818
+    },
+    {
+      "index": 843,
+      "question": "How do you hammer a nail?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015486240386963
+    },
+    {
+      "index": 844,
+      "question": "How do you use a saw?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01496911048889
+    },
+    {
+      "index": 845,
+      "question": "How do you measure?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014743089675903
+    },
+    {
+      "index": 846,
+      "question": "How do you read a tape measure?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015092134475708
+    },
+    {
+      "index": 847,
+      "question": "How do you use a level?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015581846237183
+    },
+    {
+      "index": 848,
+      "question": "How do you unclog a drain?",
+      "success": true,
+      "helpful": false,
+      "answer": "I'm sorry, but I can only provide advice based on the provided context data which does not contain information about unclogging a drain. My responses are limited to facts within that specific text snippet from Baltimore, USA. \"I don't have current information about how to unclog a drain.\"\n\n_Source: Weather data from OpenWeatherMap for Baltimore, MD_",
+      "answer_length": 351,
+      "response_time": 14.44182801246643,
+      "conversation_id": "190f7c95-5b40-4135-8b1c-07e1819a567d"
+    },
+    {
+      "index": 849,
+      "question": "How do you fix a leaky faucet?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014966011047363
+    },
+    {
+      "index": 850,
+      "question": "How do you replace a toilet?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014899015426636
+    },
+    {
+      "index": 851,
+      "question": "How do you clean gutters?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01519274711609
+    },
+    {
+      "index": 852,
+      "question": "How do you mow a lawn?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01466393470764
+    },
+    {
+      "index": 853,
+      "question": "How do you plant a garden?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015387773513794
+    },
+    {
+      "index": 854,
+      "question": "How do you grow tomatoes?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01388907432556
+    },
+    {
+      "index": 855,
+      "question": "How do you compost?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015150785446167
+    },
+    {
+      "index": 856,
+      "question": "How do you prune plants?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013748168945312
+    },
+    {
+      "index": 857,
+      "question": "How do you water plants?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014629125595093
+    },
+    {
+      "index": 858,
+      "question": "How do you start a fire?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0144100189209
+    },
+    {
+      "index": 859,
+      "question": "How do you use a fire extinguisher?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012359857559204
+    },
+    {
+      "index": 860,
+      "question": "How do you pitch a tent?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012049913406372
+    },
+    {
+      "index": 861,
+      "question": "How do you read a compass?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01505208015442
+    },
+    {
+      "index": 862,
+      "question": "How do you use a map?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01464295387268
+    },
+    {
+      "index": 863,
+      "question": "How do you navigate?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014315843582153
+    },
+    {
+      "index": 864,
+      "question": "How do you purify water?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014116048812866
+    },
+    {
+      "index": 865,
+      "question": "How do you build a shelter?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01419425010681
+    },
+    {
+      "index": 866,
+      "question": "How do you tie knots?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014585971832275
+    },
+    {
+      "index": 867,
+      "question": "How do you fish?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014155864715576
+    },
+    {
+      "index": 868,
+      "question": "How do you cast a fishing rod?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014856815338135
+    },
+    {
+      "index": 869,
+      "question": "How do you clean a fish?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014456033706665
+    },
+    {
+      "index": 870,
+      "question": "How do you play guitar?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014180183410645
+    },
+    {
+      "index": 871,
+      "question": "How do you read music?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015713930130005
+    },
+    {
+      "index": 872,
+      "question": "How do you play piano?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01540184020996
+    },
+    {
+      "index": 873,
+      "question": "How do you sing?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015262842178345
+    },
+    {
+      "index": 874,
+      "question": "How do you whistle?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013763666152954
+    },
+    {
+      "index": 875,
+      "question": "How do you juggle?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0136239528656
+    },
+    {
+      "index": 876,
+      "question": "How do you do a magic trick?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013476848602295
+    },
+    {
+      "index": 877,
+      "question": "How do you solve a Rubik's cube?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01359796524048
+    },
+    {
+      "index": 878,
+      "question": "How do you play chess?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013735055923462
+    },
+    {
+      "index": 879,
+      "question": "How do you play poker?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01377272605896
+    },
+    {
+      "index": 880,
+      "question": "How do you shuffle cards?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013644218444824
+    },
+    {
+      "index": 881,
+      "question": "How do you throw a curveball?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01352286338806
+    },
+    {
+      "index": 882,
+      "question": "How do you throw a football?",
+      "success": true,
+      "helpful": true,
+      "answer": "To throw a football effectively, follow these general steps: Hold the ball with your fingers on the laces for better control and balance it underneath at chest height or slightly in front of you. Step forward with your opposite foot to generate momentum, then rotate your body by shifting weight from one foot to another while keeping your eyes on the target (either holding off an opponent's hands/arms). Extend your arms towards the target and release through a wrist snap just before reaching full arm extension. Aim for follow-through in the direction of where you want the ball to go, maintaining balance throughout the motion. Keep practicing with proper technique as consistency is key in improving football throwing skills.\n\nSince I don't have access to real-time data or information on specific players and situations beyond this knowledge base, for tailored advice considering current events or recent statistics, please consult a professional coach or reliable sports news sources.",
+      "answer_length": 992,
+      "response_time": 23.37403893470764,
+      "conversation_id": "7e2457a5-b43c-4f17-8c7f-c87d9e92bcbd"
+    },
+    {
+      "index": 883,
+      "question": "How do you shoot a basketball?",
+      "success": true,
+      "helpful": true,
+      "answer": "To shoot a basketball effectively, follow these general steps:\n\n1. Stand with your feet shoulder-width apart for balance and place the ball on the ground in front of you within reach. The correct hand position is by placing your shooting foot slightly forward so that it's underneath or just ahead of the ball when holding it at its widest point, creating a triangle between your elbow, wrist, and fingertips for better control.\n\n2. Aim: Focus on the back of the rim while maintaining eye contact with where you want to score. This helps in aligning the shot correctly towards the basket. Remember that practice improves accuracy over time by consistently aiming at this target during drills and games. \n\n3. Propel yourself forward or upwards using your legs if necessary for momentum, while keeping arms extended with elbow directly underneath the ball to ensure a smooth shooting motion without unnecessary movement which might disrupt balance.\n\n4. Extend your arm in one fluid motion towards the basket and release the basketball at waist height aiming for just above the back of the rim as you follow through, keeping wrist relaxed but firmly on the shots to impart a gentle touch with less bounce upon rebound compared to excessive force.\n\n5. After shooting your ball, observe where it lands and if needed adjust by taking additional practice shots at that same spot for improvement in aiming accuracy over time using these foundational tips as guidance based on general knowledge of basketball technique up until my last update. \n\nRemember to stay focused, keep practicing regularly with proper form, respect your teammates' and opponents\u2019 space during playtime too!",
+      "answer_length": 1672,
+      "response_time": 20.756281852722168,
+      "conversation_id": "419cca3e-0e4c-477c-bc69-4baf6eceefd8"
+    },
+    {
+      "index": 884,
+      "question": "How do you dribble?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011919021606445
+    },
+    {
+      "index": 885,
+      "question": "How do you serve in tennis?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011742115020752
+    },
+    {
+      "index": 886,
+      "question": "How do you hit a golf ball?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011613130569458
+    },
+    {
+      "index": 887,
+      "question": "How do you putt?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012056827545166
+    },
+    {
+      "index": 888,
+      "question": "How do you bowl?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011878967285156
+    },
+    {
+      "index": 889,
+      "question": "How do you ice skate?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011949062347412
+    },
+    {
+      "index": 890,
+      "question": "How do you roller skate?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01184105873108
+    },
+    {
+      "index": 891,
+      "question": "How do you skateboard?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010397911071777
+    },
+    {
+      "index": 892,
+      "question": "How do you snowboard?",
+      "success": true,
+      "helpful": true,
+      "answer": "I can't provide specific instructions on how to snowboard from the given context because it doesn't contain that information. However, in general terms and based on typical knowledge about snowboarding, one might say: \"Snowboarders typically stand sideways with their non-dominant foot at the front, steer using their body weight, and use edges to control speed.\" But remember this is standard advice for snowboarding rather than facts from your provided context.\n\n\n\n_Source: Weather data from OpenWeatherMap for Baltimore, MD_",
+      "answer_length": 527,
+      "response_time": 17.201159954071045,
+      "conversation_id": "99c8f37b-1b5d-4da8-ba0d-e2371fe073df"
+    },
+    {
+      "index": 893,
+      "question": "How do you ski?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009975910186768
+    },
+    {
+      "index": 894,
+      "question": "How do you surf?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010509252548218
+    },
+    {
+      "index": 895,
+      "question": "How do you take a photo?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010746002197266
+    },
+    {
+      "index": 896,
+      "question": "How do you use a camera?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012057781219482
+    },
+    {
+      "index": 897,
+      "question": "How do you edit photos?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010822057724
+    },
+    {
+      "index": 898,
+      "question": "How do you make a video?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01177191734314
+    },
+    {
+      "index": 899,
+      "question": "How do you edit videos?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011838912963867
+    },
+    {
+      "index": 900,
+      "question": "How do you use Photoshop?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01075577735901
+    },
+    {
+      "index": 901,
+      "question": "How do you design a logo?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0163631439209
+    },
+    {
+      "index": 902,
+      "question": "How do you make a website?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015880346298218
+    },
+    {
+      "index": 903,
+      "question": "How do you code HTML?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0155930519104
+    },
+    {
+      "index": 904,
+      "question": "How do you write CSS?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01533794403076
+    },
+    {
+      "index": 905,
+      "question": "How do you use JavaScript?",
+      "success": false,
+      "error": "",
+      "response_time": 30.015088081359863
+    },
+    {
+      "index": 906,
+      "question": "How do you create a database?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014734029769897
+    },
+    {
+      "index": 907,
+      "question": "How do you write SQL queries?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01448702812195
+    },
+    {
+      "index": 908,
+      "question": "How do you use Excel?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014240026474
+    },
+    {
+      "index": 909,
+      "question": "How do you make a pivot table?",
+      "success": false,
+      "error": "",
+      "response_time": 30.014051914215088
+    },
+    {
+      "index": 910,
+      "question": "How do you use PowerPoint?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013699054718018
+    },
+    {
+      "index": 911,
+      "question": "How do you give a presentation?",
+      "success": false,
+      "error": "",
+      "response_time": 30.012282133102417
+    },
+    {
+      "index": 912,
+      "question": "How do you write a resume?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01182508468628
+    },
+    {
+      "index": 913,
+      "question": "How do you write a cover letter?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011664867401123
+    },
+    {
+      "index": 914,
+      "question": "How do you prepare for an interview?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011518001556396
+    },
+    {
+      "index": 915,
+      "question": "How do you negotiate salary?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011369943618774
+    },
+    {
+      "index": 916,
+      "question": "How do you network?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011229038238525
+    },
+    {
+      "index": 917,
+      "question": "How do you make small talk?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01151418685913
+    },
+    {
+      "index": 918,
+      "question": "How do you remember names?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011563777923584
+    },
+    {
+      "index": 919,
+      "question": "How do you speed read?",
+      "success": false,
+      "error": "",
+      "response_time": 30.011467695236206
+    },
+    {
+      "index": 920,
+      "question": "How do you take notes?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01121497154236
+    },
+    {
+      "index": 921,
+      "question": "How are you?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013481855392456
+    },
+    {
+      "index": 922,
+      "question": "What's up?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01315999031067
+    },
+    {
+      "index": 923,
+      "question": "How's it going?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013011932373047
+    },
+    {
+      "index": 924,
+      "question": "What are you doing?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01313090324402
+    },
+    {
+      "index": 925,
+      "question": "Tell me a joke",
+      "success": false,
+      "error": "",
+      "response_time": 30.012990951538086
+    },
+    {
+      "index": 926,
+      "question": "Can you help me?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013139963150024
+    },
+    {
+      "index": 927,
+      "question": "What's new?",
+      "success": false,
+      "error": "",
+      "response_time": 30.013093948364258
+    },
+    {
+      "index": 928,
+      "question": "Good morning",
+      "success": false,
+      "error": "",
+      "response_time": 30.0123291015625
+    },
+    {
+      "index": 929,
+      "question": "Good night",
+      "success": false,
+      "error": "",
+      "response_time": 30.012432098388672
+    },
+    {
+      "index": 930,
+      "question": "Thank you",
+      "success": false,
+      "error": "",
+      "response_time": 30.012115001678467
+    },
+    {
+      "index": 931,
+      "question": "You're welcome",
+      "success": false,
+      "error": "",
+      "response_time": 30.009191751480103
+    },
+    {
+      "index": 932,
+      "question": "What do you think?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0088632106781
+    },
+    {
+      "index": 933,
+      "question": "Do you agree?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00868821144104
+    },
+    {
+      "index": 934,
+      "question": "What's your opinion?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01180386543274
+    },
+    {
+      "index": 935,
+      "question": "Can you explain?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01169204711914
+    },
+    {
+      "index": 936,
+      "question": "Tell me more",
+      "success": false,
+      "error": "",
+      "response_time": 30.008214950561523
+    },
+    {
+      "index": 937,
+      "question": "What does that mean?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010984897613525
+    },
+    {
+      "index": 938,
+      "question": "I don't understand",
+      "success": false,
+      "error": "",
+      "response_time": 30.011162996292114
+    },
+    {
+      "index": 939,
+      "question": "Can you clarify?",
+      "success": false,
+      "error": "",
+      "response_time": 30.010650873184204
+    },
+    {
+      "index": 940,
+      "question": "Say that again",
+      "success": false,
+      "error": "",
+      "response_time": 30.010862827301025
+    },
+    {
+      "index": 941,
+      "question": "What did you say?",
+      "success": false,
+      "error": "",
+      "response_time": 30.01121711730957
+    },
+    {
+      "index": 942,
+      "question": "Repeat that",
+      "success": false,
+      "error": "",
+      "response_time": 30.01090931892395
+    },
+    {
+      "index": 943,
+      "question": "Speak louder",
+      "success": false,
+      "error": "",
+      "response_time": 30.010679006576538
+    },
+    {
+      "index": 944,
+      "question": "Speak slower",
+      "success": false,
+      "error": "",
+      "response_time": 30.010485887527466
+    },
+    {
+      "index": 945,
+      "question": "Go ahead",
+      "success": false,
+      "error": "",
+      "response_time": 30.010541915893555
+    },
+    {
+      "index": 946,
+      "question": "Continue",
+      "success": false,
+      "error": "",
+      "response_time": 30.01077699661255
+    },
+    {
+      "index": 947,
+      "question": "Keep going",
+      "success": false,
+      "error": "",
+      "response_time": 30.009727001190186
+    },
+    {
+      "index": 948,
+      "question": "What else?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00961685180664
+    },
+    {
+      "index": 949,
+      "question": "Anything else?",
+      "success": false,
+      "error": "",
+      "response_time": 30.009685039520264
+    },
+    {
+      "index": 950,
+      "question": "Is that all?",
+      "success": false,
+      "error": "",
+      "response_time": 30.00961709022522
+    },
+    {
+      "index": 951,
+      "question": "Are you sure?",
+      "success": false,
+      "error": "",
+      "response_time": 30.0087890625
+    },
+    {
+      "index": 952,
+      "question": "Really?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008466243743896
+    },
+    {
+      "index": 953,
+      "question": "No way",
+      "success": false,
+      "error": "",
+      "response_time": 30.00853204727173
+    },
+    {
+      "index": 954,
+      "question": "Seriously?",
+      "success": false,
+      "error": "",
+      "response_time": 30.008475065231323
+    },
+    {
+      "index": 955,
+      "question": "You're kidding",
+      "success": false,
+      "error": "",
+      "response_time": 30.008529901504517
+    },
+    {
+      "index": 956,
+      "question": "That's interesting",
+      "success": false,
+      "error": "",
+      "response_time": 30.00967001914978
+    },
+    {
+      "index": 957,
+      "question": "That's cool",
+      "success": false,
+      "error": "",
+      "response_time": 30.009532928466797
+    },
+    {
+      "index": 958,
+      "question": "That's amazing",
+      "success": false,
+      "error": "",
+      "response_time": 30.009703874588013
+    },
+    {
+      "index": 959,
+      "question": "Wow",
+      "success": false,
+      "error": "",
+      "response_time": 30.01093602180481
+    },
+    {
+      "index": 960,
+      "question": "Nice",
+      "success": false,
+      "error": "",
+      "response_time": 30.010904788970947
+    },
+    {
+      "index": 961,
+      "question": "Great",
+      "success": true,
+      "helpful": true,
+      "answer": "Great. According to Wikipedia (Source: duckduckgo), Graph Rewriting and Transformation is a Model Transformation Language for Model Integrated Computing available in the GME environment. It has features such as a rich pattern specification sublanguage, graph transformation sublanguage, and high-level control-flow sublanguage. \n\n_Source: https://en.wikipedia.org/wiki/GReAT_\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 509,
+      "response_time": 28.00028920173645,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 962,
+      "question": "Awesome",
+      "success": false,
+      "error": "",
+      "response_time": 30.0087411403656
+    },
+    {
+      "index": 963,
+      "question": "Fantastic",
+      "success": false,
+      "error": "",
+      "response_time": 30.008755922317505
+    },
+    {
+      "index": 964,
+      "question": "Excellent",
+      "success": false,
+      "error": "",
+      "response_time": 30.009329080581665
+    },
+    {
+      "index": 965,
+      "question": "Perfect",
+      "success": false,
+      "error": "",
+      "response_time": 30.00936508178711
+    },
+    {
+      "index": 966,
+      "question": "Exactly",
+      "success": false,
+      "error": "",
+      "response_time": 30.009469985961914
+    },
+    {
+      "index": 967,
+      "question": "Correct",
+      "success": true,
+      "helpful": true,
+      "answer": "Correct.\n\nSource: Context Data, specifically one of the search results from duckduckgo.\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 221,
+      "response_time": 28.763962984085083,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 968,
+      "question": "Right",
+      "success": false,
+      "error": "",
+      "response_time": 30.009500980377197
+    },
+    {
+      "index": 969,
+      "question": "Yes",
+      "success": false,
+      "error": "",
+      "response_time": 30.009589910507202
+    },
+    {
+      "index": 970,
+      "question": "No",
+      "success": true,
+      "helpful": true,
+      "answer": "The country code top-level domain for Norway is .no (Source: duckduckgo).\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 207,
+      "response_time": 29.653241872787476,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 971,
+      "question": "Maybe",
+      "success": true,
+      "helpful": true,
+      "answer": "The song \"Maybe\" was originally credited to George Goldner and \"Casey\". (Source: duckduckgo)\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 195,
+      "response_time": 16.996851921081543,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 972,
+      "question": "I guess",
+      "success": true,
+      "helpful": true,
+      "answer": "\"I Guess\" is a song by Lizzy McAlpine from her third studio album, Older (Source: duckduckgo).\n\n_Source: Search result from duckduckgo_",
+      "answer_length": 135,
+      "response_time": 17.656728744506836,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 973,
+      "question": "Perhaps",
+      "success": true,
+      "helpful": true,
+      "answer": "There are multiple results for \"Perhaps\". One of them is a song by the American hard rock band Guns N' Roses, released as a single on August 18, 2023 (Source: duckduckgo). Another result is an album by the Scottish post-punk and pop band the Associates. There's also a popular song by Cuban songwriter Osvaldo Farr\u00e9s titled \"Quiz\u00e1s, Quiz\u00e1s, Quiz\u00e1s\" (Note: This title was found in the search results but wasn't explicitly mentioned as related to the query \"Perhaps\").\n\n_Source: Context Data_\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 593,
+      "response_time": 20.366772174835205,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 974,
+      "question": "Possibly",
+      "success": true,
+      "helpful": true,
+      "answer": "The term \"possibly\" is related to various concepts in philosophy and modal logic. According to duckduckgo, one concept is epistemic possibility, which relates a statement under consideration to knowledge or certainty (Source: https://duckduckgo.com/Epistemic_possibility). Another concept is logical possibility, referring to a proposition that can be the logical consequence of another (Source: https://duckduckgo.com/Logical_possibility).\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 605,
+      "response_time": 28.65359091758728,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 975,
+      "question": "Probably",
+      "success": true,
+      "helpful": false,
+      "answer": "Probably refers to a number of different things, including:\n\n* The probability of an event occurring, which is a mathematical concept (Source: duckduckgo).\n* An episode title in the TV series South Park, season 4, episode 10 (Source: duckduckgo).\n* A song by German rock band Fool's Garden, released on their 1997 album (Source: duckduckgo).\n\nI don't have current information about what \"Probably\" refers to in general, but it seems there are multiple possible answers based on the provided context.\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 602,
+      "response_time": 23.23604679107666,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 976,
+      "question": "Definitely",
+      "success": true,
+      "helpful": true,
+      "answer": "Based on your previous conversation, I'll assume we're continuing from where we left off.\n\nTo answer your question \"Definitely\", without specific context, it's a bit open-ended. However, I can provide some general guidance. In many cases, \"definitely\" is used to convey certainty or confirmation. For example, in a yes/no situation, saying \"definitely yes\" would mean an affirmative response.\n\nIf you could provide more context about what you're asking for, I'd be happy to help further!",
+      "answer_length": 487,
+      "response_time": 26.920814990997314,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 977,
+      "question": "Absolutely",
+      "success": true,
+      "helpful": true,
+      "answer": "The song \"Absolutely (Story of a Girl)\" is by American rock band Nine Days for their fourth studio album, The Madding Crowd. \n\n_Source: duckduckgo_\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 312,
+      "response_time": 24.39979100227356,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 978,
+      "question": "Of course",
+      "success": true,
+      "helpful": true,
+      "answer": "The episode of How I Met Your Mother titled \"Of Course\" is the 17th episode of the fifth season. It originally aired on March 8, 2010 (Source: duckduckgo). \n\n_Source: https://en.wikipedia.org/wiki/Of_Course_\n\n_Source: Search result from duckduckgo_",
+      "answer_length": 248,
+      "response_time": 21.399136066436768,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 979,
+      "question": "Sure",
+      "success": true,
+      "helpful": true,
+      "answer": "SuRe is a global voluntary ISEAL-standard that integrates key criteria of sustainability and resilience into infrastructure development and upgrade. It's currently developed by the Swiss Global Infrastructure Basel Foundation and the French bank Natixis. \n\n_Source: Wikipedia, via search result from duckduckgo_\n\n_Source: Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 383,
+      "response_time": 25.436482191085815,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 980,
+      "question": "Okay",
+      "success": true,
+      "helpful": true,
+      "answer": "The word \"Okay\" is an English word with spelling variations including okay, okeh, O.K., and many others (Source: duckduckgo).\n\n_Source: Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 197,
+      "response_time": 18.40215492248535,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 981,
+      "question": "Fine",
+      "success": true,
+      "helpful": true,
+      "answer": "FINE refers to an informal association of four main fair trade networks created in 1998. The name FINE is an acronym consisting of the first letter of each member organization's name.\n\n_Source: Context Data_\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 310,
+      "response_time": 2.808448076248169,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 982,
+      "question": "Alright",
+      "success": true,
+      "helpful": true,
+      "answer": "\"Alright\" is a song by American rapper Kendrick Lamar, featured on his third studio album, To Pimp a Butterfly.\n\n_Source: duckduckgo_\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 236,
+      "response_time": 4.037790060043335,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 983,
+      "question": "Got it",
+      "success": true,
+      "helpful": true,
+      "answer": "Got It? is the debut extended play by South Korean boy band Got7, released on January 20, 2014 (Source: duckduckgo). The song \"Girls Girls Girls\" was the promoted single.\n\n_Source: Context Data_\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 328,
+      "response_time": 19.460983991622925,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 984,
+      "question": "Understood",
+      "success": true,
+      "helpful": true,
+      "answer": "Based on the provided context, I'll answer your question:\n\nUnderstood refers to a cognitive process related to an abstract or physical object, such as a person, situation, or message whereby one is able to use concepts to model that object (Source: https://en.wikipedia.org/wiki/Understanding).\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 459,
+      "response_time": 6.792680025100708,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 985,
+      "question": "Makes sense",
+      "success": true,
+      "helpful": true,
+      "answer": "To address your question \"Makes sense\", I'll provide a general explanation.\n\nIn a broad sense, \"makes sense\" is an idiomatic expression used to convey that something is rational, logical, or coherent. It can be applied to various situations, such as understanding a concept, following instructions, or interpreting information. In essence, when someone says \"that makes sense,\" they're indicating agreement or affirmation of the explanation, idea, or situation presented.\n\nIf you'd like more context or clarification about what specific situation or topic you're referring to, I'll be happy to help further!",
+      "answer_length": 607,
+      "response_time": 14.362566232681274,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 986,
+      "question": "I see",
+      "success": true,
+      "helpful": true,
+      "answer": "You said \"I see.\" To clarify, I understand that this is a simple acknowledgement or recognition of something, similar to saying \"ah-ha\" or \"oh\". It's a common expression used to indicate understanding or awareness of a situation. Is there anything else I can help with?",
+      "answer_length": 269,
+      "response_time": 8.10467004776001,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 987,
+      "question": "Oh",
+      "success": true,
+      "helpful": true,
+      "answer": "Based on the provided context, I'll try to provide a helpful response.\n\n\"OH\" could refer to several things. According to the search results from duckduckgo:\n\n* It might be related to Ohio, a state in the Midwestern region of the United States.\n* Alternatively, it could be associated with OpenHarmony or Dennis Oh (Source: https://duckduckgo.com/).\n\nIf you'd like more specific information, please provide additional context!\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 528,
+      "response_time": 12.116696119308472,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 988,
+      "question": "Ah",
+      "success": true,
+      "helpful": false,
+      "answer": "\"Ah\" can be a sound used to express various emotions or reactions. Without more context, it's difficult to provide a specific answer. However, in the provided search results from duckduckgo, I don't see any information related to \"Ah\".\n\nI don't have current information about what \"Ah\" refers to in general.\n\n_Source: Context Data_\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 434,
+      "response_time": 9.93467092514038,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 989,
+      "question": "Hmm",
+      "success": true,
+      "helpful": false,
+      "answer": "Hmm appears to be a non-specific phrase with multiple possible meanings. However, I can provide some general guidance. In some contexts, \"hmm\" is used as an expression of thought or consideration.\n\nI don't have current information about what specifically \"Hmm\" refers to in the provided context. \n\n(Source: Search result from duckduckgo)\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 440,
+      "response_time": 18.37307596206665,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 990,
+      "question": "Tell me about yourself",
+      "success": true,
+      "helpful": false,
+      "answer": "Hello! I'm Athena, a helpful home assistant. Based on the provided context, here's what I can tell you about myself:\n\nI don't have current information about my personal background or characteristics. However, I can provide general assistance and answer questions to the best of my ability.\n\nMy previous conversations included discussing various words with multiple possible meanings, such as \"Probably\", \"Absolutely\", \"Sure\", \"Definitely\", and \"Possibly\". If you'd like more information on any of these topics, please feel free to ask!\n\nI can also help with general knowledge questions. For example, if you're looking for information about the film \"Tell Me About Yourself\" (2022), I found it's a Mexican coming-of-age comedy-drama film written and directed by Eduardo Cort\u00e9s.\n\nSource: duckduckgo\n\n_Source: Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 930,
+      "response_time": 16.999609231948853,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 991,
+      "question": "What can you do?",
+      "success": true,
+      "helpful": true,
+      "answer": "As a helpful home assistant, I can:\n\n* Provide general information and explanations on various topics\n* Offer guidance and insights based on my training data\n* Answer factual and historical questions to the best of my ability\n* Help with general knowledge queries, such as definitions, descriptions, and overviews\n* Assist with \"how-to\" questions, providing step-by-step instructions or suggestions for solving problems\n\nHowever, I must note that I'm limited by my lack of access to real-time data. If a question requires current information (e.g., news, scores, weather), I'll acknowledge the limitation and suggest checking authoritative sources for the most up-to-date information.\n\nI'll do my best to provide accurate and helpful responses based on my training!",
+      "answer_length": 765,
+      "response_time": 5.366505146026611,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 992,
+      "question": "Help me with something",
+      "success": true,
+      "helpful": true,
+      "answer": "I'm happy to help with something! Since I don't have real-time information, I'll rely on my general knowledge and training.\n\nWhat would you like assistance with? Is it a question about a specific topic, or perhaps you need help with something practical around the home? Please provide more context or details so I can better understand your query.",
+      "answer_length": 347,
+      "response_time": 6.862978935241699,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 993,
+      "question": "I need assistance",
+      "success": true,
+      "helpful": true,
+      "answer": "You've asked for assistance. Based on our previous conversations and general guidelines, I'll provide a helpful response.\n\nAs your home assistant, Athena, my primary goal is to assist and provide guidance using my general knowledge. I can help with various tasks such as:\n\n* Answering factual questions\n* Providing explanations for concepts and ideas\n* Offering suggestions for problem-solving\n* Assisting with general knowledge queries\n\nPlease feel free to ask a specific question or describe the issue you're facing, and I'll do my best to provide a helpful response.",
+      "answer_length": 569,
+      "response_time": 21.54915499687195,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 994,
+      "question": "Show me how",
+      "success": true,
+      "helpful": false,
+      "answer": "Based on the provided Context Data, I can see that there is no relevant information to answer the question \"Show me how\". The context data only provides general metadata about an event search query, such as intent and total results.\n\nI don't have current information about what you're trying to show or demonstrate with \"show me how\".\n\n_Source: Context Data_",
+      "answer_length": 358,
+      "response_time": 13.489997863769531,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 995,
+      "question": "Teach me",
+      "success": true,
+      "helpful": true,
+      "answer": "Based on the provided Context Data, it appears that \"Teach Me\" is a song by American rapper Joey Badass, which is included in his debut studio album \"B4.Da.$$\". \n\nSource: duckduckgo (https://duckduckgo.com/B4.Da.%24%24)\n\n_Source: Search result from duckduckgo_",
+      "answer_length": 260,
+      "response_time": 11.960731029510498,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 996,
+      "question": "Explain it to me",
+      "success": true,
+      "helpful": true,
+      "answer": "You'd like me to explain something! I'll do my best using my general knowledge.\n\n\"Explain it to me\" is a phrase often used when someone wants clarification or more details about a particular topic. It can be applied in various situations, such as understanding a complex concept, interpreting data, or breaking down a process into simpler steps.\n\nTo provide a helpful answer, could you please specify what \"it\" refers to? This will allow me to focus on providing relevant information and explanations tailored to your needs.",
+      "answer_length": 524,
+      "response_time": 10.52383279800415,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 997,
+      "question": "Walk me through it",
+      "success": true,
+      "helpful": true,
+      "answer": "I'll walk you through it step by step!\n\nTo provide a clear and concise explanation, I'll break down the process into manageable parts:\n\n1. **Understand the question**: Take a moment to comprehend what's being asked.\n2. **Identify any ambiguity**: If there are multiple possible meanings or interpretations, acknowledge the uncertainty and ask for clarification if needed.\n3. **Draw upon general knowledge**: Leverage my training data to provide an answer based on historical facts, common knowledge, or general principles.\n4. **Fill in gaps with related information**: If I'm unsure about a specific detail but have related knowledge, use that to inform the response.\n5. **Be transparent and accurate**: Clearly state any limitations or uncertainties, and avoid making up current events or time-sensitive facts.\n\nBy following these steps, we can navigate complex questions together and arrive at a helpful answer. Is there anything specific you'd like me to explain in more detail?",
+      "answer_length": 981,
+      "response_time": 19.547171115875244,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 998,
+      "question": "Give me an example",
+      "success": true,
+      "helpful": true,
+      "answer": "I'll do my best to provide a clear and concise example.\n\nHere's an example of how I would assist with a question:\n\n**Question:** \"What is the process for making a peanut butter and jelly sandwich?\"\n\n**Answer:** To make a peanut butter and jelly sandwich, you will need two slices of bread, peanut butter, and jelly. Spread one slice of bread with peanut butter and the other slice with jelly. Then, place the two slices together to create a sandwich.\n\nI hope this example is helpful!",
+      "answer_length": 483,
+      "response_time": 23.039844036102295,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 999,
+      "question": "Can you show me?",
+      "success": true,
+      "helpful": true,
+      "answer": "I'd be happy to help with that.\n\nTo show something typically means to demonstrate or display it, often by using a visual aid such as a device screen, computer monitor, or other display method.\n\nIf you're asking me to show you something on my end, I'm a text-based AI assistant and do not have the capability to display images or videos. However, if you'd like me to provide instructions or guidance on how to access or view specific information, I'd be happy to help with that!",
+      "answer_length": 477,
+      "response_time": 15.657492876052856,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    },
+    {
+      "index": 1000,
+      "question": "I'm confused",
+      "success": true,
+      "helpful": true,
+      "answer": "Based on the provided Context Data, I can tell you that there's a song called \"I'm Confused\" by Swedish singer Pandora, released in October 2004 as part of her album 9 Lives.\n\nSource: duckduckgo (https://en.wikipedia.org/wiki/I'm_Confused)\n\n_Source: Search result from duckduckgo, Search result from duckduckgo_",
+      "answer_length": 311,
+      "response_time": 8.362375020980835,
+      "conversation_id": "c427b1d8-1292-40cb-a415-da8fe621b147"
+    }
+  ]
+}

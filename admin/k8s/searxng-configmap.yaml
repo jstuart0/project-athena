@@ -1,0 +1,166 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: searxng-config
+  namespace: athena-admin
+  labels:
+    app: searxng
+data:
+  settings.yml: |
+    # SearXNG Configuration for Project Athena
+    # Deployed to THOR cluster, using Mac mini Redis
+
+    use_default_settings: true
+
+    general:
+      debug: false
+      instance_name: "Athena Search"
+      privacypolicy_url: ""
+      donation_url: ""
+      contact_url: ""
+      enable_metrics: false
+
+    brand:
+      new_issue_url: ""
+      docs_url: ""
+      public_instances: ""
+      wiki_url: ""
+
+    search:
+      safe_search: 0
+      autocomplete: "duckduckgo"
+      default_lang: "en"
+      max_page: 0  # Unlimited pages
+      formats:
+        - html
+        - json
+
+    server:
+      port: 8080
+      bind_address: "0.0.0.0"
+      secret_key: "__PLACEHOLDER__"  # Will be replaced by init container
+      limiter: false  # Disable rate limiting (behind ingress)
+      image_proxy: true
+      http_protocol_version: "1.1"
+      method: "GET"
+      base_url: "https://athena-admin.xmojo.net/searxng/"
+
+    redis:
+      url: "redis://192.168.10.181:6379/1"  # Mac mini Redis (database 1)
+
+    ui:
+      static_use_hash: true
+      default_locale: "en"
+      query_in_title: true
+      infinite_scroll: false
+      center_alignment: false
+      cache_url: "https://athena-admin.xmojo.net/searxng/static/"
+      default_theme: "simple"
+      theme_args:
+        simple_style: "auto"
+
+    # Privacy-focused settings
+    outgoing:
+      request_timeout: 3.0
+      max_request_timeout: 10.0
+      useragent_suffix: ""
+      pool_connections: 100
+      pool_maxsize: 10
+      enable_http2: true
+      verify: true
+      max_redirects: 5
+      retries: 1
+      # Privacy: Don't send referer
+      headers:
+        User-Agent: "Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/119.0"
+
+    # Enabled search engines
+    engines:
+      - name: google
+        engine: google
+        shortcut: g
+        timeout: 3.0
+        disabled: false
+
+      - name: duckduckgo
+        engine: duckduckgo
+        shortcut: ddg
+        timeout: 3.0
+        disabled: false
+
+      - name: brave
+        engine: brave
+        shortcut: br
+        timeout: 3.0
+        disabled: false
+
+      - name: wikipedia
+        engine: wikipedia
+        shortcut: wp
+        timeout: 3.0
+        disabled: false
+
+      - name: github
+        engine: github
+        shortcut: gh
+        timeout: 3.0
+        disabled: false
+
+      - name: stackoverflow
+        engine: stackoverflow
+        shortcut: so
+        timeout: 3.0
+        disabled: false
+
+      - name: arxiv
+        engine: arxiv
+        shortcut: arx
+        timeout: 4.0
+        disabled: false
+
+      - name: reddit
+        engine: reddit
+        shortcut: re
+        timeout: 3.0
+        disabled: false
+
+      - name: youtube
+        engine: youtube_noapi
+        shortcut: yt
+        timeout: 3.0
+        disabled: false
+
+      # Disable tracking/metrics engines
+      - name: google analytics
+        disabled: true
+
+      - name: bing
+        disabled: false
+        shortcut: bi
+
+      # News sources
+      - name: google news
+        engine: google_news
+        shortcut: gn
+        timeout: 3.0
+        disabled: false
+
+    # Disable telemetry and tracking
+    preferences:
+      lock:
+        - autocomplete
+        - method
+        - safesearch
+
+    enabled_plugins:
+      - 'Hash plugin'
+      - 'Self Information'
+      - 'Tracker URL remover'
+      - 'Ahmia blacklist'
+
+    # Disable hosting metrics and telemetry
+    hostnames:
+      replace:
+        '(.*\.)?youtube\.com$': 'invidious.snopyta.org'
+        '(.*\.)?reddit\.com$': 'teddit.net'

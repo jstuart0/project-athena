@@ -81,8 +81,10 @@ export REDIS_URL="redis://192.168.10.181:6379"
 export RAG_WEATHER_URL="http://localhost:8010"
 export RAG_AIRPORTS_URL="http://localhost:8011"
 export RAG_SPORTS_URL="http://localhost:8012"
-export GATEWAY_API_KEY="athena-gateway-key-2024"
+# Phase 1: run gateway without enforcing API key (set to dummy to disable auth)
+export GATEWAY_API_KEY="dummy-key"
 export PYTHONPATH="/Users/jstuart/dev/project-athena/src:/Users/jstuart/dev/project-athena"
+export SEARXNG_BASE_URL="http://192.168.60.10:8080"
 
 echo "Starting Orchestrator on port 8001..."
 cd ~/dev/project-athena/src/orchestrator

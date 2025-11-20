@@ -33,7 +33,7 @@ from app.models import User
 from app.routes import (
     policies, secrets, devices, audit, users, servers, services, rag_connectors, voice_tests,
     hallucination_checks, multi_intent, validation_models, conversation, llm_backends, settings,
-    intent_routing, features
+    intent_routing, features, external_api_keys
 )
 
 logger = structlog.get_logger()
@@ -107,6 +107,7 @@ app.include_router(llm_backends.router)
 app.include_router(settings.router)
 app.include_router(intent_routing.router)
 app.include_router(features.router)
+app.include_router(external_api_keys.router)
 
 
 # Startup event: Initialize database and check connections
@@ -411,6 +412,37 @@ async def get_system_status():
                 status.error = "Service not yet deployed - system works without this"
 
             service_statuses.append(status)
+
+        # Check SearXNG (cluster-local service)
+        searxng_status = ServiceStatus(
+            name="searxng (search)",
+            port=8080,
+            healthy=False,
+            status="unknown"
+        )
+
+        try:
+            url = "http://searxng.athena-admin.svc.cluster.local:8080/healthz"
+            response = await client.get(url)
+
+            if response.status_code == 200:
+                searxng_status.healthy = True
+                searxng_status.status = "running"
+            else:
+                searxng_status.status = f"error: HTTP {response.status_code}"
+                searxng_status.error = f"Unexpected status code: {response.status_code}"
+
+        except httpx.ConnectError:
+            searxng_status.status = "not deployed"
+            searxng_status.error = "SearXNG service not accessible"
+        except httpx.TimeoutException:
+            searxng_status.status = "timeout"
+            searxng_status.error = "Service did not respond within timeout"
+        except Exception as e:
+            searxng_status.status = "error"
+            searxng_status.error = str(e)
+
+        service_statuses.append(searxng_status)
 
     healthy_count = sum(1 for s in service_statuses if s.healthy)
     total_count = len(service_statuses)

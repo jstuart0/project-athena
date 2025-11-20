@@ -405,6 +405,53 @@ class AdminConfigClient:
         flags = await self.get_feature_flags()
         return flags.get(feature_name)
 
+    async def get_external_api_key(self, service_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Fetch external API key from Admin API (decrypted).
+
+        Args:
+            service_name: Service identifier (e.g., "brave-search", "api-football")
+
+        Returns:
+            Dict with api_key, endpoint_url, rate_limit_per_minute, or None if not found
+        """
+        try:
+            url = f"{self.admin_url}/api/external-api-keys/public/{service_name}/key"
+            response = await self.client.get(url)
+
+            if response.status_code == 404:
+                logger.debug(
+                    "external_api_key_not_found",
+                    service_name=service_name
+                )
+                return None
+
+            response.raise_for_status()
+            data = response.json()
+
+            logger.info(
+                "external_api_key_fetched",
+                service_name=service_name,
+                endpoint_url=data.get("endpoint_url")
+            )
+            return data
+
+        except httpx.HTTPStatusError as e:
+            logger.warning(
+                "external_api_key_fetch_error",
+                service_name=service_name,
+                status_code=e.response.status_code,
+                error=str(e)
+            )
+            return None
+        except Exception as e:
+            logger.warning(
+                "external_api_key_connection_failed",
+                service_name=service_name,
+                error=str(e)
+            )
+            return None
+
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()

@@ -214,11 +214,11 @@ class HAConversationResponse(BaseModel):
     response: Dict[str, Any] = Field(..., description="Response structure")
     conversation_id: Optional[str] = Field(None, description="Session ID for conversation context")
 
-# API key validation (optional for Phase 1)
+# API key validation (now optional/off by default)
 async def validate_api_key(request: Request):
-    """Validate API key if configured."""
-    if API_KEY == "dummy-key":
-        return True  # Skip validation in dev
+    """Validate API key only if explicitly set via env."""
+    if not API_KEY or API_KEY == "dummy-key":
+        return True  # Auth disabled
 
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
@@ -361,8 +361,14 @@ async def classify_intent_llm(query: str) -> bool:
 Query: "{query}"
 
 Categories:
-- athena: Home control, weather, sports, airports, local info (Baltimore context)
+- athena: Home control, weather, SPORTS (games/scores/schedules/teams), airports, local info (Baltimore context)
 - general: General knowledge, math, coding, explanations
+
+Examples of athena queries:
+- "turn on the lights"
+- "what's the weather?"
+- "when do the Ravens play?" or "football schedule" (SPORTS - always athena)
+- "BWI flight delays?"
 
 Respond with ONLY the category name (athena or general)."""
 

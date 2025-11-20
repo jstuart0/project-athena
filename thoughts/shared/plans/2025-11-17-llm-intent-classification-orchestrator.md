@@ -1,7 +1,7 @@
 # LLM-Based Intent Classification for Orchestrator
 
 **Date:** 2025-11-17
-**Status:** Planned
+**Status:** In Progress (Phase 1 Complete)
 **Priority:** High
 **Estimated Effort:** 4-6 hours
 
@@ -394,17 +394,25 @@ async def test_end_to_end_classification():
 
 ## Implementation Checklist
 
-- [ ] Add `classify_intent_llm()` function
-- [ ] Add `_parse_classification_response()` helper
-- [ ] Update `classify_intent` node to support LLM
-- [ ] Add feature flag to admin database
-- [ ] Write unit tests
-- [ ] Write integration tests
-- [ ] Manual testing with diverse queries
-- [ ] Measure baseline latency
-- [ ] Deploy with feature flag disabled
-- [ ] Enable for 10% of queries
-- [ ] Monitor metrics for 24 hours
-- [ ] Increase to 50% if successful
-- [ ] Full rollout to 100%
+### Phase 1: Core Implementation (COMPLETED)
+- [x] Add `classify_intent_llm()` function (src/orchestrator/main.py:298-362)
+- [x] Add `_parse_classification_response()` helper (src/orchestrator/main.py:254-295)
+- [x] Update `classify_node` to support LLM with feature flag (src/orchestrator/main.py:365-486)
+- [x] Manual testing with diverse queries (weather, sports queries validated)
+- [x] Deployed to Mac Studio with pattern-based fallback as default
+
+### Phase 2: Testing & Rollout (PENDING)
+- [ ] Add feature flag `enable_llm_intent_classification` to admin database
+- [ ] Write unit tests for classification logic
+- [ ] Write integration tests for LangGraph workflow
+- [ ] Measure baseline latency with LLM enabled
+- [ ] Enable feature flag for testing
+- [ ] Monitor classification accuracy and latency
+- [ ] Gradual rollout (10% → 50% → 100%)
 - [ ] Document results in Wiki
+
+### Notes
+- Current deployment uses pattern-based classification (feature flag defaults to False)
+- LLM classification available but disabled pending admin feature flag creation
+- All metadata errors fixed - classification working correctly
+- Git checkpoint created at tag: checkpoint-before-simplified-llm-classification

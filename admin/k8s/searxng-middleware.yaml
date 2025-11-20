@@ -1,0 +1,11 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: searxng-stripprefix
+  namespace: athena-admin
+spec:
+  stripPrefix:
+    prefixes:
+      - /searxng
+    forceSlash: false

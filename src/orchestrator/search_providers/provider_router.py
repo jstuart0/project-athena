@@ -12,6 +12,7 @@ import asyncio
 from .base import SearchProvider
 from .duckduckgo import DuckDuckGoProvider
 from .brave import BraveSearchProvider
+from .searxng import SearXNGProvider
 from .ticketmaster import TicketmasterProvider
 from .eventbrite import EventbriteProvider
 from shared.admin_config import get_admin_client
@@ -36,19 +37,33 @@ class ProviderRouter:
             "ticketmaster",    # Official event data
             "eventbrite",      # Local community events
             "duckduckgo",      # General web search backup
-            "brave"            # Additional web search coverage
+            "brave",           # Additional web search coverage
+            "searxng"          # Metasearch aggregator (multiple engines)
         ],
         "general": [
             "duckduckgo",      # Free unlimited
-            "brave"            # 2,000/month free
+            "brave",           # 2,000/month free
+            "searxng"          # Metasearch aggregator (multiple engines)
         ],
         "news": [
             "brave",           # Excellent news search
-            "duckduckgo"       # General news coverage
+            "duckduckgo",      # General news coverage
+            "searxng"          # Metasearch aggregator (multiple engines)
         ],
         "local_business": [
             "brave",           # Good local search
-            "duckduckgo"       # General search
+            "duckduckgo",      # General search
+            "searxng"          # Metasearch aggregator (multiple engines)
+        ],
+        "sports": [
+            "duckduckgo",      # Primary sports search
+            "brave",           # Sports news coverage
+            "searxng"          # Metasearch aggregator (multiple engines)
+        ],
+        "weather": [
+            "duckduckgo",      # Weather information
+            "brave",           # Weather coverage
+            "searxng"          # Metasearch aggregator (multiple engines)
         ]
     }
 
@@ -60,10 +75,12 @@ class ProviderRouter:
         ticketmaster_api_key: Optional[str] = None,
         eventbrite_api_key: Optional[str] = None,
         brave_api_key: Optional[str] = None,
+        searxng_base_url: Optional[str] = None,
         enable_ticketmaster: bool = True,
         enable_eventbrite: bool = True,
         enable_brave: bool = True,
-        enable_duckduckgo: bool = True
+        enable_duckduckgo: bool = True,
+        enable_searxng: bool = True
     ):
         """
         Initialize provider router.
@@ -72,10 +89,12 @@ class ProviderRouter:
             ticketmaster_api_key: Ticketmaster API key
             eventbrite_api_key: Eventbrite API key
             brave_api_key: Brave Search API key
+            searxng_base_url: SearXNG instance base URL (defaults to internal cluster service)
             enable_ticketmaster: Enable Ticketmaster provider
             enable_eventbrite: Enable Eventbrite provider
             enable_brave: Enable Brave Search provider
             enable_duckduckgo: Enable DuckDuckGo provider
+            enable_searxng: Enable SearXNG metasearch provider
         """
         self.all_providers: Dict[str, SearchProvider] = {}
 
@@ -86,6 +105,14 @@ class ProviderRouter:
                 logger.info("Initialized DuckDuckGo provider")
             except Exception as e:
                 logger.error(f"Failed to initialize DuckDuckGo provider: {e}")
+
+        # Initialize SearXNG (no API key needed)
+        if enable_searxng:
+            try:
+                self.all_providers["searxng"] = SearXNGProvider(base_url=searxng_base_url)
+                logger.info("Initialized SearXNG provider")
+            except Exception as e:
+                logger.error(f"Failed to initialize SearXNG provider: {e}")
 
         # Initialize Brave Search
         if enable_brave and brave_api_key:
@@ -260,30 +287,72 @@ class ProviderRouter:
         return list(self.all_providers.keys())
 
     @classmethod
-    def from_environment(cls) -> "ProviderRouter":
+    async def from_environment(cls) -> "ProviderRouter":
         """
-        Create ProviderRouter from environment variables.
+        Create ProviderRouter from environment variables and admin database.
+
+        Fetches API keys from admin database first, falls back to environment variables.
 
         Environment variables:
-        - TICKETMASTER_API_KEY: Ticketmaster API key
-        - EVENTBRITE_API_KEY: Eventbrite API key
-        - BRAVE_SEARCH_API_KEY: Brave Search API key
+        - TICKETMASTER_API_KEY: Ticketmaster API key (fallback)
+        - EVENTBRITE_API_KEY: Eventbrite API key (fallback)
+        - BRAVE_SEARCH_API_KEY: Brave Search API key (fallback)
+        - SEARXNG_BASE_URL: SearXNG instance base URL (default: cluster-local)
         - ENABLE_TICKETMASTER: Enable Ticketmaster (default: true)
         - ENABLE_EVENTBRITE: Enable Eventbrite (default: true)
         - ENABLE_BRAVE_SEARCH: Enable Brave Search (default: true)
         - ENABLE_DUCKDUCKGO: Enable DuckDuckGo (default: true)
+        - ENABLE_SEARXNG: Enable SearXNG metasearch (default: true)
 
         Returns:
             Configured ProviderRouter instance
         """
+        # Try to fetch API keys from admin database
+        admin_client = get_admin_client()
+
+        # Brave Search API key
+        brave_api_key = os.getenv("BRAVE_SEARCH_API_KEY")
+        try:
+            brave_key_data = await admin_client.get_external_api_key("brave-search")
+            if brave_key_data and brave_key_data.get("api_key"):
+                brave_api_key = brave_key_data["api_key"]
+                logger.info("brave_api_key_loaded_from_database")
+        except Exception as e:
+            logger.warning(f"Failed to fetch Brave API key from database: {e}. Using environment variable.")
+
+        # Ticketmaster API key
+        ticketmaster_api_key = os.getenv("TICKETMASTER_API_KEY")
+        try:
+            ticketmaster_key_data = await admin_client.get_external_api_key("ticketmaster")
+            if ticketmaster_key_data and ticketmaster_key_data.get("api_key"):
+                ticketmaster_api_key = ticketmaster_key_data["api_key"]
+                logger.info("ticketmaster_api_key_loaded_from_database")
+        except Exception as e:
+            logger.warning(f"Failed to fetch Ticketmaster API key from database: {e}. Using environment variable.")
+
+        # Eventbrite API key
+        eventbrite_api_key = os.getenv("EVENTBRITE_API_KEY")
+        try:
+            eventbrite_key_data = await admin_client.get_external_api_key("eventbrite")
+            if eventbrite_key_data and eventbrite_key_data.get("api_key"):
+                eventbrite_api_key = eventbrite_key_data["api_key"]
+                logger.info("eventbrite_api_key_loaded_from_database")
+        except Exception as e:
+            logger.warning(f"Failed to fetch Eventbrite API key from database: {e}. Using environment variable.")
+
+        # SearXNG base URL (no API key needed)
+        searxng_base_url = os.getenv("SEARXNG_BASE_URL")  # Defaults to cluster-local in provider
+
         return cls(
-            ticketmaster_api_key=os.getenv("TICKETMASTER_API_KEY"),
-            eventbrite_api_key=os.getenv("EVENTBRITE_API_KEY"),
-            brave_api_key=os.getenv("BRAVE_SEARCH_API_KEY"),
+            ticketmaster_api_key=ticketmaster_api_key,
+            eventbrite_api_key=eventbrite_api_key,
+            brave_api_key=brave_api_key,
+            searxng_base_url=searxng_base_url,
             enable_ticketmaster=os.getenv("ENABLE_TICKETMASTER", "true").lower() == "true",
             enable_eventbrite=os.getenv("ENABLE_EVENTBRITE", "true").lower() == "true",
             enable_brave=os.getenv("ENABLE_BRAVE_SEARCH", "true").lower() == "true",
-            enable_duckduckgo=os.getenv("ENABLE_DUCKDUCKGO", "true").lower() == "true"
+            enable_duckduckgo=os.getenv("ENABLE_DUCKDUCKGO", "true").lower() == "true",
+            enable_searxng=os.getenv("ENABLE_SEARXNG", "true").lower() == "true"
         )
 
     async def close_all(self):

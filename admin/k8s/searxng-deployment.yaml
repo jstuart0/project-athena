@@ -1,0 +1,206 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: searxng
+  namespace: athena-admin
+  labels:
+    app: searxng
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: searxng
+  template:
+    metadata:
+      labels:
+        app: searxng
+    spec:
+      # Security: Run as non-root user
+      securityContext:
+        runAsUser: 977
+        runAsGroup: 977
+        fsGroup: 977
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+
+      initContainers:
+      # Init container to inject secret key into settings.yml
+      - name: inject-secret
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          # Copy settings.yml from ConfigMap
+          cp /config-source/settings.yml /config-target/settings.yml
+
+          # Replace placeholder with actual secret key
+          SECRET_KEY=$(cat /secrets/secret-key)
+          sed -i "s/__PLACEHOLDER__/$SECRET_KEY/g" /config-target/settings.yml
+
+          # Verify the replacement worked
+          if grep -q "__PLACEHOLDER__" /config-target/settings.yml; then
+            echo "ERROR: Failed to replace secret key placeholder"
+            exit 1
+          fi
+
+          echo "Successfully injected secret key into settings.yml"
+
+          # Set proper permissions
+          chmod 644 /config-target/settings.yml
+        volumeMounts:
+        - name: config-source
+          mountPath: /config-source
+          readOnly: true
+        - name: config-target
+          mountPath: /config-target
+        - name: secret
+          mountPath: /secrets
+          readOnly: true
+        securityContext:
+          runAsUser: 977
+          runAsGroup: 977
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false  # busybox sed needs writable /tmp
+
+      containers:
+      - name: searxng
+        image: searxng/searxng:latest
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+
+        env:
+        - name: SEARXNG_SETTINGS_PATH
+          value: "/etc/searxng/settings.yml"
+        - name: SEARXNG_BASE_URL
+          value: "https://athena-admin.xmojo.net/searxng/"
+        # Bind to all interfaces
+        - name: SEARXNG_BIND_ADDRESS
+          value: "0.0.0.0:8080"
+
+        volumeMounts:
+        # Use the injected config from init container
+        - name: config-target
+          mountPath: /etc/searxng
+          readOnly: true
+        # Writable directories required by SearXNG
+        - name: cache
+          mountPath: /var/cache/searxng
+        - name: log
+          mountPath: /var/log/searxng
+        - name: tmp
+          mountPath: /tmp
+
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+
+        # Security: Harden container
+        securityContext:
+          runAsUser: 977
+          runAsGroup: 977
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true  # SearXNG can run with read-only root
+
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: https
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: https
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+            httpHeaders:
+            - name: X-Forwarded-Proto
+              value: https
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 12  # Allow up to 60 seconds for startup
+
+      volumes:
+      # Source config from ConfigMap
+      - name: config-source
+        configMap:
+          name: searxng-config
+          items:
+          - key: settings.yml
+            path: settings.yml
+
+      # Target config (writable, used by init container)
+      - name: config-target
+        emptyDir: {}
+
+      # Secret containing secret-key
+      - name: secret
+        secret:
+          secretName: searxng-secret
+          items:
+          - key: secret-key
+            path: secret-key
+
+      # Writable directories
+      - name: cache
+        emptyDir:
+          sizeLimit: 1Gi
+
+      - name: log
+        emptyDir:
+          sizeLimit: 100Mi
+
+      - name: tmp
+        emptyDir:
+          sizeLimit: 100Mi
+
+      # Anti-affinity to spread pods across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: searxng
+              topologyKey: kubernetes.io/hostname
+
+      # Restart policy
+      restartPolicy: Always

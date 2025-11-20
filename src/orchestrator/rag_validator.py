@@ -33,10 +33,141 @@ class RAGValidator:
     Provides service-specific validation and auto-fix strategies.
     """
 
+    # Patterns that indicate unhelpful RAG responses
+    UNHELPFUL_PATTERNS = [
+        "i don't have access",
+        "i cannot provide",
+        "i don't have current",
+        "i don't have real-time",
+        "i'm unable to access",
+        "i don't have the ability",
+        "no information available",
+        "data not available",
+        "unable to retrieve",
+        "service unavailable",
+        "api error",
+        "connection failed",
+        "timeout",
+        "no data found",
+        "empty response"
+    ]
+
+    def _check_content_quality(self, content: str, query: str) -> Tuple[bool, str]:
+        """
+        Check if content contains unhelpful patterns.
+
+        Args:
+            content: Content to check (from RAG response or LLM answer)
+            query: Original user query
+
+        Returns:
+            Tuple of (is_helpful, reason)
+            - is_helpful: True if content looks helpful, False if unhelpful
+            - reason: Explanation of why content failed quality check
+        """
+        if not content:
+            return (False, "Empty content")
+
+        content_lower = content.lower()
+
+        # Check for unhelpful patterns
+        for pattern in self.UNHELPFUL_PATTERNS:
+            if pattern in content_lower:
+                logger.warning(f"Content contains unhelpful pattern '{pattern}': {content[:100]}")
+                return (False, f"Contains unhelpful pattern: '{pattern}'")
+
+        # Check for very short responses (< 20 chars) unless it's a simple fact
+        if len(content) < 20 and query.lower() not in content_lower:
+            return (False, "Response too short and doesn't answer query")
+
+        return (True, "Content appears helpful")
+
+    def validate_answer_quality(
+        self,
+        answer: str,
+        query: str,
+        intent: str
+    ) -> Tuple[ValidationResult, str, Optional[Dict[str, Any]]]:
+        """
+        Validate final synthesized answer quality.
+
+        This is Priority 2: Post-synthesis validation to catch bad RAG data
+        that passed initial validation but produced unhelpful answers.
+
+        Args:
+            answer: Final synthesized answer from LLM
+            query: Original user query
+            intent: Query intent category
+
+        Returns:
+            Tuple of (ValidationResult, reason, suggestions)
+        """
+        try:
+            # Check content quality
+            is_helpful, reason = self._check_content_quality(answer, query)
+
+            if not is_helpful:
+                logger.warning(f"Answer quality validation failed: {reason}. Answer: {answer[:200]}")
+                return (
+                    ValidationResult.INVALID,
+                    f"Answer is unhelpful: {reason}",
+                    {
+                        "fallback_action": "web_search",
+                        "reason": "unhelpful_answer",
+                        "original_intent": intent
+                    }
+                )
+
+            # Check if answer admits it doesn't have the information
+            # NOTE: Using VERY SPECIFIC phrases to avoid false positives
+            # These patterns indicate explicit admission of ignorance, not conversational hedging
+            answer_lower = answer.lower()
+
+            # EXPLICIT ignorance patterns (highly specific)
+            # Added variations to catch different word orders (e.g., "real-time access" vs "access to real-time")
+            explicit_ignorance_patterns = [
+                "i don't have the ability to access",
+                "i don't have access to real-time",
+                "i don't have real-time access",  # Word order variation
+                "i don't have access to current",
+                "i don't have current",  # Shorter variation
+                "i cannot access real-time",
+                "i cannot provide real-time",
+                "please check espn",
+                "please check cbs sports",
+                "check reputable sports news",
+                "check with a trustworthy sports news source",  # Common LLM phrasing
+                "consult official league",
+                "visit the official website",
+                "for their latest updates on"  # Often paired with "check ESPN/sports news"
+            ]
+
+            for pattern in explicit_ignorance_patterns:
+                if pattern in answer_lower:
+                    logger.warning(f"Answer explicitly admits ignorance: contains '{pattern}'")
+                    return (
+                        ValidationResult.INVALID,
+                        f"Answer explicitly admits it doesn't have the information",
+                        {
+                            "fallback_action": "web_search",
+                            "reason": "llm_admits_ignorance",
+                            "limitation_phrase": pattern
+                        }
+                    )
+
+            logger.debug(f"Answer quality validated successfully")
+            return (ValidationResult.VALID, "Answer appears helpful and informative", None)
+
+        except Exception as e:
+            logger.error(f"Answer validation error: {e}", exc_info=True)
+            # If validation fails, assume answer is OK to avoid false positives
+            return (ValidationResult.VALID, "Validation error, assuming answer is OK", None)
+
     def validate_sports_response(
         self,
         response_data: Dict[str, Any],
-        query: str
+        query: str,
+        requested_team: Optional[str] = None
     ) -> Tuple[ValidationResult, str, Optional[Dict[str, Any]]]:
         """
         Validate Sports RAG service response.
@@ -44,6 +175,7 @@ class RAGValidator:
         Args:
             response_data: Raw response from Sports RAG service
             query: Original user query
+            requested_team: Team name that was requested (optional)
 
         Returns:
             Tuple of (ValidationResult, reason, suggestions)
@@ -53,6 +185,7 @@ class RAGValidator:
             - Events have required fields (datetime, opponent, location)
             - Team data has required fields (name, record, standing)
             - Response matches query intent (scores vs schedules)
+            - Events match the requested team (detect API data corruption)
         """
         try:
             # Check for events array
@@ -69,7 +202,8 @@ class RAGValidator:
 
                 # Validate first event structure (sample check)
                 first_event = events[0]
-                required_event_fields = ["opponent", "datetime"]
+                # TheSportsDB API uses these field names
+                required_event_fields = ["strEvent", "dateEvent"]
                 missing_fields = [f for f in required_event_fields if f not in first_event]
 
                 if missing_fields:
@@ -79,6 +213,40 @@ class RAGValidator:
                         f"Event missing required fields: {missing_fields}",
                         {"fallback_action": "web_search", "reason": "malformed_event"}
                     )
+
+                # CRITICAL FIX: Validate events match requested team
+                # TheSportsDB has data corruption issues where team_id can return wrong team
+                if requested_team:
+                    # Check if any events match the requested team
+                    team_lower = requested_team.lower()
+                    events_match_team = False
+
+                    for event in events[:5]:  # Check first 5 events
+                        event_name = event.get("strEvent", "").lower()
+                        home_team = event.get("strHomeTeam", "").lower()
+                        away_team = event.get("strAwayTeam", "").lower()
+
+                        if (team_lower in event_name or
+                            team_lower in home_team or
+                            team_lower in away_team):
+                            events_match_team = True
+                            break
+
+                    if not events_match_team:
+                        logger.warning(
+                            f"Sports RAG returned events that don't match requested team '{requested_team}'. "
+                            f"First event: {first_event.get('strEvent')}. "
+                            f"This suggests TheSportsDB API data corruption."
+                        )
+                        return (
+                            ValidationResult.INVALID,
+                            f"Events don't match requested team '{requested_team}'",
+                            {
+                                "fallback_action": "web_search",
+                                "reason": "team_mismatch",
+                                "api_bug": "thesportsdb_team_id_corruption"
+                            }
+                        )
 
                 # Check if query asks for scores but we got schedule
                 query_lower = query.lower()

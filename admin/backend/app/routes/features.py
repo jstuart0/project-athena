@@ -6,7 +6,7 @@ Enables toggling features on/off and performing what-if analysis on system perfo
 """
 
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from pydantic import BaseModel, Field
@@ -193,6 +193,57 @@ async def toggle_feature(
         feature_name=feature.name,
         enabled=feature.enabled,
         user=current_user.username
+    )
+
+    return FeatureResponse(**feature.to_dict())
+
+
+@router.put("/service/{feature_id}/toggle", response_model=FeatureResponse)
+async def service_toggle_feature(
+    feature_id: int,
+    db: Session = Depends(get_db),
+    api_key: str = Header(None, alias="X-API-Key")
+):
+    """
+    Service-to-service toggle feature endpoint.
+
+    Allows services to toggle features using API key authentication
+    instead of OIDC. Useful for testing and automation.
+
+    Headers:
+    - X-API-Key: Service API key
+
+    Cannot toggle required features (they must always be enabled).
+    """
+    import os
+
+    # Verify service API key
+    expected_key = os.getenv("SERVICE_API_KEY", "dev-service-key-change-in-production")
+    if not api_key or api_key != expected_key:
+        logger.warning("service_toggle_feature_unauthorized", provided_key=bool(api_key))
+        raise HTTPException(status_code=403, detail="Invalid or missing API key")
+
+    feature = db.query(Feature).filter(Feature.id == feature_id).first()
+    if not feature:
+        raise HTTPException(status_code=404, detail="Feature not found")
+
+    # Check if feature is required
+    if feature.required and feature.enabled:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot disable required feature '{feature.display_name}'"
+        )
+
+    feature.enabled = not feature.enabled
+    db.commit()
+    db.refresh(feature)
+
+    logger.info(
+        "service_toggle_feature",
+        feature_id=feature_id,
+        feature_name=feature.name,
+        enabled=feature.enabled,
+        source="service_api"
     )
 
     return FeatureResponse(**feature.to_dict())

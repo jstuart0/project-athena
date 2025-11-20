@@ -315,6 +315,24 @@ class EnhancedIntentClassifier:
                 best_match = category
 
         if best_match and best_score > 0:
+            # Special handling: Exclude "how to" questions from weather classification
+            # Questions like "How do you snowboard?" should not be classified as weather
+            # even though they contain weather-related words like "snow"
+            if best_match == IntentCategory.WEATHER:
+                # Check for "how to/do/does" patterns
+                how_to_patterns = [
+                    r'\bhow (to|do|does|can|should)\b',
+                    r'\bwhat (is|are|was|were)\b.*\b(snowboard|ski|brain|drain)\b',
+                ]
+
+                is_how_to = any(re.search(pattern, query, re.IGNORECASE) for pattern in how_to_patterns)
+
+                if is_how_to:
+                    # This is a "how to" or "what is" question, not a weather query
+                    # Reclassify as general_info with moderate confidence
+                    logger.debug(f"Reclassifying '{query[:50]}...' from weather to general_info (how-to pattern detected)")
+                    return (IntentCategory.GENERAL_INFO, 0.6)
+
             # Calculate confidence based on match density
             # More pattern matches relative to pattern count = higher confidence
             pattern_count = len(self.info_patterns[best_match])
@@ -414,10 +432,28 @@ class EnhancedIntentClassifier:
                     entities["timeframe"] = value
                     break
 
-            # Extract location if specified
-            location_match = re.search(r'in\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)', query)
+            # Mark if forecast is needed (future timeframes or keywords like "will", "going to")
+            future_keywords = [
+                "tomorrow", "weekend", "next week", "this week",
+                "will it", "going to", "is it going to",
+                "when will", "when is it going to"
+            ]
+
+            # Check if question is about future weather
+            if any(keyword in query for keyword in future_keywords):
+                entities["forecast"] = True
+            # Default to current weather
+            elif "timeframe" not in entities or entities["timeframe"] == "today":
+                entities["forecast"] = False
+
+            # Extract location if specified (works with lowercase queries)
+            # Patterns: "in chicago", "in new york", "in los angeles", "weather in seattle"
+            location_match = re.search(r'in\s+([a-z]+(?:\s+[a-z]+)?(?:\s+[a-z]+)?)', query)
             if location_match:
-                entities["location"] = location_match.group(1)
+                # Capitalize each word in the location
+                location = location_match.group(1).strip()
+                # Title case the location (Chicago, New York, Los Angeles)
+                entities["location"] = ' '.join(word.capitalize() for word in location.split())
 
         elif category == IntentCategory.SPORTS:
             # Extract team names

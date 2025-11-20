@@ -60,6 +60,13 @@ class ResultFusion:
             "news": 0.95,  # Excellent news search with dedicated results
             "local_business": 0.8,
             "definition": 0.85
+        },
+        "searxng": {
+            "general": 0.75,  # Good for general queries (aggregates multiple engines)
+            "event_search": 0.55,  # Moderate for events (backup coverage)
+            "news": 0.8,  # Good for news (multiple news sources)
+            "local_business": 0.7,  # Decent for local business
+            "definition": 0.75  # Good for definitions (Wikipedia, etc.)
         }
     }
 

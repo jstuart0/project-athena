@@ -64,8 +64,8 @@ RAG_SPORTS_URL=http://192.168.10.167:8012
 # Orchestrator
 ORCHESTRATOR_SERVICE_URL=http://192.168.10.167:8001
 
-# Gateway
-GATEWAY_API_KEY=athena-gateway-key-2024
+# Gateway (set to dummy to disable API key auth in Phase 1)
+GATEWAY_API_KEY=dummy-key
 GATEWAY_PORT=8000
 ORCHESTRATOR_PORT=8001
 

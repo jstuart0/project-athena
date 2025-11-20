@@ -177,14 +177,14 @@ class ParallelSearchEngine:
         await self.provider_router.close_all()
 
     @classmethod
-    def from_environment(cls, **kwargs) -> "ParallelSearchEngine":
+    async def from_environment(cls, **kwargs) -> "ParallelSearchEngine":
         """
-        Create ParallelSearchEngine from environment variables.
+        Create ParallelSearchEngine from environment variables and admin database.
 
         Environment variables:
-            TICKETMASTER_API_KEY: Ticketmaster API key
-            EVENTBRITE_API_KEY: Eventbrite API key
-            BRAVE_SEARCH_API_KEY: Brave Search API key
+            TICKETMASTER_API_KEY: Ticketmaster API key (fallback)
+            EVENTBRITE_API_KEY: Eventbrite API key (fallback)
+            BRAVE_SEARCH_API_KEY: Brave Search API key (fallback)
             SEARCH_TIMEOUT: Global timeout in seconds (default 3.0)
             ENABLE_TICKETMASTER: Enable Ticketmaster provider (default: true)
             ENABLE_EVENTBRITE: Enable Eventbrite provider (default: true)
@@ -202,8 +202,8 @@ class ParallelSearchEngine:
         # Initialize intent classifier
         intent_classifier = IntentClassifier()
 
-        # Initialize provider router from environment
-        provider_router = ProviderRouter.from_environment()
+        # Initialize provider router from environment and admin database
+        provider_router = await ProviderRouter.from_environment()
 
         return cls(
             intent_classifier=intent_classifier,

@@ -150,6 +150,31 @@ class Secret(Base):
     )
 
 
+class ExternalAPIKey(Base):
+    """External API key storage with application-level encryption."""
+    __tablename__ = 'external_api_keys'
+
+    id = Column(Integer, primary_key=True)
+    service_name = Column(String(255), nullable=False, unique=True, index=True)
+    api_name = Column(String(255), nullable=False)
+    api_key_encrypted = Column(Text, nullable=False)
+    endpoint_url = Column(Text, nullable=False)
+    enabled = Column(Boolean, nullable=False, default=True)
+    description = Column(Text)
+    rate_limit_per_minute = Column(Integer)
+    created_by_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    last_used = Column(DateTime(timezone=True))
+
+    creator = relationship('User', foreign_keys=[created_by_id])
+
+    __table_args__ = (
+        Index('idx_external_api_keys_service_name', 'service_name'),
+        Index('idx_external_api_keys_enabled', 'enabled'),
+        Index('idx_external_api_keys_last_used', 'last_used'),
+    )
+
 class Device(Base):
     """
     Device model for tracking voice devices and services.
